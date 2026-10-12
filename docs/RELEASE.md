@@ -1,32 +1,38 @@
 # Release scope
 
-PaperDesk 0.2.0 is a Windows x64 source distribution using a local Python service and a browser interface. Python 3.12 and Node.js 24 are recommended.
+PaperDesk 0.2.0 provides a Windows x64 installer and a source distribution. The installer includes Electron 44.5.1, Python 3.12.10, and the official native Codex CLI 0.162.1. Python or Node.js need not be installed on the user's machine. Windows 11 x64 is the validated host.
 
-EPUB 2/3 import is new in 0.2.0. It reuses the PDF-based reading workflow through generated reading pages and retains the original book. Unsupported features and resource limits are documented in [Document formats](FORMATS.md). No new runtime dependencies or model settings are required.
+EPUB 2/3 is supported through generated reading pages; see [Document formats](FORMATS.md). Automatic update downloads remain disabled.
+
+## Build the installer
+
+Maintainers need Windows x64, the source environment created by Setup-PaperDesk.cmd, and Node.js 24. Run `Build-PaperDesk.cmd` or `scripts/build_desktop.ps1`. Build tools use requirements-build-hashed.txt and package-lock.json. npm installation scripts are disabled; known npm advisories fail the build gate. The pinned native CLI is reinstalled from the official registry before staging.
+
+The pipeline stages only official CLI program files, builds a folder-based Python backend to avoid repeated extraction during document processing, then creates an NSIS installer. Unused voice libraries are omitted. Runtime license notices are included.
+
+Outputs are in `dist/electron/`. Publish the `PaperDesk-Setup-0.2.0.exe` and its SHA-256 checksum through GitHub Release Assets. `win-unpacked/` is a complete app directory for validation, not a single-file portable executable. The installer is unsigned; no signing credentials are configured.
+
+## Validate before publication
+
+Run Python/JavaScript regressions and the optional `node scripts/verify_desktop.cjs` check. That script launches the actual packaged app with an isolated data/profile directory and removes Python/Node.js from the application PATH. It checks CLI detection, sign-in UI, PDF/EPUB, notes, exports, authenticated source documents and backend shutdown. Configure Playwright and the test Python overrides in the script header. These are maintainer test tools, not end-user dependencies.
+
+Also test installation into a path containing spaces, reinstallation, and removal. Preserve any existing installation; use a clean account or isolated test machine for installer lifecycle checks. Notes and documents must remain outside the program directory. Cross-version upgrades and other Windows installations require additional validation; PATH isolation on the development host is not a fresh-OS VM test.
+
+Commit and push the exact reviewed source before creating a release tag. Assets built from an uncommitted tree should be matched against the published source or rebuilt from the clean commit. Keep personal data and build output out of Git.
 
 ## Source package
-
-Run from an installed project:
 
 ```powershell
 .\.venv\Scripts\python.exe scripts/prepare_source_release.py --check-only
 .\.venv\Scripts\python.exe scripts/prepare_source_release.py
 ```
 
-The `outputs/` directory contains:
+The source ZIP, RELEASE-MANIFEST.json, and SHA256SUMS.txt are in `outputs/`. Packaging excludes private directories, documents, credentials, installed dependencies and diagnostics. Source users still need Python and Node.js; a source ZIP is not the installer.
 
-- `paperdesk-0.2.0-source.zip`
-- `RELEASE-MANIFEST.json`: per-file SHA-256 hashes.
-- `SHA256SUMS.txt`: the ZIP checksum.
+## Data and authentication
 
-The packaging tool checks private paths, potential credentials, and dependency sources. Personal documents, authentication data, installed dependencies, and diagnostic logs are excluded.
+The installer defaults to `%USERPROFILE%\PaperDesk` for library/configuration and `%APPDATA%\PaperDesk` for window/cache state. Source mode uses the checkout's data/. Reinstallation and uninstallation preserve data. Existing library paths can be selected in settings; no automatic source-library migration occurs.
 
-## Support and limitations
-
-- Executable installers, signing, and other operating systems are not part of the current release.
-- Source setup does not install the Electron build toolchain. Its 2026-10-11 audit reported eight moderate advisories; reassess these before preparing a desktop installer.
-- PDF/EPUB workers limit concurrency, elapsed time, CPU, and memory. Model processes restrict unnecessary tools. They operate under the current OS user rather than a separate low-privilege account.
-- Online metadata lookup for local papers is disabled by default. Authors and publication years may need manual entry.
-- Back up personal data before updating and rerun Setup after obtaining new source. Automatic update downloads are not provided.
+Official CLI authentication remains in the user's Codex profile or credential store. Login requires an explicit click and runs the official browser flow. Existing valid credentials can be reused. PaperDesk's local HTTP session remains separate. Original PDF windows share only the local Electron session and have no Node integration or application preload; EPUB downloads use the authenticated session. External links receive no local authentication token.
 
 See [validation](VALIDATION.md), [data flows](../CONNECTIONS.md), and [project origin](../PROVENANCE.md).

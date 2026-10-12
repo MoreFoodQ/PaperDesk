@@ -12,6 +12,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 import threading
 from pathlib import Path
@@ -97,6 +98,11 @@ def claude_path(c: dict) -> str | None:
 
 def codex_path(c: dict) -> str | None:
     if not c.get("command") or c.get("command") == "codex":
+        if getattr(sys, 'frozen', False) and os.name == 'nt':
+            native = Path(sys.executable).resolve().parent.parent / 'codex/bin/codex.exe'
+            if native.is_file():
+                return str(native)
+            raise EngineError('安裝包內的 Codex CLI 不完整，請重新安裝 PaperDesk。')  # i18n-ok
         root = Path(__file__).resolve().parents[1] / ".tools" / "codex" / "node_modules" / "@openai"
         for package in (root / "codex", root / "codex" / "node_modules" / "@openai" / "codex-win32-x64", root / "codex-win32-x64"):
             for folder in ("bin", "codex"):

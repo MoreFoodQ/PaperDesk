@@ -10,7 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DIRECTORIES = ('easyread', 'tests', 'scripts', 'licenses', 'electron', '.github', 'img')
 FILES = ('README.md', 'README.en.md', 'LICENSE', 'pyproject.toml', 'package.json', 'package-lock.json',
-         'requirements-lock.txt', 'requirements-hashed.txt', 'Open-PaperDesk.cmd', 'Setup-PaperDesk.cmd', 'start.cmd',
+         'requirements-lock.txt', 'requirements-hashed.txt', 'requirements-build-hashed.txt', 'Build-PaperDesk.cmd', 'Open-PaperDesk.cmd', 'Setup-PaperDesk.cmd', 'start.cmd',
          '.gitignore', 'CONNECTIONS.md', 'ARCHITECTURE.md', 'PROVENANCE.md',
          'CONTRIBUTING.md', 'SECURITY.md', 'docs/USAGE.md', 'docs/VALIDATION.md', 'docs/RELEASE.md', 'docs/FORMATS.md', '.gitattributes')
 PRIVATE = {'data', '.tools', '.venv', '.git', '.codex', '.aws', '.claude', 'node_modules', '__pycache__', 'security-audit', 'outputs', 'verification', '.impeccable'}

@@ -8,7 +8,7 @@ PaperDesk 是在自己電腦上執行的論文閱讀工具，提供 PDF 原文�
 > 2. ChatGPT 網頁已登入，**不等於 Codex CLI 已登入**。
 > 3. 使用 ChatGPT 帳號登入 CLI 時，翻譯與問答使用訂閱提供的 **Codex／代理工作用量**，不是一般 ChatGPT 對話窗的訊息額度。
 
-此版本為 **0.2.0 Windows x64 原始碼版**，沒有 EXE 安裝包。PaperDesk 基於 [EasyRead](https://github.com/Edwardxlai/easyread) 的 MIT 原始碼改作，保留其 PDF、文獻庫與批註核心，重做閱讀工作臺與安全防護。
+此版本提供 **0.2.0 Windows x64 安裝版與原始碼版**。PaperDesk 基於 [EasyRead](https://github.com/Edwardxlai/easyread) 的 MIT 原始碼改作，保留其 PDF、文獻庫與批註核心，重做閱讀工作臺與安全防護。
 
 ## 目錄
 
@@ -295,3 +295,15 @@ Freeze 表示已完成所列發布門檻與記錄取捨，不保證零 bug。後
 原始檔存為 `source.epub`，下載時回傳原始位元組；`source.pdf` 是本機產生的閱讀版 PDF。頁碼與版面不是原書排版，閱讀版 PDF 是頁圖組成；App 的文字上下文另存於 `extract/`。原書樣式、連結互動及精細表格排版不會保留。筆記、翻譯和匯出沿用既有資料結構。
 
 支援範圍、字型要求與安全上限請見 [文件格式](FORMATS.md)。EPUB 本身不需要新套件或新模型設定；開啟模型處理後仍消耗原來的 CLI／API 額度。
+
+## Windows 安裝版
+
+下載 Release 的 `PaperDesk-Setup-0.2.0.exe` 安裝，再由開始功能表或桌面捷徑開啟。安裝版已包含 Python、閱讀後端與 Codex 原生 CLI，不需執行 Setup-PaperDesk.cmd。此啟動器保留給原始碼版。
+
+到「設定 → 模型」按「登入 ChatGPT／Codex」，完成官方瀏覽器登入即可使用 AI 功能。登入由使用者自己的官方 CLI 帳號管理；安裝包不包含任何帳號憑證。以 ChatGPT 登入時使用 Codex 額度，API 模式依 API 帳戶計費。
+
+安裝版預設閱讀資料目錄是 `%USERPROFILE%\PaperDesk`，視窗與 Chromium 快取是 `%APPDATA%\PaperDesk`。EASYREAD_HOME 或既有文獻庫設定可覆寫預設位置。從原始碼版換成安裝版時，原本的專案 `data/` 不會自動搬移；可在文獻庫位置設定選取既有文獻庫，或備份後搬移。請確認目前設定的路徑再開始匯入。
+
+重新安裝或移除程式保留閱讀資料與 CLI 登入。若要刪除閱讀資料，先備份後自行處理資料目錄；程式移除不會代替你刪除論文或筆記。
+
+安裝包目前未簽章，Windows 可能顯示未知發行者提示。可使用 PowerShell `Get-FileHash -Algorithm SHA256` 與 Release 的 SHA256SUMS.txt 核對下載檔。開發者建置方式見 [發布說明](RELEASE.md)。

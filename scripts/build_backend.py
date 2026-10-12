@@ -44,18 +44,16 @@ def main() -> None:
     check_dependencies(python)  # 验证通过后再清理旧产物
     OUT.mkdir(parents=True, exist_ok=True)
     WORK.mkdir(parents=True, exist_ok=True)
-    for old in OUT.iterdir():
-        if old.is_file() or old.is_symlink():
-            old.unlink()
-        elif old.is_dir():
-            shutil.rmtree(old)
-    cmd = python + ["-m", "PyInstaller", "--noconfirm", "--clean", "--onefile",
+    if not OUT.resolve().is_relative_to(ROOT.resolve()) or not WORK.resolve().is_relative_to(ROOT.resolve()):
+        raise SystemExit('Build paths leave the project.')
+    cmd = python + ["-m", "PyInstaller", "--noconfirm", "--clean", "--onedir", "--noupx",
                     "--name", "easyread-backend", "--distpath", str(OUT),
                     "--workpath", str(WORK), "--specpath", str(WORK),
+                    "--paths", str(ROOT),
                     *[arg for module in REQUIRED for arg in ("--collect-all", module)],
                     str(ROOT / "scripts" / "backend_entry.py")]
     subprocess.run(cmd, cwd=ROOT, check=True)
-    print(f"后端已生成：{OUT / ('easyread-backend.exe' if os.name == 'nt' else 'easyread-backend')}")
+    print(f"后端已生成：{OUT / 'easyread-backend' / ('easyread-backend.exe' if os.name == 'nt' else 'easyread-backend')}")
 
 
 if __name__ == "__main__":

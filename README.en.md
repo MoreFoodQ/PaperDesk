@@ -52,6 +52,18 @@ Bilingual passages, the paper outline, and the original PDF side by side.
 
 ## Quick start
 
+### Windows installer
+
+Download `PaperDesk-Setup-0.2.0.exe` from the Assets section of [GitHub Releases](https://github.com/MoreFoodQ/PaperDesk/releases). Install and open PaperDesk. Python and the official native Codex CLI are bundled; no separate Python, Node.js, or npm installation is required.
+
+Choose **Do nothing yet** when importing documents for local reading. For translation or GPT questions, open **Settings → Models → Sign in to ChatGPT / Codex** and complete the official browser sign-in. An existing valid Codex login can be reused.
+
+This build is unsigned. Compare the file with the Release's `SHA256SUMS.txt`; Windows may display an unknown-publisher prompt.
+
+### Run from source
+
+The following prerequisites apply to source execution and development.
+
 ### Requirements
 
 | Component | Requirement |
@@ -112,7 +124,7 @@ See the [user guide](docs/USAGE.md) for additional operations, backups, and trou
 
 ## Data and privacy
 
-PDFs, notes, conversations, and preferences are stored in the project's `data/` directory by default. Model authentication is managed by the official CLI.
+Source execution stores documents, notes, conversations, and preferences in the project's `data/` directory. The installer defaults to `%USERPROFILE%\PaperDesk`, with window/cache state in `%APPDATA%\PaperDesk`. Reinstalling or uninstalling preserves reading data. Model authentication is managed by the official CLI.
 
 - AI translation, organization, and questions send relevant text, conversation context, and optional page images to the selected model service.
 - URL imports and online metadata lookups connect to external services. Metadata lookup for local papers is disabled by default.

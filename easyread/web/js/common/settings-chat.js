@@ -197,7 +197,9 @@
       if (!s.chat) return '<p class="hint">' + PR.t("读不到模型名单。") + "</p>";
       pinDefaults(s);
       ensureTranslationCard(s);
-      return cardsHtml(s) + (s.editing ? formHtml(s) : "") +
+      const desktopLogin = window.easyreadDesktop && window.easyreadDesktop.platform === 'win32' && window.easyreadDesktop.loginCodex;
+      const login = desktopLogin ? '<div class="settings-sec"><button class="btn line" data-codex-login>' + PR.t('登入 ChatGPT／Codex') + '</button><p class="hint">' + PR.t('安裝版已包含 Codex CLI。按下登入後，請在瀏覽器完成官方帳號登入；已登入者可直接使用。') + '</p></div>' : '';
+      return login + cardsHtml(s) + (s.editing ? formHtml(s) : "") +
         '<div class="settings-sec">' + translationHtml(s) + "</div>" +
         '<p class="hint" style="margin-top:14px">' + PR.t("文献库位置：{path}", { path: PR.esc(s.cfg.library_dir) }) + "</p>";
     },
@@ -215,6 +217,24 @@
       return false;
     },
     async click(e, s) {
+      const login = e.target.closest('[data-codex-login]');
+      if (login) {
+        readForm(s);
+        login.disabled = true;
+        login.textContent = PR.t('請在瀏覽器完成登入…');
+        try {
+          await window.easyreadDesktop.loginCodex();
+          const [engines, chat] = await Promise.all([PR.api('/api/engines'), PR.api('/api/chat/models')]);
+          s.found = engines.found; s.models = engines.models; s.chat = chat;
+          PR.toast(PR.t('登入完成，現在可以使用 Codex。'));
+          PR.settingsRender();
+        } catch (error) {
+          PR.toast(PR.t('Codex 登入未完成，請重試。'));
+          login.disabled = false;
+          login.textContent = PR.t('登入 ChatGPT／Codex');
+        }
+        return false;
+      }
       if (e.target.closest("#testBtn")) {
         readTranslation(s);
         const res = PR.$("#testRes");

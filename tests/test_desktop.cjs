@@ -53,6 +53,8 @@ async function desktop(platform = "darwin", lock = true, ready = true, argv = []
       }); return req;
     } }
     : name === "./startup-feedback.cjs" ? { ...require("../electron/startup-feedback.cjs"), mark(_app, stage) { stages.push(stage); }, loginShellPath: async () => "/usr/bin:/bin" }
+    : name === "./open-target.cjs" ? require("../electron/open-target.cjs")
+    : name === "./codex-login.cjs" ? { registerCodexLogin() {} }
     : name === "./desktop-updates.cjs" ? { registerUpdates() {} }
     : name === "./deep-link.cjs" ? require("../electron/deep-link.cjs")
     : name === "electron-updater" ? { autoUpdater: {} }

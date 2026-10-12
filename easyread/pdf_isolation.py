@@ -52,6 +52,12 @@ def run(operation, root, *args):
         if getattr(sys, 'frozen', False):
             argv = [sys.executable, '--pdf-worker', '', operation, json.dumps([str(root), *args])]
         env = {k: v for k, v in os.environ.items() if k.upper() in {'SYSTEMROOT','WINDIR','PATH','TEMP','TMP','LANG','LC_ALL'}}
+        if getattr(sys, 'frozen', False):
+            # Frozen imports cannot use the source checkout as their data home.
+            # Keep UI language while preventing worker reads of account profiles.
+            from .i18n import lang
+            env.update(EASYREAD_HOME=str(directory / '.worker-state'), USERPROFILE=str(directory),
+                       HOME=str(directory), EASYREAD_LANG=lang())
         env['PYINSTALLER_RESET_ENVIRONMENT'] = '1'
         proc = subprocess.Popen(argv, cwd=str(directory), env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                 creationflags=0x08000000 if os.name == 'nt' else 0)

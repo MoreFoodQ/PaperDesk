@@ -3,6 +3,7 @@ const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("easyreadDesktop", {
   isElectron: true,
   platform: process.platform,
+  loginCodex: () => ipcRenderer.invoke("paperdesk:codex-login"),
   pickFolder: () => ipcRenderer.invoke("easyread:pick-folder"),
   relaunch: () => ipcRenderer.invoke("easyread:relaunch"),
   updateState: () => ipcRenderer.invoke("easyread:update-state"),

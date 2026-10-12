@@ -15,7 +15,7 @@ PaperDesk stores its library locally. Network activity depends on the operation 
 | Tool detection | Local CLI processes and optional local model endpoints | Version and availability checks; no paper content. |
 | Optional cloud synchronization | User-selected sync provider | Files in the selected sync folder, uploaded by the external sync client. |
 
-The default installation does not install the Electron build toolchain. PaperDesk currently has no automatic update download service.
+Source setup does not install the Electron build toolchain. The Windows installer contains its runtime and needs no dependency downloads for local reading. Official browser sign-in connects to OpenAI when initiated by the user. PaperDesk currently has no automatic update download service.
 
 ## Provider configuration
 

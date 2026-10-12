@@ -9,11 +9,14 @@ const http = require("http");
 const backendSession = require('crypto').randomBytes(32).toString('hex');
 const startup = require("./startup-feedback.cjs");
 const { registerUpdates } = require("./desktop-updates.cjs");
+const openTarget = require("./open-target.cjs");
+const { registerCodexLogin } = require("./codex-login.cjs");
 const deepLink = require("./deep-link.cjs");
 
 // 窗口缓存等放 %APPDATA%\EasyRead（默认会用 package.json 的 name，叫 easyread-desktop）。
 // 论文和设置不放这里：打包后的后端默认用 ~/EasyRead，和 pip 安装版同一个位置，用户找得到、好备份。
-app.setPath("userData", path.join(app.getPath("appData"), "PaperDesk"));
+app.setPath("userData", process.env.PAPERDESK_DESKTOP_PROFILE || path.join(app.getPath("appData"), "PaperDesk"));
+const background = process.env.PAPERDESK_BACKGROUND === "1";
 startup.mark(app, "electron-entry");
 
 // 桌面版自己的几句报错跟系统语言走（界面语言由后端决定，见 easyread/i18n.py）
@@ -39,7 +42,7 @@ function backendCommand() {
   if (app.isPackaged) {
     const executable = packagedBackend();
     if (!fs.existsSync(executable)) {
-      throw new Error(isZh() ? `找不到打包后的 EasyRead 后端：${executable}` : `Bundled EasyRead backend not found: ${executable}`);
+      throw new Error(isZh() ? `找不到 PaperDesk 的隨附後端：${executable}` : `Bundled PaperDesk backend not found: ${executable}`);
     }
     return { command: executable, args: ["serve", "--port", "0"], cwd: os.homedir() };
   }
@@ -64,7 +67,7 @@ function startBackend() {
   startup.mark(app, "shell-path-start");
   const shellPath = await startup.loginShellPath(process.platform);
   startup.mark(app, "shell-path-ready");
-  if (quitting) throw new Error(isZh() ? "启动已取消" : "Startup cancelled");
+  if (quitting) throw new Error(isZh() ? "啟動已取消" : "Startup cancelled");
   if (shellPath) {
     env.PATH = [...new Set([...shellPath.split(":"), ...(env.PATH || "").split(":")].filter(Boolean))].join(":");
   }
@@ -83,7 +86,7 @@ function startBackend() {
       fn(value);
     };
     const timer = setTimeout(() => {
-      finish(reject, new Error((isZh() ? "EasyRead 后端启动超时。" : "EasyRead backend timed out while starting. ") + output.slice(-500)));
+      finish(reject, new Error((isZh() ? "PaperDesk 後端啟動逾時。" : "PaperDesk backend timed out while starting. ") + output.slice(-500)));
       stopBackend();
     }, 30000);
 
@@ -104,7 +107,7 @@ function startBackend() {
     });
     backend.once("error", (error) => finish(reject, error));
     backend.once("exit", (code, signal) => {
-      if (!settled) finish(reject, new Error((isZh() ? `EasyRead 后端退出（code=${code}, signal=${signal}）。` : `EasyRead backend exited (code=${code}, signal=${signal}). `) + output.slice(-500)));
+      if (!settled) finish(reject, new Error((isZh() ? `PaperDesk 後端已結束（code=${code}, signal=${signal}）。` : `PaperDesk backend exited (code=${code}, signal=${signal}). `) + output.slice(-500)));
       backend = undefined;
       backendReady = undefined;
       backendUrl = undefined;
@@ -132,7 +135,7 @@ function backendJson(endpoint, token) {
         } catch (error) { reject(error); }
       });
     });
-    req.setTimeout(8000, () => req.destroy(new Error(isZh() ? "后端关闭超时，请稍后重试" : "Backend shutdown timed out. Try again later.")));
+    req.setTimeout(8000, () => req.destroy(new Error(isZh() ? "後端關閉逾時，請稍後重試" : "Backend shutdown timed out. Try again later.")));
     req.on("error", reject);
     req.end(token ? "{}" : undefined);
   });
@@ -146,7 +149,7 @@ async function stopBackendGracefully() {
   // 后端清掉占用标记、关闭 HTTP 服务后才启动新进程。
   if (backend !== child) return;
   await new Promise((resolve, reject) => {
-    const timer = setTimeout(() => { child.removeListener("exit", exited); reject(new Error(isZh() ? "后端尚未退出，请稍后重试" : "The backend has not exited yet. Try again later.")); }, 8000);
+    const timer = setTimeout(() => { child.removeListener("exit", exited); reject(new Error(isZh() ? "後端尚未結束，請稍後重試" : "The backend has not exited yet. Try again later.")); }, 8000);
     function exited() { clearTimeout(timer); resolve(); }
     child.once("exit", exited);
   });
@@ -222,10 +225,8 @@ async function createWindow() {
       preload: path.join(__dirname, "preload.cjs"),
     },
   });
-  mainWindow.webContents.setWindowOpenHandler(({ url: target }) => {
-    if (/^https?:/i.test(target)) shell.openExternal(target);
-    return { action: "deny" };
-  });
+  mainWindow.webContents.setWindowOpenHandler(({ url: target }) =>
+    openTarget.policy(target, backendUrl, mainWindow.webContents, url => shell.openExternal(url), background));
   // A native context menu is separate from the application Edit menu.
   // Electron does not emit this event when the page prevents contextmenu,
   // so the library's and reader's custom menus keep working.
@@ -243,14 +244,14 @@ async function createWindow() {
   mainWindow.once("ready-to-show", () => {
     if (mainWindow !== openingWindow) return;
     if (state.maximized) openingWindow.maximize();
-    openingWindow.show();
+    if (!background) openingWindow.show();
   });
   mainWindow.on("closed", () => { mainWindow = undefined; });
   try {
     await openingWindow.loadURL(startup.loadingUrl(isZh()));
     if (mainWindow !== openingWindow || quitting) return;
     if (state.maximized) openingWindow.maximize();
-    openingWindow.show();
+    if (!background) openingWindow.show();
     startup.mark(app, "startup-window-visible");
     const url = await startBackend();
     await openingWindow.webContents.session.cookies.set({url, name: 'paperdesk_session', value: backendSession, httpOnly: true, sameSite: 'strict', path: '/'});
@@ -262,7 +263,7 @@ async function createWindow() {
   } catch (error) {
     if (mainWindow !== openingWindow || quitting) return;
     startup.mark(app, "startup-failed");
-    dialog.showErrorBox(isZh() ? "EasyRead 启动失败" : "EasyRead failed to start", error.message);
+    dialog.showErrorBox(isZh() ? "PaperDesk 啟動失敗" : "PaperDesk failed to start", error.message);
     app.quit();
   } finally {
     windowOpening = false;
@@ -287,9 +288,10 @@ if (!app.requestSingleInstanceLock()) {
     openLink(deepLink.openPath(link));
   });
   app.whenReady().then(() => {
-    deepLink.register(app, process);
+    if (!background) deepLink.register(app, process);
+    registerCodexLogin({app, ipcMain, trustedWindow, resourcesPath: process.resourcesPath});
     registerUpdates({
-      app, ipcMain, updater: require("electron-updater").autoUpdater, trustedWindow,
+      app, ipcMain, trustedWindow,
       getWindow: () => mainWindow,
       prepareInstall: stopBackendGracefully,
       recover: async () => {

@@ -1190,5 +1190,10 @@
   "尚未翻譯的部分顯示原文": "Untranslated passages show the original text",
   "正文顯示原文": "The body shows the original text",
   "複製原文": "Copy original text",
-  "原文：{done} / {total} 頁": "Original: {done} / {total} pages"
+  "原文：{done} / {total} 頁": "Original: {done} / {total} pages",
+  "登入 ChatGPT／Codex": "Sign in to ChatGPT / Codex",
+  "安裝版已包含 Codex CLI。按下登入後，請在瀏覽器完成官方帳號登入；已登入者可直接使用。": "The installer includes Codex CLI. Complete the official sign-in in your browser; an existing login can be reused.",
+  "請在瀏覽器完成登入…": "Complete sign-in in your browser…",
+  "登入完成，現在可以使用 Codex。": "Signed in. Codex is ready to use.",
+  "Codex 登入未完成，請重試。": "Codex sign-in did not complete. Try again."
 }

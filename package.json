@@ -8,11 +8,12 @@
     "dev": "electron .",
     "start": "electron .",
     "build:backend": "python scripts/build_backend.py",
-    "dist": "npm run build:backend && electron-builder --publish never"
+    "dist": "npm run build:runtime && npm run build:backend && electron-builder --win nsis --x64 --publish never",
+    "build:runtime": "python scripts/prepare_desktop_runtime.py"
   },
   "devDependencies": {
-    "electron": "^44.5.1",
-    "electron-builder": "^26.15.3"
+    "electron": "44.5.1",
+    "electron-builder": "26.15.3"
   },
   "build": {
     "appId": "local.paperdesk.desktop",
@@ -36,8 +37,15 @@
     "icon": "electron/assets",
     "extraResources": [
       {
-        "from": "build/backend",
+        "from": "build/backend/easyread-backend",
         "to": "backend",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "build/codex",
+        "to": "codex",
         "filter": [
           "**/*"
         ]
@@ -60,13 +68,23 @@
             "x64"
           ]
         }
-      ]
+      ],
+      "signAndEditExecutable": true,
+      "signExecutable": "false"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "artifactName": "PaperDesk-Setup-${version}.exe"
+      "artifactName": "PaperDesk-Setup-${version}.exe",
+      "installerLanguages": [
+        "en_US",
+        "zh_TW"
+      ],
+      "displayLanguageSelector": true,
+      "deleteAppDataOnUninstall": false,
+      "runAfterFinish": false,
+      "perMachine": false
     },
     "mac": {
       "icon": "electron/assets/icon.png",
@@ -90,10 +108,11 @@
       "category": "Office"
     }
   },
-  "dependencies": {
-    "electron-updater": "^6.8.9"
-  },
   "overrides": {
-    "http-cache-semantics": "4.3.0"
+    "http-cache-semantics": "4.3.0",
+    "@electron/get": "5.1.0"
+  },
+  "author": {
+    "name": "MoreFoodQ"
   }
 }

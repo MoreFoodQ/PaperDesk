@@ -6,8 +6,8 @@ Scope: the Windows x64 source distribution and local browser interface.
 
 | Check | Result |
 |---|---|
-| Python regressions | 357 passed for 0.2.0 on 2026-10-12 (including 11 EPUB regressions) |
-| JavaScript regressions | 109 passed |
+| Python regressions | 361 passed on 2026-10-13 after Windows packaging regressions; EPUB baseline: 357 passed on 2026-10-12 |
+| JavaScript regressions | 116 passed on 2026-10-13; baseline: 109 passed |
 | Clean Python 3.12 environment | The 344-test baseline and PDF smoke checks passed on 2026-10-11; 13 PDF-related tests passed on 2026-10-12; all 19 EPUB/i18n tests passed for 0.2.0 on Python 3.12 |
 | Browser workflows | PDF import and source pages, note saving and reload, offline export, trash restore, search, languages, palettes, and desktop/mobile layout checks passed |
 | Official CLI integration | Synthetic translation, questions, and read-only account quota lookup passed |
@@ -46,3 +46,19 @@ The optional `scripts/verify_reader_drawer.cjs` browser regression checks repeat
 Python regressions: 357 passed. JavaScript regressions: 109 passed. The existing drawer regression passed at all nine viewport widths. PDF CLI import, authenticated reader, source image, and offline export smoke checks passed. The 19 EPUB/i18n tests also passed in the clean Python 3.12 environment.
 
 EPUB model tests simulate responses while exercising actual image preparation, prompt assembly, block merging, character positioning, and note storage. No new live model calls were made for this release. The existing official CLI integration remains the same; live EPUB translation quality and publisher-specific books are not established by these checks. Test fixtures are generated in temporary directories and contain no personal literature.
+
+## Windows installer validation (2026-10-13)
+
+| Problem | Change | Result |
+|---|---|---|
+| Source users needed Python and Node.js | Bundle Electron, a folder-based Python 3.12 backend and pinned native Codex 0.162.1 | Actual packaged and installed app passed with Python/Node removed from application PATH |
+| Frozen document imports needed a profile/data location | Give isolated workers a private home path and the selected UI language; exclude account credentials | Frozen-environment regression and real PDF/EPUB preparation passed |
+| External browsers lack the desktop authentication cookie | Open local PDFs in sandboxed session-sharing windows; use authenticated EPUB downloads | Popup policy regressions and real original PDF windows passed |
+| New users need CLI authentication | Explicit trusted IPC launches the official browser login; no credential data is staged | Untrusted sender, process concurrency, failure/quit cleanup, and native login UI checks passed; existing ChatGPT login was reused for the model smoke |
+| Build dependencies had eight moderate npm advisories | Remove unused updater runtime and override the official download dependency with @electron/get 5.1.0 | npm audit: 0 known advisories at the validation date |
+| Packaging must exclude personal data | Fixed runtime/file allowlists, original native hashes, preserved runtime notices | Packaged-content and source privacy gates passed |
+| Installation lifecycle could affect notes | Per-user installer, reading data outside program files, preserve data on uninstall | Path with spaces, reinstall and uninstall passed; synthetic note hashes unchanged and test uninstall entry removed |
+
+Full Python suite: 361 passed. JavaScript suite: 116 passed. Packaged browser checks included PDF/EPUB import, source images, note save/reload, source download authentication, local PDF windows, offline HTML and backend shutdown. Those checks used an isolated synthetic library and no model calls.
+
+One separate installed-app smoke used gpt-5.6-luna, low reasoning and standard service tier, returning a short JSON object through the bundled CLI. Local usage accounting recorded one call and 8,184 reported tokens, including CLI context. No live translation of user literature was performed. Fresh-account interactive OAuth, cross-version upgrades, a fresh-OS VM, other operating systems and code signing are not established by these tests. The installer is unsigned.

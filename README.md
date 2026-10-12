@@ -52,6 +52,18 @@ PaperDesk 在本機執行，以瀏覽器開啟閱讀介面，預設透過官方 
 
 ## 快速開始
 
+### Windows 安裝版
+
+從 [GitHub Releases](https://github.com/MoreFoodQ/PaperDesk/releases) 的 Assets 下載 `PaperDesk-Setup-0.2.0.exe`，安裝後開啟 PaperDesk。安裝版包含 Python 後端與官方 Codex 原生 CLI，不需另外安裝 Python、Node.js 或 npm。
+
+只看 PDF／EPUB 時，匯入選「先不處理」。需要翻譯或 GPT 問答時，到「設定 → 模型」按「登入 ChatGPT／Codex」，在瀏覽器完成官方登入；已有有效的 Codex 登入可直接沿用。
+
+此版本未使用程式碼簽章憑證。可比對 Release 的 `SHA256SUMS.txt`；Windows 可能顯示未知發行者提示。
+
+### 原始碼執行
+
+以下環境需求適用於從原始碼執行或開發專案。
+
 ### 環境需求
 
 | 項目 | 需求 |
@@ -112,7 +124,7 @@ EPUB 不執行書內腳本、不載入外部圖片；CSS 版面會改為統一�
 
 ## 資料與隱私
 
-PDF、筆記、對話及偏好預設儲存在專案的 `data/`。模型登入由官方 CLI 管理。
+原始碼版的 PDF、EPUB、筆記、對話及偏好預設儲存在專案的 `data/`；安裝版預設使用 `%USERPROFILE%\PaperDesk`，視窗快取使用 `%APPDATA%\PaperDesk`。重新安裝或移除程式會保留閱讀資料。模型登入由官方 CLI 管理。
 
 - 使用 AI 翻譯、整理或問答時，相關文字、對話及選用頁圖會送至所選模型服務。
 - 網址匯入與線上文獻資料補齊會連線外部服務；本機文獻資料補齊預設關閉。
