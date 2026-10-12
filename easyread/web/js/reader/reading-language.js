@@ -123,7 +123,7 @@
     const description = PR.$(".reading-language-description");
     if (description && !document.body.classList.contains("en-only") && !((S.paper.translation || {}).en_pages || []).length) {
       const v = PR.readingView();
-      description.textContent = v === "both" ? PR.t("正文是原文和译文") : v === "original" ? PR.t("正文是英文原文") : PR.t("正文是译文");
+      description.textContent = v === "both" ? PR.t("正文是原文和译文") : v === "original" ? ((S.paper.meta || {}).format === "epub" ? PR.t("正文顯示原文") : PR.t("正文是英文原文")) : PR.t("正文是译文");
     }
     PR.hideBlockbar && PR.hideBlockbar();
   };

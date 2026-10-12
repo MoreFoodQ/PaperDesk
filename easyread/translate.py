@@ -168,6 +168,14 @@ def _one_batch(ws: Workspace, cfg: dict, batch: list[int], total_pages: int, can
         prompt = prompts_en.structure(ws, batch, mode, head, skip_head, peek)
     else:
         prompt = prompts.translate(ws, batch, mode, head, skip_head, peek, front_context.build(ws.root, batch[0]) if front else "")
+    meta = ws.load('paper').get('meta', {})
+    if meta.get('format') == 'epub':
+        # EPUB pages are locally generated. Keep the existing schema and page IDs.
+        language = str(meta.get('source_language', ''))[:40]
+        prompt = (f"Source format: EPUB, declared language: {language}. "
+                  "These pages are repaginated reading pages, not original book page numbers. "
+                  "The en fields store the original text in its actual language; never convert it to English. "
+                  "In original-only mode preserve the original language. In translation mode use the configured target.\n\n") + prompt
     text = engines.run(cfg, prompt, ws.root, images, cancel, meter)
     try:
         data = engines.parse_json(text)

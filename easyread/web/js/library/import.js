@@ -4,9 +4,9 @@
   const L = PR.lib;
   const dlg = PR.$("#importDlg");
   const SCOPES = [["all", PR.t("全文")], ["body", PR.t("正文（到参考文献为止）")], ["range", PR.t("指定页")]];
-  // 导入后做什么：翻译成中文 / 只读英文原文（模型把版面排好，不翻译）/ 只放原页图
+  // 导入后做什么：翻译成中文 / 只閱讀原文（模型把版面排好，不翻译）/ 只放原页图
   const AFTER = [["translate", PR.t("翻译成"), PR.t("后台逐页翻译，随时对照原文；译成哪种语言在右边选")],
-    ["read", PR.t("读英文原文"), PR.t("不翻译：模型只把公式、表格、段落排好，正文就是英文，比翻译省用量；想看译文了随时点“翻译成{lang}”", { lang: PR.targetName(PR.target) })],
+    ["read", PR.t("閱讀原文"), PR.t("不翻譯：模型整理原文段落、公式與表格；需要譯文時可選「翻譯成{lang}」。", { lang: PR.targetName(PR.target) })],
     ["none", PR.t("先不处理"), PR.t("不用模型，阅读页先放原页图片")]];
 
   const pref = () => {
@@ -25,13 +25,13 @@
     const after = off ? "none" : p.after;
     dlg.querySelector(".dialog").innerHTML =
       "<h2>" + PR.t("导入论文") + "</h2>" +
-      '<div class="dropzone" id="pick">' + PR.icon("upload") + '<div class="big">' + PR.t("选择 PDF，或拖到这里") + '</div><div class="hint">' + PR.t("可以一次选多个；同一个文件不会重复导入") + "</div></div>" +
+      '<div class="dropzone" id="pick">' + PR.icon("upload") + '<div class="big">' + PR.t("選擇 PDF 或 EPUB，或拖曳到這裡") + '</div><div class="hint">' + PR.t("可以一次選取多個；相同檔案不會重複匯入。EPUB 會重新分頁，頁碼與原書可能不同。") + "</div></div>" +
       '<div class="or">' + PR.t("或者") + "</div>" +
       '<label class="field"><span>' + PR.t("链接、arXiv 编号、DOI 或论文标题") + '</span><div class="inline"><input class="input" id="arxivRef" placeholder="' + PR.t("2411.00640 · 10.18653/v1/N19-1423 · 论文网页链接 · 论文标题") + '">' +
       '<button class="btn accent" id="arxivGo">' + PR.t("导入") + "</button></div></label>" +
       '<div class="imp-opts"><span class="imp-lbl">' + PR.t("导入后") + '</span><div class="seg" id="afterSeg">' + AFTER.map(([k, l, tip]) => '<button data-after="' + k + '" title="' + PR.esc(tip) + '" class="' + (after === k ? "on" : "") + '"' + (off && k !== "none" ? " disabled" : "") + ">" + l + "</button>").join("") + "</div>" +
         '<select class="input imp-target" id="impTarget" title="' + PR.t("译成哪种语言") + '"' + (after === "translate" ? "" : " hidden") + ">" + PR.opt(PR.TARGETS, PR.target) + "</select></div>" +
-      '<p class="hint" id="originalModelHint"' + (after === "read" ? "" : " hidden") + '>' + PR.t("读英文原文仍需可用模型整理段落、公式和表格，会消耗模型额度；只看 PDF 可选“先不处理”。") + "</p>" +
+      '<p class="hint" id="originalModelHint"' + (after === "read" ? "" : " hidden") + '>' + PR.t("閱讀原文仍需模型整理內容，會消耗額度；只看文件請選「先不處理」。") + "</p>" +
       '<div class="imp-opts' + (after === "none" ? " dim" : "") + '" id="scopeRow"><span class="imp-lbl">' + PR.t("范围") + '</span><div class="seg" id="scopeSeg">' + SCOPES.map(([k, l]) => '<button data-scope="' + k + '" class="' + (p.scope === k ? "on" : "") + '">' + l + "</button>").join("") + "</div>" +
       '<span class="first-n"' + (p.scope === "range" ? "" : " hidden") + '>' + PR.t("第 {from} 到 {to} 页", { from: '<input class="input" id="pgFrom" type="number" min="1" value="' + p.from + '">', to: '<input class="input" id="pgTo" type="number" min="1" value="' + p.to + '">' }) + "</span></div>" +
       '<div class="imp-opts' + (after === "none" ? " dim" : "") + '" id="modelRow"><span class="imp-lbl">' + PR.t("模型") + '</span><select class="input" id="impModel">' +
@@ -98,8 +98,8 @@
   PR.$("#fileInput").addEventListener("change", (e) => { importFiles(Array.from(e.target.files)); e.target.value = ""; });
 
   async function importFiles(files) {
-    const pdfs = files.filter((f) => /\.pdf$/i.test(f.name) || f.type === "application/pdf");
-    if (!pdfs.length) return PR.toast(PR.t("只支持 PDF 文件"));
+    const pdfs = files.filter((f) => /\.(pdf|epub)$/i.test(f.name) || ["application/pdf", "application/epub+zip"].includes(f.type));
+    if (!pdfs.length) return PR.toast(PR.t("支援 PDF 與 EPUB 檔案"));
     close();
     const o = opts();
     let last = null;

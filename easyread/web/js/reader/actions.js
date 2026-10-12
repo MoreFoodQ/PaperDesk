@@ -78,7 +78,7 @@
     const items = actionsFor(id).map((a) => ({ label: a.label, icon: a.icon, kbd: a.kbd, fn: a.fn }));
     items.push("-",
       { label: PR.t("复制译文"), icon: "copy", kbd: PR.keyOf("copy"), fn: () => copyBlock(id, "zh") },
-      { label: PR.t("复制英文原文"), icon: "copy", fn: () => copyBlock(id, "en") },
+      { label: ((S.paper.meta || {}).format === "epub" ? PR.t("複製原文") : PR.t("复制英文原文")), icon: "copy", fn: () => copyBlock(id, "en") },
       // 贴进 Obsidian / Notion 是一条 Markdown 链接，点开（EasyRead 开着时）直接回到这一段
       { label: PR.t("复制段落链接（贴进笔记软件）"), icon: "link", fn: () => {
         const sec = PR.sectionOf ? PR.sectionOf(id) : "";  // 用“论文 · 章节 · 页码”当链接文字，正文里可能有公式，不好截

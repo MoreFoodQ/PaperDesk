@@ -18,11 +18,19 @@ def main(argv=None):
         resource.setrlimit(resource.RLIMIT_AS, (1536*1024*1024, 1536*1024*1024))
     from easyread import pdfwork
     operation = argv[1]
-    allowed = {'prepare', 'crop', 'engine_image', 'locate', 'title'}
+    allowed = {'prepare', 'crop', 'engine_image', 'locate', 'title', 'epub_inspect', 'epub_prepare'}
     if operation not in allowed: raise ValueError('Invalid PDF operation')
     args = json.loads(argv[2])
     args[0] = Path(args[0])
-    if operation == 'title':
+    if operation in {'epub_inspect', 'epub_prepare'}:
+        from easyread import epub
+        try:
+            result = getattr(epub, 'inspect' if operation == 'epub_inspect' else 'prepare')(*args)
+        except ValueError as error:
+            result = {'epub_error': str(error)}
+        except (OSError, KeyError, UnicodeError):
+            result = {'epub_error': 'EPUB content could not be decoded.'}
+    elif operation == 'title':
         from easyread.library import _pdf_title
         result = _pdf_title(args[0])
     else:

@@ -12,7 +12,7 @@ DIRECTORIES = ('easyread', 'tests', 'scripts', 'licenses', 'electron', '.github'
 FILES = ('README.md', 'README.en.md', 'LICENSE', 'pyproject.toml', 'package.json', 'package-lock.json',
          'requirements-lock.txt', 'requirements-hashed.txt', 'Open-PaperDesk.cmd', 'Setup-PaperDesk.cmd', 'start.cmd',
          '.gitignore', 'CONNECTIONS.md', 'ARCHITECTURE.md', 'PROVENANCE.md',
-         'CONTRIBUTING.md', 'SECURITY.md', 'docs/USAGE.md', 'docs/VALIDATION.md', 'docs/RELEASE.md', '.gitattributes')
+         'CONTRIBUTING.md', 'SECURITY.md', 'docs/USAGE.md', 'docs/VALIDATION.md', 'docs/RELEASE.md', 'docs/FORMATS.md', '.gitattributes')
 PRIVATE = {'data', '.tools', '.venv', '.git', '.codex', '.aws', '.claude', 'node_modules', '__pycache__', 'security-audit', 'outputs', 'verification', '.impeccable'}
 OMIT = {'scripts/configure_fork.py'}
 SECRETS = re.compile(rb'(?<![A-Za-z0-9_-])(?:sk-(?:proj-|svcacct-)?[A-Za-z0-9_-]{24,}|gh[pousr]_[A-Za-z0-9]{30,}|'
@@ -25,7 +25,7 @@ def candidates(root=ROOT):
     for directory in DIRECTORIES:
         paths.extend((root/directory).rglob('*'))
     return sorted({p for p in paths if p.is_file() and not (PRIVATE & {x.lower() for x in p.relative_to(root).parts})
-                   and p.relative_to(root).as_posix() not in OMIT and p.suffix not in ('.pyc', '.log')
+                   and p.relative_to(root).as_posix() not in OMIT and p.suffix.lower() not in ('.pyc', '.log', '.pdf', '.epub')
                    and not (p.name.startswith('.env') or p.suffix == '.env')
                    and not (p.relative_to(root).parts[0] == 'licenses' and p.suffix == '.py')})
 
@@ -33,7 +33,7 @@ def candidates(root=ROOT):
 def check(root=ROOT):
     if (root/'.git').exists():
         tracked = subprocess.run(['git', 'ls-files', '-z'], cwd=root, check=True, capture_output=True).stdout.decode('utf-8').split('\0')
-        bad = [p for p in tracked if p and ({x.lower() for x in Path(p).parts} & PRIVATE or Path(p).name.lower() in ('auth.json', 'config.json', '.server.json') or Path(p).name.startswith('.env') or Path(p).suffix == '.env')]
+        bad = [p for p in tracked if p and ({x.lower() for x in Path(p).parts} & PRIVATE or Path(p).name.lower() in ('auth.json', 'config.json', '.server.json') or Path(p).name.startswith('.env') or Path(p).suffix.lower() in ('.env', '.pdf', '.epub'))]
         if bad: raise ValueError('Private files tracked by Git: '+', '.join(bad))
         history = subprocess.run(['git', 'log', '--all', '--format=', '--name-only', '--', 'data', '.tools', '.venv', '.codex', '.aws', '.claude', '*.env', '.env*', 'config.json', 'auth.json'], cwd=root, check=True, capture_output=True).stdout
         if history.strip(): raise ValueError('Private paths exist in Git history; review before publishing')
@@ -55,10 +55,10 @@ def check(root=ROOT):
 
 def build(root=ROOT):
     paths = check(root)
-    manifest = {'version': '0.1.0', 'edition': 'windows-source', 'files': {
+    manifest = {'version': '0.2.0', 'edition': 'windows-source', 'files': {
         p.relative_to(root).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}}
     out = root/'outputs'; out.mkdir(exist_ok=True)
-    archive = out/'paperdesk-0.1.0-source.zip'
+    archive = out/'paperdesk-0.2.0-source.zip'
     with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED) as z:
         for path in paths:
             info = zipfile.ZipInfo('paperdesk/'+path.relative_to(root).as_posix(), (2026, 10, 11, 0, 0, 0))

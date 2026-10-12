@@ -423,6 +423,10 @@ def warm_variants(root: Path, width: int = PANEL_WIDTH) -> None:
 
 def prepare(root: Path) -> list[dict]:
     """渲染原页 + 抽文字，返回 meta.pages。"""
+    meta = json.loads((root / 'paper.json').read_text(encoding='utf-8')).get('meta', {}) if (root / 'paper.json').exists() else {}
+    if meta.get('format') == 'epub':
+        from .pdf_isolation import run
+        return run('epub_prepare', root)
     if os.environ.get('PAPERDESK_PDF_WORKER') != '1':
         from .pdf_isolation import run
         return run('prepare', root)

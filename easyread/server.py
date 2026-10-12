@@ -327,6 +327,10 @@ class Handler(BaseHTTPRequestHandler):
                     w = 1000
                 variant = pdfwork.page_variant(ws.root, rel, w)
                 return self._file(variant or _safe(ws.root, rel), cache=True)
+            if ws and rel == 'source.epub' and ws.load('paper').get('meta', {}).get('format') == 'epub':
+                original = _safe(ws.root, rel)
+                if original:
+                    return self._download(original.read_bytes(), 'source.epub', 'application/epub+zip')
             if ws and (rel.split("/", 1)[0] in ("pages", "figures") or rel == "source.pdf"):
                 return self._file(_safe(ws.root, rel), cache=rel != "source.pdf")
         return self._json(404, {"error": "not found"})
@@ -379,7 +383,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(200, {"ok": True})
         if path == "/api/import":  # 请求体就是 PDF 文件
             data = self._body()
-            ws, fresh = lib.create_from_pdf(data, q.get("name", "paper.pdf"))
+            ws, fresh = lib.create_from_document(data, q.get("name", "paper.pdf"))
             return self._import_result(ws, fresh, q.get("translate", "1") == "1", q.get("scope"),
                                        read=q.get("read") == "1", model=q.get("model", ""), target=q.get("target", ""))
         if path in ("/api/import-url", "/api/import-arxiv"):

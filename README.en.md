@@ -8,7 +8,7 @@
 ![HTML5](https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white)
 ![CSS](https://img.shields.io/badge/CSS-663399?logo=css&logoColor=white)
 
-A paper-reading workspace with bilingual PDF reading, translation, GPT assistance, notes, and library management.
+A paper-reading workspace with bilingual PDF and EPUB reading, translation, GPT assistance, notes, and library management.
 
 PaperDesk runs locally and opens in your browser. It uses the official Codex CLI by default to connect to models. The current release is distributed as source code for Windows x64.
 
@@ -16,7 +16,7 @@ PaperDesk runs locally and opens in your browser. It uses the official Codex CLI
 
 ## Features
 
-- **Paper library**: Import local PDFs or public paper URLs, search and categorize papers, view details, and restore deleted items from the trash.
+- **Paper library**: Import local PDFs, EPUB books, or public paper URLs, search and categorize papers, view details, and restore deleted items from the trash.
 - **Bilingual reading**: Switch between the original, translation, and bilingual views. Navigate outlines and terminology while comparing passages with the source PDF.
 - **GPT reading assistant**: Use relevant passages and optional page images for translation, questions, and help with notes.
 - **Notes and export**: Text annotations, paper-level notes, automatic saving, Markdown export, and self-contained HTML for offline reading.
@@ -90,9 +90,15 @@ An existing valid CLI login can be reused. Reading local PDFs and writing notes 
 
 The launcher starts the local service and opens your browser. The default address is `http://127.0.0.1:8876`. If that port is in use, use the address opened by the launcher. Use the same launcher for subsequent sessions.
 
+## Document formats
+
+PDF and DRM-free, reflowable EPUB 2/3 are supported. EPUB chapters are repaginated for the existing reading, translation, GPT, notes, and offline HTML workflows. The original EPUB is preserved and available for download. Reading page numbers are generated locally and should not be cited as the original book's page numbers.
+
+Publisher scripts are not executed and external images are not fetched. CSS is replaced with a common reading layout. Fixed-layout EPUB, SVG, MathML, media, DRM, and obfuscated fonts are currently unsupported. Limits: 32 MiB archive, 64 MiB expanded content, and 200 reading pages. See [Document formats](docs/FORMATS.md) for details.
+
 ## Usage
 
-1. Import a PDF and choose original-only reading or the scope to translate.
+1. Import a PDF or EPUB. Choose “Do nothing yet” to view pages without a model; “Read the original” uses a model to organize content. Translation can be limited to selected pages.
 2. Double-click a paper in the library to open the reading workspace.
 3. Switch between original, translation, and bilingual views. Open the PDF panel to inspect the source pages.
 4. Select text to add an annotation, or use the notes panel for paper-level notes.

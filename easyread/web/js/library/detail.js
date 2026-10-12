@@ -30,7 +30,7 @@
     } else {
       const full = i.pages && i.done_pages >= i.pages;
       const en = i.en_pages || 0, read = en > 0 || j.read;  // 只读原文：整理成英文块，没翻译
-      h += read ? "<div>" + PR.t("英文原文：{done} / {total} 页", { done: i.done_pages, total: i.pages }) + (full ? PR.t(" · 全文") : "") + (i.done_pages - en ? PR.t(" · 其中 {n} 页已译", { n: i.done_pages - en }) : "") + "</div>"
+      h += read ? "<div>" + (i.format === "epub" ? PR.t("原文：{done} / {total} 頁", { done: i.done_pages, total: i.pages }) : PR.t("英文原文：{done} / {total} 页", { done: i.done_pages, total: i.pages })) + (full ? PR.t(" · 全文") : "") + (i.done_pages - en ? PR.t(" · 其中 {n} 页已译", { n: i.done_pages - en }) : "") + "</div>"
         : "<div>" + PR.t("译文：{s}", { s: i.pages ? PR.t("{done} / {total} 页", { done: i.done_pages, total: i.pages }) : PR.t("尚未处理") }) + (full ? PR.t(" · 全文") : "") + "</div>";
       const failed = Object.keys(j.failed || {}).map(Number).sort((a, b) => a - b);
       if (j.state === "error") h += '<div class="err">' + (j.read ? PR.t("上次整理原文出错：") : PR.t("上次翻译出错：")) + PR.esc(j.error || j.message) + "</div>";
@@ -78,7 +78,7 @@
       '<div class="detail-inner">' +
       '<div class="cover">' + thumb + '<div class="actions">' +
       '<a class="btn accent" href="/read/' + i.id + '">' + PR.icon("book", "sm") + readLabel + "</a>" +
-      '<a class="btn line" href="/p/' + i.id + '/source.pdf" target="_blank" rel="noopener">' + PR.icon("pdf", "sm") + PR.t("打开原 PDF") + "</a>" +
+      '<a class="btn line" href="/p/' + i.id + (i.format === "epub" ? '/source.epub' : '/source.pdf') + '" target="_blank" rel="noopener">' + PR.icon("pdf", "sm") + (i.format === "epub" ? PR.t("下載原始 EPUB") : PR.t("打开原 PDF")) + "</a>" +
       '<div class="act-row"><button class="btn line" data-d="cite" title="' + PR.t("复制参考文献格式：GB/T 7714、APA、BibTeX") + '">' + PR.icon("copy", "sm") + PR.t("复制引用") + "</button>" +
       '<button class="btn icon line" data-d="star" title="' + PR.t("星标（S）") + '" style="color:' + (i.starred ? "#c9a24a" : "") + '">' + PR.icon("star", "sm").replace('class="i sm"', 'class="i sm"' + (i.starred ? ' style="fill:currentColor"' : "")) + "</button>" +
       '<button class="btn icon line" data-d="more" title="' + PR.t("更多：导出、打开文件夹、回收站") + '">' + PR.icon("more", "sm") + "</button></div></div></div>" +
@@ -177,7 +177,7 @@
     const setStatus = (s) => () => L.patch(id, { status: s });
     PR.menu(where, [
       { label: PR.t("打开阅读"), icon: "book", kbd: "Enter", fn: () => L.openReader(id) },
-      { label: PR.t("打开原 PDF"), icon: "pdf", fn: () => window.open("/p/" + id + "/source.pdf") },
+      { label: i.format === "epub" ? PR.t("下載原始 EPUB") : PR.t("打开原 PDF"), icon: "pdf", fn: () => window.open("/p/" + id + (i.format === "epub" ? "/source.epub" : "/source.pdf")) },
       "-",
       { label: i.starred ? PR.t("取消星标") : PR.t("加星标"), icon: "star", kbd: "S", fn: () => L.patch(id, { starred: !i.starred }) },
       { label: L.side.pinned.includes("p:" + id) ? PR.t("取消置顶") : PR.t("置顶到侧栏"), icon: "pin", fn: () => L.togglePin("p:" + id) },

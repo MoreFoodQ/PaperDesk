@@ -27,13 +27,20 @@
   };
 
   PR.initWorkspaceReader = function () {
-    if (!document.body.classList.contains("pd-reader") || PR.store.mode !== "server") return;
+    if (!document.body.classList.contains("pd-reader")) return;
     const meta = PR.state.paper.meta || {};
+    if (meta.format === 'epub') {
+      const button = PR.$('[data-act="pages"]');
+      button.querySelector('span').textContent = PR.t('原文頁面');
+      button.title = PR.t('EPUB 重新分頁產生的閱讀版 PDF，不是原書頁碼。');
+      PR.$('#pageview').setAttribute('aria-label', PR.t('原文頁面'));
+    }
+    if (PR.store.mode !== "server") return;
     const dock = document.querySelector("#workspaceDock");
     if (dock) {
       dock.innerHTML = '<a href="/" class="pd-dock-home">' + PR.logo() + '<span>PaperDesk</span></a>' +
         '<span class="pd-dock-label">' + text("研讀工具", "READING TOOLS") + '</span>' + // i18n-ok bilingual
-        [["drawer", "book", text("論文目錄", "Outline")], ["pages", "page", text("原文 PDF", "Source PDF")], // i18n-ok bilingual
+        [["drawer", "book", text("論文目錄", "Outline")], ["pages", "page", meta.format === "epub" ? text("原文頁面", "Source pages") : text("原文 PDF", "Source PDF")], // i18n-ok bilingual
          ["chat", "sparkle", text("GPT 閱讀助手", "Ask GPT")], ["notes", "note", text("我的筆記", "Notes")]] // i18n-ok bilingual
           .map(([act, icon, label]) => '<button data-pd-act="' + act + '">' + PR.icon(icon) + '<span>' + E(label) + '</span></button>').join("") +
         '<div class="pd-dock-foot">' + text("繁體中文研讀", "Read with clarity") + '<br><small>' + E(meta.authors ? text("筆記儲存於本機", "Notes saved locally") : "PaperDesk") + '</small></div>'; // i18n-ok bilingual

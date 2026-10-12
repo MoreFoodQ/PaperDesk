@@ -89,3 +89,7 @@ Thumbs.db
 /FULL-FUNCTION-TEST-20*.md
 /FREEZE-*.md
 /README.upstream.md
+
+# Personal source documents; tests generate synthetic fixtures at runtime
+*.pdf
+*.epub

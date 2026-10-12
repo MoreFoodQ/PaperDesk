@@ -7,6 +7,7 @@ import os
 import re
 import shutil
 import time
+import tempfile
 from datetime import datetime
 from pathlib import Path
 
@@ -54,6 +55,7 @@ class Library:
             "authors": meta.get("authors", ""), "affiliation": meta.get("affiliation", ""),
             "year": meta.get("year") or _year(meta.get("date", "")), "date": meta.get("date", ""),
             "venue": meta.get("venue", ""), "arxiv": meta.get("arxiv", ""), "url": _link(meta), "doi": meta.get("doi", ""),
+            "format": meta.get("format", "pdf"),
             "pages": meta.get("page_count", 0), "done_pages": len(tr.get("done_pages", [])), "en_pages": len(tr.get("en_pages", [])),
             "abstract": abstract,
             "meta_override": item.get("meta_override") or {},
@@ -73,6 +75,40 @@ class Library:
         return [self.summary(ws) for ws in self.all()]
 
     # ---------- 导入 ----------
+    def create_from_document(self, data: bytes, filename: str, meta: dict | None = None) -> tuple[Workspace, bool]:
+        if data.startswith(b"%PDF"):
+            return self.create_from_pdf(data, filename, meta)
+        if Path(filename).suffix.lower() == '.epub':
+            return self.create_from_epub(data, filename, meta)
+        raise ValueError(tr('請選擇有效的 PDF 或 EPUB 檔案。'))
+
+    def create_from_epub(self, data: bytes, filename: str, meta: dict | None = None) -> tuple[Workspace, bool]:
+        from .epub import MAX_ARCHIVE
+        from .pdf_isolation import run
+        if len(data) > MAX_ARCHIVE:
+            raise ValueError(tr('EPUB 超過 32 MiB 檔案上限。'))
+        digest = sha256_bytes(data)
+        ws = Workspace(self.root / digest[:12])
+        if ws.paper_path.exists():
+            return ws, False
+        # Validate in a resource-limited worker before publishing a library entry.
+        with tempfile.TemporaryDirectory(prefix='.epub-import-', dir=self.root) as temp:
+            stage = Path(temp)
+            (stage / 'source.epub').write_bytes(data)
+            metadata = run('epub_inspect', stage)
+            metadata = {**(meta or {}), **metadata, 'source': filename, 'source_sha256': digest, 'pdf': 'source.pdf'}
+            metadata['title_en'] = metadata.get('title_en') or Path(filename).stem
+            metadata.setdefault('title_zh', '')
+            ws.root.mkdir(exist_ok=True)
+            shutil.copyfile(stage / 'source.epub', ws.root / 'source.epub')
+        write_json_atomic(ws.discussion_path, empty_discussion())
+        write_json_atomic(ws.reader_path, empty_reader())
+        write_json_atomic(ws.item_path, {'added': now_iso(), 'tags': [], 'status': 'unread', 'starred': False})
+        write_json_atomic(ws.paper_path, {'schema': SCHEMA, 'meta': metadata,
+            'translation': {'scope': '未开始', 'done_pages': [], 'note': ''},  # i18n-ok persisted data
+            'glossary': [], 'references': [], 'blocks': []})
+        return ws, True
+
     def create_from_pdf(self, data: bytes, filename: str, meta: dict | None = None) -> tuple[Workspace, bool]:
         """建目录、落 PDF 和空数据文件。渲染原页、抽文字放到后台任务里做。返回 (目录, 是否新建)。"""
         if not data.startswith(b"%PDF"):

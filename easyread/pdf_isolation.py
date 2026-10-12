@@ -62,7 +62,10 @@ def run(operation, root, *args):
             if proc.returncode:
                 raise ValueError('PDF processing failed or exceeded the safety limit')
             if len(stdout) > 5_000_000: raise ValueError('PDF result too large')
-            return json.loads(stdout)
+            result = json.loads(stdout)
+            if operation in {'epub_inspect', 'epub_prepare'} and isinstance(result, dict) and 'epub_error' in result:
+                raise ValueError(result['epub_error'][:800])
+            return result
         except subprocess.TimeoutExpired:
             raise ValueError('PDF processing exceeded 120 seconds') from None
         finally:

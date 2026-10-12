@@ -128,7 +128,8 @@ def inspect(path: str | Path, *, exact: bool = False) -> dict:
 
 
 def _sha(paper: Path) -> str:
-    pdf = paper / "source.pdf"
+    meta = read_json(paper / 'paper.json', {}).get('meta', {})
+    pdf = paper / ('source.epub' if meta.get('format') == 'epub' else 'source.pdf')
     if not pdf.exists():
         return ""
     if _linked(pdf):

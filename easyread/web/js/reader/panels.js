@@ -217,9 +217,10 @@
       ? PR.t("你改的译文、笔记、划线写进论文目录的 reader.json（每次保存记日志，每 10 分钟留快照）。翻译方只写 paper.json 和 discussion.json，不会覆盖你的内容。")
       : PR.t("这是离线单文件版：修改只存在当前浏览器里。要把修改带回文献库，点“导出我的修改”得到一个 JSON，再运行 easyread merge。");
     const en = (tr.en_pages || []).length, done = (tr.done_pages || []).length;
-    return '<div class="about"><h3>' + (en ? PR.t("英文原文") : PR.t("译文")) + "</h3><p>" + (en ? PR.t("{done} / {n} 页，其中 {en} 页没有翻译。", { done, n: (m.pages || []).length, en }) : PR.t("{done} / {n} 页。", { done, n: (m.pages || []).length })) + PR.esc(tr.note || "") + "</p>" +
+    return '<div class="about"><h3>' + (en ? (m.format === "epub" ? PR.t("閱讀原文") : PR.t("英文原文")) : PR.t("译文")) + "</h3><p>" + (en ? PR.t("{done} / {n} 页，其中 {en} 页没有翻译。", { done, n: (m.pages || []).length, en }) : PR.t("{done} / {n} 页。", { done, n: (m.pages || []).length })) + PR.esc(tr.note || "") + "</p>" +
+      (m.format === 'epub' ? '<p class="hint">' + PR.t('EPUB 重新分頁產生的閱讀版 PDF，不是原書頁碼。') + '</p>' + (PR.store.mode === 'server' ? '<a class="btn sm line" href="/p/' + PR.pid + '/source.epub">' + PR.t('下載原始 EPUB') + '</a>' : '') : '') +
       "<h3>" + PR.t("保存") + "</h3><p>" + status + "</p>" + (PR.store.pending ? "<p>" + PR.t("还有 {n} 条修改在等待写入。", { n: PR.store.pending }) + "</p>" : "") +
-      '<div class="row">' + (pdf ? '<a class="btn sm line" href="' + pdf + '" target="_blank" rel="noopener">' + PR.t("打开原 PDF") + "</a>" : "") +
+      '<div class="row">' + (pdf ? '<a class="btn sm line" href="' + pdf + '" target="_blank" rel="noopener">' + (m.format === "epub" ? PR.t("閱讀版 PDF") : PR.t("打开原 PDF")) + "</a>" : "") +
       '<button class="btn sm line" data-x="md">' + PR.t("导出笔记…") + "</button>" + (PR.store.mode === "static" && !S.demo ? '<button class="btn sm line" data-x="ops">' + PR.t("导出我的修改") + "</button>" : "") + "</div>" +
       "<h3>" + PR.t("怎么用") + "</h3><p>" + PR.t("点一下段落，上方出现操作条：笔记、提问、问 AI、原文、改译文、原页。右键段落是完整菜单。选中文字可以用四种颜色划线、写笔记、提问；打开问 AI 时，选中的文字可以直接拖进输入框，一次引用多段。双击一段直接改译文。") + "</p>" +
       "<h3>" + PR.t("快捷键") + "</h3>" + (PR.keysOn

@@ -85,7 +85,7 @@ def cmd_import(a):
     L = lib()
     src = a.source
     if Path(src).exists():
-        ws, fresh = L.create_from_pdf(Path(src).read_bytes(), Path(src).name)
+        ws, fresh = L.create_from_document(Path(src).read_bytes(), Path(src).name)
     else:
         data, name, meta = L.fetch(src)
         ws, fresh = L.create_from_pdf(data, name, meta)

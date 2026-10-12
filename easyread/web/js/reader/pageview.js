@@ -86,6 +86,10 @@
   function updatePageLabel() {
     PR.$(".pv-label").textContent = PR.t("第 {p} / {n} 页", { p: pvPage, n: pages().length });
     const pdf = PR.$('[data-pv="pdf"]'), url = PR.pdfUrl(pvPage);
+    if ((S.paper.meta || {}).format === 'epub') {
+      pdf.textContent = PR.t('閱讀版 PDF');
+      pdf.title = PR.t('EPUB 重新分頁產生的閱讀版 PDF，不是原書頁碼。');
+    }
     pdf.style.display = url ? "" : "none";
     if (url) pdf.href = url;
   }

@@ -8,7 +8,7 @@ PaperDesk 是在自己電腦上執行的論文閱讀工具，提供 PDF 原文�
 > 2. ChatGPT 網頁已登入，**不等於 Codex CLI 已登入**。
 > 3. 使用 ChatGPT 帳號登入 CLI 時，翻譯與問答使用訂閱提供的 **Codex／代理工作用量**，不是一般 ChatGPT 對話窗的訊息額度。
 
-此版本為 **0.1.0 Windows x64 原始碼版**，沒有 EXE 安裝包。PaperDesk 基於 [EasyRead](https://github.com/Edwardxlai/easyread) 的 MIT 原始碼改作，保留其 PDF、文獻庫與批註核心，重做閱讀工作臺與安全防護。
+此版本為 **0.2.0 Windows x64 原始碼版**，沒有 EXE 安裝包。PaperDesk 基於 [EasyRead](https://github.com/Edwardxlai/easyread) 的 MIT 原始碼改作，保留其 PDF、文獻庫與批註核心，重做閱讀工作臺與安全防護。
 
 ## 目錄
 
@@ -110,7 +110,7 @@ node .tools/codex/node_modules/@openai/codex/bin/codex.js login status
 
 ## 閱讀與翻譯
 
-1. **匯入論文**：拖曳本機 PDF、點「匯入論文」，或貼上公開論文網址／編號。
+1. **匯入論文**：拖曳本機 PDF 或 EPUB、點「匯入論文」，或貼上公開論文網址／編號。
 2. **選擇處理方式**：需要翻譯時選翻譯範圍；只想本機看 PDF 時，確認關閉 AI 翻譯／整理。AI 整理原文也會呼叫模型。
 3. **進入工作臺**：在文獻庫選取論文檢視詳情，雙擊開啟閱讀頁。
 4. **原文對照**：切換原文、譯文或雙語；右側 PDF 面板可檢視原頁。
@@ -259,7 +259,7 @@ node --test $files
 
 輸出於 `outputs/`：
 
-- `paperdesk-0.1.0-source.zip`：白名單來源包。
+- `paperdesk-0.2.0-source.zip`：白名單來源包。
 - `RELEASE-MANIFEST.json`：逐檔 SHA-256。
 - `SHA256SUMS.txt`：ZIP 的 SHA-256。
 
@@ -287,3 +287,11 @@ Freeze 表示已完成所列發布門檻與記錄取捨，不保證零 bug。後
 深色模式預設使用「石墨青藍」。到「設定 → 閱讀 → 深色配色」可切換北歐霧藍、暮色薰衣草、森林薄荷與夜幕紫；按「儲存」後，文獻庫與閱讀頁共用並保存至本機偏好。取消或按 Esc 會還原預覽。配色只影響深色模式，淺色與跟隨系統選項保留。
 
 完整功能收尾結果、低成本模型實測用量與覆蓋限制：[全功能驗證](VALIDATION.md)。
+
+## EPUB 閱讀
+
+0.2.0 起支援無 DRM 的 EPUB 2／3 文字型書籍，從本機選取或拖曳匯入。網址／DOI／arXiv 匯入仍以 PDF 為主。EPUB 的章節、段落、基本清單與表格文字及內嵌 JPEG／PNG／GIF／WebP 圖片會轉成統一閱讀頁面；動畫僅保留第一張影格。
+
+原始檔存為 `source.epub`，下載時回傳原始位元組；`source.pdf` 是本機產生的閱讀版 PDF。頁碼與版面不是原書排版，閱讀版 PDF 是頁圖組成；App 的文字上下文另存於 `extract/`。原書樣式、連結互動及精細表格排版不會保留。筆記、翻譯和匯出沿用既有資料結構。
+
+支援範圍、字型要求與安全上限請見 [文件格式](FORMATS.md)。EPUB 本身不需要新套件或新模型設定；開啟模型處理後仍消耗原來的 CLI／API 額度。
