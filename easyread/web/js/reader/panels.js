@@ -151,6 +151,10 @@
     if (which) tab = which;
     const open = force != null ? force : !body.classList.contains("drawer-open");
     body.classList.toggle("drawer-open", open);
+    const drawer = PR.$("#drawer");
+    drawer.inert = !open;
+    drawer.setAttribute("aria-hidden", String(!open));
+    PR.$$('[data-act="drawer"], [data-pd-act="drawer"]').forEach(button => button.setAttribute("aria-expanded", String(open)));
     if (open) PR.renderDrawer();
   };
   PR.$("#scrim").onclick = () => PR.toggleDrawer(false);

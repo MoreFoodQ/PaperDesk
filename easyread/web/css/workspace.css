@@ -133,7 +133,14 @@
 .pd-reader .paper-head { border-bottom: 1px solid var(--rule); padding-bottom: 30px; }
 .pd-reader .side-panel { background: var(--surface); box-shadow: none; }
 .pd-reader .ch-head { background: var(--surface-2); }
-.pd-reader #drawer { border-radius: 0; }
+/* The drawer offset must also be subtracted when it leaves the viewport. */
+.pd-reader #drawer {
+  border-radius: 0; top: var(--bar-h);
+  transform: translateX(calc(-100% - var(--dock-w)));
+  visibility: hidden; pointer-events: none;
+}
+.pd-reader.drawer-open #drawer { transform: none; visibility: visible; pointer-events: auto; }
+.pd-reader #scrim { top: var(--bar-h); }
 .pd-reader { --dock-w: 64px; --outline-w: 288px; color-scheme: light; }
 :root[data-theme="dark"] .pd-reader { color-scheme: dark; }
 .pd-reader :is(.drawer-body, .pv-scroll, .ch-scroll, #notespanel) {
@@ -175,7 +182,8 @@
   .pd-reader #workspaceDock button { justify-content: center; padding: 0; }
   .pd-reader #stage, .pd-reader.side-open #stage { margin-left: 80px; width: calc(100vw - 96px); }
   .pd-reader.side-open #stage { width: calc(100vw - 96px - var(--side-w)); }
-  .pd-reader #drawer { left: 64px; }
+  .pd-reader #drawer { left: var(--dock-w); }
+  .pd-reader #scrim { left: var(--dock-w); }
 }
 @media (max-width: 1150px) {
   .pd-library .lib { grid-template-columns: var(--side-w, 210px) minmax(0, 1fr) 0; }

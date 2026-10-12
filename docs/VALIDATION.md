@@ -25,3 +25,9 @@ GitHub Actions results must be checked after pushing. Local results do not estab
 On 2026-10-12, a race between background thumbnail generation and HTTP reads was reproduced. Cache generation now uses process-local synchronization and atomic publication of completed files. Empty cache files are regenerated.
 
 Concurrent publication and empty-cache regressions, the full Python suite, and PDF/export smoke checks passed. README screenshots use three original synthetic documents and notes; capture does not require live model calls.
+
+## Reader drawer regression
+
+On 2026-10-12, the closed drawer retained part of its width because its transform did not include the navigation offset. The drawer now leaves the viewport completely, disables interaction while closed, and keeps the header and navigation controls outside the overlay.
+
+The optional `scripts/verify_reader_drawer.cjs` browser regression checks repeated header and dock toggles, the T shortcut, overlay dismissal, focus exclusion, and horizontal overflow at 390, 600, 899, 900, 980, 1180, 1359, 1360, and 1600 pixels. All widths passed. JavaScript regressions (109), i18n/release checks (14), and PDF/export smoke checks passed. Browser runtime overrides are documented in the script header.
