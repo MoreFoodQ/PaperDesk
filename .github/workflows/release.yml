@@ -1,0 +1,15 @@
+# Source-only freeze: tags must not publish unreviewed desktop installers.
+name: Desktop release gate (disabled for source freeze)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Explain the source-only release boundary
+        run: |
+          echo "Desktop installers are disabled for this source release."
+          echo "Resolve build advisories, binary checks, license texts and signing before enabling this workflow."
+          exit 1

@@ -1,0 +1,31 @@
+[project]
+name = "paperdesk"
+version = "0.1.0"
+description = "PaperDesk：繁體中文論文閱讀工作台，使用 Codex CLI 翻譯與問答"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+keywords = ["paper", "translation", "reader", "arxiv", "llm", "论文翻译"]
+dependencies = [
+  "tomli>=2.0; python_version < '3.11'",
+  "pypdfium2>=4.30",
+  "pdfplumber>=0.11",
+  "pillow>=10",
+  "pypdf>=4",
+  "truststore>=0.10",
+  "certifi>=2024.8.30",
+]
+
+[project.scripts]
+paperdesk = "easyread.cli:main"
+easyread = "easyread.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["easyread"]
+
+[tool.setuptools.package-data]
+easyread = ["check_tex.js", "web/*", "web/**/*"]

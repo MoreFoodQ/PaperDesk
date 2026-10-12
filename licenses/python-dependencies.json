@@ -1,0 +1,86 @@
+[
+  {
+    "name": "certifi",
+    "version": "2026.7.22",
+    "license": "MPL-2.0",
+    "source": "https://pypi.org/project/certifi/2026.7.22/"
+  },
+  {
+    "name": "cffi",
+    "version": "2.1.1",
+    "license": "MIT-0",
+    "source": "https://pypi.org/project/cffi/2.1.1/"
+  },
+  {
+    "name": "charset-normalizer",
+    "version": "3.5.2",
+    "license": "MIT",
+    "source": "https://pypi.org/project/charset-normalizer/3.5.2/"
+  },
+  {
+    "name": "cryptography",
+    "version": "50.0.2",
+    "license": "Apache-2.0 OR BSD-3-Clause",
+    "source": "https://pypi.org/project/cryptography/50.0.2/"
+  },
+  {
+    "name": "packaging",
+    "version": "26.3",
+    "license": "Apache-2.0 OR BSD-2-Clause",
+    "source": "https://pypi.org/project/packaging/26.3/"
+  },
+  {
+    "name": "pdfminer.six",
+    "version": "20260107",
+    "license": "MIT",
+    "source": "https://pypi.org/project/pdfminer.six/20260107/"
+  },
+  {
+    "name": "pdfplumber",
+    "version": "0.11.10",
+    "license": null,
+    "source": "https://pypi.org/project/pdfplumber/0.11.10/"
+  },
+  {
+    "name": "pillow",
+    "version": "12.3.0",
+    "license": "MIT-CMU",
+    "source": "https://pypi.org/project/pillow/12.3.0/"
+  },
+  {
+    "name": "pycparser",
+    "version": "3.11",
+    "license": "BSD-3-Clause",
+    "source": "https://pypi.org/project/pycparser/3.11/"
+  },
+  {
+    "name": "pypdf",
+    "version": "6.20.0",
+    "license": "BSD-3-Clause",
+    "source": "https://pypi.org/project/pypdf/6.20.0/"
+  },
+  {
+    "name": "pypdfium2",
+    "version": "5.14.0",
+    "license": "BSD-3-Clause, Apache-2.0, dependency licenses",
+    "source": "https://pypi.org/project/pypdfium2/5.14.0/"
+  },
+  {
+    "name": "truststore",
+    "version": "0.10.4",
+    "license": "MIT",
+    "source": "https://pypi.org/project/truststore/0.10.4/"
+  },
+  {
+    "name": "typing_extensions",
+    "version": "4.16.0",
+    "license": "PSF-2.0",
+    "source": "https://pypi.org/project/typing_extensions/4.16.0/"
+  },
+  {
+    "name": "tomli",
+    "version": "2.4.0",
+    "license": "MIT",
+    "source": "https://pypi.org/project/tomli/2.4.0/"
+  }
+]

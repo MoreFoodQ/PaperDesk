@@ -1,0 +1,14 @@
+certifi==2026.7.22
+cffi==2.1.1
+charset-normalizer==3.5.2
+cryptography==50.0.2
+packaging==26.3
+pdfminer.six==20260107
+pdfplumber==0.11.10
+pillow==12.3.0
+pycparser==3.11
+pypdf==6.20.0
+pypdfium2==5.14.0
+truststore==0.10.4
+typing_extensions==4.16.0
+tomli==2.4.0

@@ -1,0 +1,43 @@
+name: Windows source release checks
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.10', '3.12']
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      PYTHONUTF8: '1'
+      EASYREAD_HOME: ${{ runner.temp }}/paperdesk-ci-data
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install hash-locked runtime only
+        run: python -m pip install --require-hashes --only-binary=:all: -r requirements-hashed.txt
+      - name: Python regressions
+        run: python -m unittest discover -s tests -p 'test_*.py'
+      - name: JavaScript regressions without Electron build dependencies
+        run: |
+          $files = (Get-ChildItem tests -Filter 'test_*.cjs').FullName
+          node --test $files
+      - name: Synthetic source import and authenticated HTTP checks
+        run: python scripts/verify_source.py
+      - name: Release privacy and manifest checks
+        run: python scripts/prepare_source_release.py --check-only

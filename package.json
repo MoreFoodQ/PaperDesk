@@ -1,0 +1,99 @@
+{
+  "name": "paperdesk-desktop",
+  "version": "0.1.0",
+  "description": "PaperDesk: Traditional Chinese research workbench with Codex CLI",
+  "main": "electron/main.cjs",
+  "private": true,
+  "scripts": {
+    "dev": "electron .",
+    "start": "electron .",
+    "build:backend": "python scripts/build_backend.py",
+    "dist": "npm run build:backend && electron-builder --publish never"
+  },
+  "devDependencies": {
+    "electron": "^44.5.1",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "local.paperdesk.desktop",
+    "productName": "PaperDesk",
+    "protocols": [
+      {
+        "name": "PaperDesk",
+        "schemes": [
+          "paperdesk"
+        ]
+      }
+    ],
+    "asar": true,
+    "directories": {
+      "output": "dist/electron"
+    },
+    "files": [
+      "electron/**/*",
+      "package.json"
+    ],
+    "icon": "electron/assets",
+    "extraResources": [
+      {
+        "from": "build/backend",
+        "to": "backend",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "licenses",
+        "to": "licenses"
+      },
+      {
+        "from": "LICENSE",
+        "to": "licenses/EasyRead-MIT.txt"
+      }
+    ],
+    "win": {
+      "icon": "electron/assets/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "artifactName": "PaperDesk-Setup-${version}.exe"
+    },
+    "mac": {
+      "icon": "electron/assets/icon.png",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ],
+      "category": "publications",
+      "identity": "-",
+      "hardenedRuntime": false
+    },
+    "linux": {
+      "icon": "electron/assets/icon.png",
+      "target": [
+        "AppImage"
+      ],
+      "category": "Office"
+    }
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
+  },
+  "overrides": {
+    "http-cache-semantics": "4.3.0"
+  }
+}
