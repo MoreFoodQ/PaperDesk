@@ -10,7 +10,7 @@
 
 A paper-reading workspace with bilingual PDF and EPUB reading, translation, GPT assistance, notes, and library management.
 
-PaperDesk runs locally and opens in your browser. It uses the official Codex CLI by default to connect to models. The current release is distributed as source code for Windows x64.
+PaperDesk runs locally and opens in your browser. It uses the official Codex CLI by default to connect to models. Windows x64 installer and source distributions are available.
 
 [Quick start](#quick-start) · [User guide](docs/USAGE.md) · [Architecture](ARCHITECTURE.md) · [Contributing](CONTRIBUTING.md)
 
@@ -18,6 +18,7 @@ PaperDesk runs locally and opens in your browser. It uses the official Codex CLI
 
 - **Paper library**: Import local PDFs, EPUB books, or public paper URLs, search and categorize papers, view details, and restore deleted items from the trash.
 - **Bilingual reading**: Switch between the original, translation, and bilingual views. Navigate outlines and terminology while comparing passages with the source PDF.
+- **Figure text translation**: enabled by default. Turn it off under Settings → Models while retaining body and caption translation. Skipped labels can be translated later without retranslating the body. [Behavior and validation](docs/FIGURE-TRANSLATION.md)
 - **GPT reading assistant**: Use relevant passages and optional page images for translation, questions, and help with notes.
 - **Notes and export**: Text annotations, paper-level notes, automatic saving, Markdown export, and self-contained HTML for offline reading.
 - **Models and usage**: Codex CLI, Claude Code, local model services, and custom APIs; official account quota lookup and local daily usage limits.

@@ -16,7 +16,7 @@ Unit and smoke tests use synthetic fixtures. Commands are listed in the [English
 
 ## Coverage limits
 
-External model APIs are exercised with simulated HTTP responses. Live third-party accounts, local model inference, cross-device cloud synchronization, other operating systems, and executable installers are outside the current validation scope.
+External model APIs are exercised with simulated HTTP responses. Live third-party accounts, local model inference, cross-device cloud synchronization and other operating systems are outside the current validation scope. Windows installer evidence and its remaining limits are documented below.
 
 GitHub Actions results must be checked after pushing. Local results do not establish remote CI status.
 
@@ -62,3 +62,19 @@ EPUB model tests simulate responses while exercising actual image preparation, p
 Full Python suite: 361 passed. JavaScript suite: 116 passed. Packaged browser checks included PDF/EPUB import, source images, note save/reload, source download authentication, local PDF windows, offline HTML and backend shutdown. Those checks used an isolated synthetic library and no model calls.
 
 One separate installed-app smoke used gpt-5.6-luna, low reasoning and standard service tier, returning a short JSON object through the bundled CLI. Local usage accounting recorded one call and 8,184 reported tokens, including CLI context. No live translation of user literature was performed. Fresh-account interactive OAuth, cross-version upgrades, a fresh-OS VM, other operating systems and code signing are not established by these tests. The installer is unsigned.
+
+## Optional figure text translation (2026-10-19)
+
+Feature branch: `feat/optional-figure-translation`. Full Python regression baseline:
+385 passed; JavaScript: 118 passed. Feature checks cover default/legacy behavior,
+boolean API validation, task snapshots, confirmation, resume, original-mode fills,
+explicit image fills, missing replies, retries, cancellation, mixed task batches,
+explicit full-page retranslation versus image-only retry semantics, and preservation
+of source images, body blocks, notes, captions and review entries.
+The isolated browser check passed setting save/reload, PDF/EPUB skip/fill workflows,
+exports and reader widths 390, 900 and 1440. No live model calls were made.
+See [behavior, issue/change/result records and release handling](FIGURE-TRANSLATION.md).
+
+The final source import/authentication/export smoke and release privacy gate passed.
+The existing reader drawer regression passed at all nine supported test widths.
+Remote CI and rebuilt installer validation are pending publication of the branch.

@@ -1,7 +1,7 @@
 """整篇翻译入口：继续确认中的任务、重试失败页、给已整理的原文补译文。"""
 from __future__ import annotations
 
-from . import paperdata, translate
+from . import figure_translation, paperdata, translate
 
 
 def enqueue(jobs, ws, body: dict) -> dict:
@@ -14,6 +14,11 @@ def enqueue(jobs, ws, body: dict) -> dict:
     read = bool(last.get("read")) if pending else bool(body.get("read"))
     model = (last.get("model") or "") if pending else str(body.get("model") or "")
     target = (last.get("target") or "") if pending else ""
+    translate_images = last.get("translate_images", True) if pending or body.get("failed") else None
+    images_only = bool(last.get("images_only")) if pending or body.get("failed") else body.get("images") is True
+    if body.get("images") is True and not pending and not body.get("failed"):
+        pages = sorted(figure_translation.pending_pages(ws.load("paper")))
+        translate_images, read, cap_check = True, False, True
     if pending and not explicit:
         # 确认的是等待时已算好的页，不能因为后来又整理了原文而扩大范围。
         pages = last.get("pages")
@@ -32,5 +37,7 @@ def enqueue(jobs, ws, body: dict) -> dict:
             pages = sorted(set((ws.load("paper").get("translation") or {}).get("en_pages", [])))
             cap_check = True  # 系统生成的页计划仍需确认；用户亲自填 pages 才豁免。
     jobs.enqueue(ws, pages=pages, translate_after=True, scope=scope, read=read, model=model,
-                 confirmed=body.get("confirmed") is True, target=target, cap_check=cap_check)
+                 confirmed=body.get("confirmed") is True, target=target, cap_check=cap_check,
+                 translate_images=translate_images, images_only=images_only,
+                 fill_skipped_images=last.get("fill_skipped_images") if pending or body.get("failed") else None)
     return {"ok": True}

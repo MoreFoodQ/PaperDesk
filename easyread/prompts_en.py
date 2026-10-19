@@ -49,7 +49,7 @@ def structure(ws: Workspace, pages: list[int], engine: str, next_head: str, skip
             f"{_context(ws, pages, skip_head=skip_head)}\n\n{RULES_EN}\n\n{SCHEMA_EN}\n\n" + _page_texts(ws, pages) + look)
 
 
-def todo(blocks: list[dict]) -> dict[str, object]:
+def todo(blocks: list[dict], translate_images: bool = True) -> dict[str, object]:
     """这些块里还没有中文的地方：{键: 英文}。键同页面：块 id、id#caption、id#image（图内文字）、id#序号、id#head（表头）。"""
     out: dict[str, object] = {}
     for b in blocks:
@@ -64,7 +64,7 @@ def todo(blocks: list[dict]) -> dict[str, object]:
             out[f"{b['id']}#caption"] = b["caption_en"]
             if t == "table" and b.get("head"):
                 out[f"{b['id']}#head"] = b["head"]
-        if t == "figure" and b.get("image_en") and not b.get("image_zh"):
+        if translate_images and t == "figure" and b.get("image_en") and not b.get("image_zh"):
             out[f"{b['id']}#image"] = b["image_en"]
     return out
 

@@ -49,6 +49,7 @@ DEFAULTS = {
     "library_dir": str(HOME / "library"),
     "port": 8876,
     "engine": "codex",          # Use the locally authenticated Codex CLI by default.
+    "translate_images": True,   # Translate figure labels; captions are always translated.
     "auto_translate": True,      # 导入后自动开始翻译
     "target": "zh-TW",
     "check_updates": False,      # This fork has no release feed yet.

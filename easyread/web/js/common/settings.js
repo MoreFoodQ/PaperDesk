@@ -145,7 +145,7 @@
   PR.settingsTabs.engine = {
     collect(state) {
       const c = state.cfg, o = c.openai;
-      return { engine: c.engine, batch_pages: c.batch_pages, concurrency: c.concurrency, page_cap: c.page_cap, auto_translate: c.auto_translate,
+      return { engine: c.engine, batch_pages: c.batch_pages, concurrency: c.concurrency, page_cap: c.page_cap, auto_translate: c.auto_translate, translate_images: c.translate_images !== false,
         claude: { model: c.claude.model, reasoning_effort: c.claude.reasoning_effort || "" },
         codex: { model: c.codex.model, reasoning_effort: c.codex.reasoning_effort || "", service_tier: c.codex.service_tier || "" },
         openai: { preset: o.preset, base_url: o.base_url, api: o.api, model: o.model, api_key: o.api_key, vision: o.vision,

@@ -6,6 +6,8 @@ from .i18n import tr
 
 
 def save_config(patch: dict) -> dict:
+    if "translate_images" in patch and type(patch["translate_images"]) is not bool:
+        raise ValueError("translate_images must be a boolean")
     if 'metadata_lookup' in patch and type(patch['metadata_lookup']) is not bool:
         raise ValueError('Metadata lookup must be a boolean')
     if 'budget' in patch:

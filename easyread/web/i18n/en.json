@@ -1195,5 +1195,10 @@
   "安裝版已包含 Codex CLI。按下登入後，請在瀏覽器完成官方帳號登入；已登入者可直接使用。": "The installer includes Codex CLI. Complete the official sign-in in your browser; an existing login can be reused.",
   "請在瀏覽器完成登入…": "Complete sign-in in your browser…",
   "登入完成，現在可以使用 Codex。": "Signed in. Codex is ready to use.",
-  "Codex 登入未完成，請重試。": "Codex sign-in did not complete. Try again."
+  "Codex 登入未完成，請重試。": "Codex sign-in did not complete. Try again.",
+  "翻譯圖片內文字": "Translate text inside figures",
+  "關閉後保留圖片內原文，正文、表格與圖說仍會翻譯。既有譯文保留；重新開啟後可補翻。整頁影像仍可能送交模型。": "When off, figure labels remain in the original language. Body text, tables and captions are still translated. Existing translations are kept and skipped labels can be translated later. Page images may still be sent to the model.",
+  "補翻圖片文字": "Translate skipped figure text",
+  "部分圖片內文字保留原文；補翻只處理圖片文字，會使用模型額度。": "Some figure labels remain in the original language. Translating them uses model quota and leaves the body text unchanged.",
+  "正在補翻圖片文字，正文與筆記保留。": "Translating skipped figure text. Body text and notes are preserved."
 }

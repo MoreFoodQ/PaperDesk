@@ -7,7 +7,7 @@ import threading
 import time
 from uuid import uuid4
 
-from . import chat_models, config, langs, translate, usage
+from . import chat_models, config, figure_translation, langs, translate, usage
 from .engines import Cancelled, EngineError
 from .i18n import tr
 from .library import Library
@@ -47,12 +47,19 @@ class Jobs:
         ws.update("job", apply)
 
     def enqueue(self, ws: Workspace, pages: list[int] | None = None, translate_after: bool = True, scope: str | None = None,
-                read: bool = False, model: str = "", confirmed: bool = False, target: str = "", cap_check: bool = False):
+                read: bool = False, model: str = "", confirmed: bool = False, target: str = "", cap_check: bool = False,
+                translate_images: bool | None = None, images_only: bool = False, fill_skipped_images: bool | None = None):
         """pages=None：按 scope（all / body / range:A-B / first:N）翻译还没译的页。
         read：只读原文，用模型把页整理成段落、公式、表格，不翻译；之后再翻译时就地补中文。
         model：用“问 AI”名单里的哪个模型（导入时选的）；空着用设置里的翻译引擎。
         confirmed：只接受真正的 True；target：续跑时保留原任务的译文语言。
         cap_check：pages 来自系统计划而非用户指定，仍检查页数上限并跳过已完成页。"""
+        if translate_images is None:
+            translate_images = figure_translation.enabled(config.load())
+        if type(translate_images) is not bool or type(images_only) is not bool:
+            raise ValueError("Figure translation options must be boolean")
+        if fill_skipped_images is None:
+            fill_skipped_images = pages is None or cap_check or images_only
         target = langs.valid(target) if target else langs.of_paper((ws.load("paper") or {}).get("meta"))
         def apply(job):
             if job.get("state") in ("queued", "running"):
@@ -60,6 +67,7 @@ class Jobs:
             job.update(type="read" if read and translate_after else "translate" if translate_after else "prepare",
                        state="queued", message=tr("排队中"), pages=pages, scope=scope or "all", translate=translate_after, read=read, model=model or "",
                        confirmed=confirmed is True, target=target, cap_check=cap_check is True,
+                       translate_images=translate_images, images_only=images_only, fill_skipped_images=fill_skipped_images,
                        done=0, total=0, error="", failed={}, updated=now_iso(), usage={})
             job.pop("page_cap", None)
         with self.lock:
@@ -116,7 +124,8 @@ class Jobs:
                     self.cancels.pop(pid, None)
 
     def _run_bulk(self, ws: Workspace, job: dict, cancel: threading.Event):
-        cfg = engine_for(config.load(), job.get("model"))
+        cfg = dict(engine_for(config.load(), job.get("model")))
+        cfg["translate_images"] = job.get("translate_images", True)
         if job.get("target"):
             cfg = {**cfg, "target": langs.valid(job["target"])}
         if cancel.is_set():
@@ -135,9 +144,16 @@ class Jobs:
         tl = paper.get("translation", {})
         # 只读原文：跳过已经整理过（或已经译过）的页；翻译：跳过已经有译文的页，只有原文的页会补译文
         skip = set(tl.get("done_pages", [])) if read else set(tl.get("done_pages", [])) - set(tl.get("en_pages", []))
+        fill_skipped = job.get("fill_skipped_images", job.get("pages") is None or job.get("cap_check") or job.get("images_only"))
+        figure_pages = figure_translation.pending_pages(paper) if figure_translation.enabled(cfg) and not read and fill_skipped else set()
+        figure_pages &= set(tl.get("done_pages", [])) - set(tl.get("en_pages", []))
+        skip -= figure_pages
+        cfg["_figure_fill_pages"] = figure_pages
         planned = job.get("pages") is not None
         wanted = job["pages"] if planned else translate.scope_pages(ws, job.get("scope")) or all_pages
         pages = wanted if planned and not job.get("cap_check") else [n for n in wanted if n not in skip]
+        if job.get("images_only"):
+            pages = [n for n in pages if n in figure_pages]
         if not pages:
             self._write(ws, state="done", message=tr("选定范围已整理完") if read else tr("选定范围已译完"))
             return

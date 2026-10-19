@@ -9,7 +9,7 @@ import re
 import threading
 from concurrent.futures import ThreadPoolExecutor
 
-from . import config, consistency, engines, front_context, langs, netcheck, pdfwork, prompts, prompts_en, segments, sentences, sources, terms
+from . import config, consistency, engines, figure_translation, front_context, langs, netcheck, pdfwork, prompts, prompts_en, segments, sentences, sources, terms
 from .checks import block_problems, tex_problems
 from .figures import normalize_figure, prepare_figures
 from .i18n import tr
@@ -128,15 +128,27 @@ def journal(ws: Workspace, line: str) -> None:
 def _fill_batch(ws: Workspace, cfg: dict, batch: list[int], cancel, say, meter=None) -> None:
     """只读原文整理过的页：不重排，只给已有的块补译文。漏译的键抛错，重试时只译剩下的。"""
     blocks = [b for b in ws.load("paper").get("blocks", []) if b.get("page") in batch]
-    items = prompts_en.todo(blocks)
+    images_enabled = figure_translation.enabled(cfg)
+    items = prompts_en.todo(blocks, translate_images=images_enabled)
+    figure_only = set(cfg.get("_figure_fill_pages", ()))
+    # Keep metadata/check updates from ordinary fills away from completed pages.
+    if set(batch) & figure_only and set(batch) - figure_only:
+        _fill_batch(ws, cfg, [n for n in batch if n not in figure_only], cancel, say, meter)
+        _fill_batch(ws, cfg, [n for n in batch if n in figure_only], cancel, say, meter)
+        return
+    by_id = {b["id"]: b for b in blocks}
+    items = {key: value for key, value in items.items()
+             if by_id[key.partition("#")[0]].get("page") not in figure_only or key.endswith("#image")}
     if not items:
         fill_zh(ws, {}, batch, set())
+        _mark_figure_policy(ws, cfg, batch)
         return
     marked, ends = sentences.mark_items(blocks, items)  # 英文先按句插好 ‖，译文照着插，记句子对齐
     text = engines.run(cfg, prompts_en.fill(ws, batch, marked), ws.root, None, cancel, meter)
     data = engines.parse_json(text)
     if not isinstance(data, dict) or not isinstance(data.get("zh"), dict):
         raise engines.EngineError(tr("模型输出的格式不对（缺 zh）"))
+    data["zh"] = {k: v for k, v in data["zh"].items() if k in items}
     fake = [{"id": k, "type": "para", "zh": v} for k, v in data["zh"].items() if isinstance(v, str)]
     problems = _problems({"blocks": fake})
     if problems:
@@ -147,12 +159,29 @@ def _fill_batch(ws: Workspace, cfg: dict, batch: list[int], cancel, say, meter=N
                 data = fixed
         except engines.EngineError as e:
             journal(ws, tr("第 {pages} 页修正失败，保留原译：{err}", pages=batch, err=e))
+    if set(batch) <= figure_only:
+        data = {"zh": data["zh"]}
     with _merge_lock:
         _unify_terms(ws, data, batch, {k: v if isinstance(v, str) else json.dumps(v, ensure_ascii=False) for k, v in items.items()})
         missing = fill_zh(ws, data, batch, set(items), sentences.unmark_fill(data["zh"], ends))
-        _save_checks(ws, data.get("checks"), batch)
+        _mark_figure_policy(ws, cfg, batch)
+        # A figure-only fill must not replace existing review/check entries.
+        if not set(batch) <= figure_only:
+            _save_checks(ws, data.get("checks"), batch)
     if missing:
         raise engines.EngineError(tr("漏译了 {n} 处（{ids}）", n=len(missing), ids=", ".join(missing[:5])))
+
+
+def _mark_figure_policy(ws: Workspace, cfg: dict, batch: list[int]) -> None:
+    def apply(paper):
+        blocks = [b for b in paper.get("blocks", []) if b.get("page") in batch]
+        if not figure_translation.enabled(cfg):
+            figure_translation.apply(blocks, blocks, False)
+        else:
+            for block in blocks:
+                if block.get("image_zh"):
+                    block.pop("image_translation_skipped", None)
+    ws.update("paper", apply)
 
 
 def _one_batch(ws: Workspace, cfg: dict, batch: list[int], total_pages: int, cancel, say, meter=None, read=False,
@@ -176,6 +205,8 @@ def _one_batch(ws: Workspace, cfg: dict, batch: list[int], total_pages: int, can
                   "These pages are repaginated reading pages, not original book page numbers. "
                   "The en fields store the original text in its actual language; never convert it to English. "
                   "In original-only mode preserve the original language. In translation mode use the configured target.\n\n") + prompt
+    if not read and not figure_translation.enabled(cfg):
+        prompt += "\n\n" + figure_translation.SKIP_INSTRUCTION
     text = engines.run(cfg, prompt, ws.root, images, cancel, meter)
     try:
         data = engines.parse_json(text)
@@ -183,12 +214,16 @@ def _one_batch(ws: Workspace, cfg: dict, batch: list[int], total_pages: int, can
         (ws.root / "extract" / f"failed-{batch[0]:03d}.txt").write_text(text, encoding="utf-8")
         raise
     data = _normalize(data, batch, _taken(ws, batch))
+    figure_translation.apply(data["blocks"], ws.load("paper").get("blocks", []),
+                             read or figure_translation.enabled(cfg))
     problems = _problems(data)
     if problems:  # 给一次修的机会
         say(tr("第 {page} 页起有 {n} 处公式或格式问题，正在让模型修正", page=batch[0], n=len(problems)))
         try:
             fixed = engines.parse_json(engines.run(cfg, prompts.repair(prompts.dump(data), problems), ws.root, None, cancel, meter))
             fixed = _normalize(fixed, batch, _taken(ws, batch))
+            figure_translation.apply(fixed["blocks"], ws.load("paper").get("blocks", []),
+                                     read or figure_translation.enabled(cfg))
             if fixed["blocks"] and len(_problems(fixed)) < len(problems):
                 data = fixed
         except engines.EngineError as e:
@@ -197,6 +232,8 @@ def _one_batch(ws: Workspace, cfg: dict, batch: list[int], total_pages: int, can
         raise engines.EngineError(tr("模型没有整理出任何内容") if read else tr("模型没有译出任何内容"))
     with _merge_lock:
         data = _normalize(data, batch, _taken(ws, batch))  # 并发时别的批可能刚占用了同名 id
+        figure_translation.apply(data["blocks"], ws.load("paper").get("blocks", []),
+                                 read or figure_translation.enabled(cfg))
         prepare_figures(ws.root, data["blocks"], total_pages)
         _unify_terms(ws, data, batch)
         drop = _one_references(ws, data, batch)
@@ -268,6 +305,7 @@ def translate_pages(ws: Workspace, cfg: dict, pages: list[int], cancel, report, 
     paper = ws.load("paper")
     total_pages = paper.get("meta", {}).get("page_count") or 0
     en_pages = set() if read else set(paper.get("translation", {}).get("en_pages", []))
+    en_pages |= set(cfg.get("_figure_fill_pages", ())) if not read else set()
     size = max(1, int(cfg.get("batch_pages") or 2))
     # 分段并行：切成几段连续的页同时译，段内一批接一批（见 segments.py）
     k = segments.workers(cfg.get("concurrency"), len(_batches(pages, size, en_pages)))
@@ -367,10 +405,10 @@ def translate_pages(ws: Workspace, cfg: dict, pages: list[int], cancel, report, 
             f.result()  # Cancelled 在这里抛出去
     if cancel.is_set():
         raise engines.Cancelled()
-    if not read and len(batches) > 1 and not state["quota"] and state["ok"]:
+    if not read and len(batches) > 1 and not state["quota"] and state["ok"] - set(cfg.get("_figure_fill_pages", ())):
         try:  # 检查失败或这时取消，都不影响已经译好的内容：照常结束，不算取消
             report(state["done"], len(pages), tr("正在检查术语一致性"))
-            consistency.check(ws, cfg, sorted(state["ok"]), cancel, meter, journal, _merge_lock)
+            consistency.check(ws, cfg, sorted(state["ok"] - set(cfg.get("_figure_fill_pages", ()))), cancel, meter, journal, _merge_lock)
         except engines.Cancelled:
             journal(ws, tr("术语一致性检查已取消，译文保留"))
         except Exception as e:  # noqa: BLE001

@@ -151,14 +151,18 @@
     const by = [m.authors, m.affiliation].filter(Boolean).map(PR.esc).join("　·　");
     const pages = (m.pages || []).length, done = (tr.done_pages || []).length, en = (tr.en_pages || []).length;
     const toZh = en && PR.canAsk() && !jobRunning() && (S.job || {}).state !== "confirm" ? '<button class="btn sm line" data-t="translate-en">' + PR.t("翻译成{lang}", { lang: PR.targetName((S.paper.meta || {}).target || PR.target) }) + "</button>" : "";
+    const skippedFigures = (S.paper.blocks || []).some(b => b.type === 'figure' && b.image_translation_skipped === true && b.image_en && !b.image_zh);
+    const fillFigures = skippedFigures && PR.canAsk() && PR.store.mode === 'server' && !jobRunning() && (S.job || {}).state !== 'confirm'
+      ? '<button class="btn sm line" data-t="translate-images">' + PR.t('補翻圖片文字') + '</button>' : '';
     const scope = (en ? "<b>" + (m.format === "epub" ? PR.t("閱讀原文") : PR.t("英文原文")) + "</b>　" + (done - en ? PR.t("其中 {n} 页已译，", { n: done - en }) : "") + PR.t("{n} 页没有翻译", { n: en }) + toZh
       : "<b>" + PR.t("译文") + "</b>　" + (pages ? (done >= pages ? PR.t("全文 {n} 页", { n: pages }) : PR.t("已译 {done} / {n} 页", { done, n: pages })) : PR.t("尚未处理"))) +
       (tr.note ? "　" + PR.esc(tr.note) : "") +
       '<br><span class="reading-language-description">' + (en ? (m.format === "epub" ? PR.t("尚未翻譯的部分顯示原文") : PR.t("没译的地方正文是英文原文")) : PR.t("正文是译文")) + '</span>' + PR.t('；<span class="legend-agent"></span>青色细线是 AI 的解释和回答，<span class="legend-mine"></span>赭色细线是我的笔记，都不属于原文。');
+    const figureStatus = skippedFigures ? '<p class="hint">' + PR.t('部分圖片內文字保留原文；補翻只處理圖片文字，會使用模型額度。') + fillFigures + '</p>' : '';
     return '<header class="paper-head" id="b-head" data-id="head">' + (kicker ? '<div class="kicker">' + kicker + "</div>" : "") +
       "<h1>" + PR.esc(m.title_zh || m.title_en || PR.t("（正在识别标题）")) + "</h1>" +
       (m.title_zh && m.title_en ? '<p class="title-en" lang="en">' + PR.esc(m.title_en) + "</p>" : "") +
-      (by ? '<p class="byline">' + by + "</p>" : "") + '<p class="scope">' + scope + "</p>" + creditHtml() + "</header>";
+      (by ? '<p class="byline">' + by + "</p>" : "") + '<p class="scope">' + scope + "</p>" + figureStatus + creditHtml() + "</header>";
   }
 
   /* 还没译的页：放原页图，边译边读 */

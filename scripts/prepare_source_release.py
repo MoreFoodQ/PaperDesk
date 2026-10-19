@@ -12,7 +12,7 @@ DIRECTORIES = ('easyread', 'tests', 'scripts', 'licenses', 'electron', '.github'
 FILES = ('README.md', 'README.en.md', 'LICENSE', 'pyproject.toml', 'package.json', 'package-lock.json',
          'requirements-lock.txt', 'requirements-hashed.txt', 'requirements-build-hashed.txt', 'Build-PaperDesk.cmd', 'Open-PaperDesk.cmd', 'Setup-PaperDesk.cmd', 'start.cmd',
          '.gitignore', 'CONNECTIONS.md', 'ARCHITECTURE.md', 'PROVENANCE.md',
-         'CONTRIBUTING.md', 'SECURITY.md', 'docs/USAGE.md', 'docs/VALIDATION.md', 'docs/RELEASE.md', 'docs/FORMATS.md', '.gitattributes')
+         'CONTRIBUTING.md', 'SECURITY.md', 'docs/USAGE.md', 'docs/VALIDATION.md', 'docs/RELEASE.md', 'docs/FORMATS.md', 'docs/FIGURE-TRANSLATION.md', '.gitattributes')
 PRIVATE = {'data', '.tools', '.venv', '.git', '.codex', '.aws', '.claude', 'node_modules', '__pycache__', 'security-audit', 'outputs', 'verification', '.impeccable'}
 OMIT = {'scripts/configure_fork.py'}
 SECRETS = re.compile(rb'(?<![A-Za-z0-9_-])(?:sk-(?:proj-|svcacct-)?[A-Za-z0-9_-]{24,}|gh[pousr]_[A-Za-z0-9]{30,}|'
