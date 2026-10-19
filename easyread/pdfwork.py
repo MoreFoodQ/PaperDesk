@@ -1,6 +1,6 @@
-"""PDF 相关的机械活：渲染原页、抽文字和字符坐标、裁图、给译文段落定位原页区域。
+"""PDF 相關的機械活：渲染原頁、抽文字和字符座標、裁圖、給譯文段落定位原頁區域。
 
-这里不做任何翻译，也不调用模型。
+這裡不做任何翻譯，也不呼叫模型。
 """
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ _VARIANT_LOCK = threading.RLock()
 
 @contextmanager
 def open_pdf(pdf: Path):
-    """所有 PDFium 调用与资源释放共用一把锁，包括操作不同文档的线程。"""
+    """所有 PDFium 呼叫與資源釋放共用一把鎖，包括操作不同文件的執行緒。"""
     import pypdfium2 as pdfium
     with _PDFIUM_LOCK, closing(pdfium.PdfDocument(str(pdf))) as doc:
         if len(doc) > 1000:
@@ -54,7 +54,7 @@ def render_pages(pdf: Path, out_dir: Path, scale: float = 2.4, quality: int = 84
 
 
 def extract_text(pdf: Path, out_dir: Path) -> int:
-    """每页一份 .txt（给 agent 读）和 .chars.json（给定位用，坐标按页宽高归一化）。"""
+    """每頁一份 .txt（給 agent 讀）和 .chars.json（給定位用，座標按頁寬高正規化）。"""
     from pypdfium2 import raw as pdfium_c
 
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -110,7 +110,7 @@ def _char_box(box, bounds, rotation: int) -> list[float] | None:
 
 
 def crop(root: Path, page: int, box: list[float], out_name: str, scale: float = 3.0) -> str:
-    """box 是按页宽高归一化的 [x0, y0, x1, y1]；输出到 figures/，返回相对路径。"""
+    """box 是按頁寬高正規化的 [x0, y0, x1, y1]；輸出到 figures/，回傳相對路徑。"""
     if os.environ.get('PAPERDESK_PDF_WORKER') != '1':
         from .pdf_isolation import run
         return run('crop', root, page, box, out_name, scale)
@@ -126,11 +126,11 @@ def crop(root: Path, page: int, box: list[float], out_name: str, scale: float = 
     return rel
 
 
-# ---------- 定位：译文段落 -> 原页区域 ----------
+# ---------- 定位：譯文段落 -> 原頁區域 ----------
 
 _MATH = re.compile(r"\$[^$]*\$")
 _ALNUM = re.compile(r"[a-z0-9]")
-LOCATE_VERSION = "5"  # 图形范围按页面上看得见的像素收边；旧论文打开时重算。
+LOCATE_VERSION = "5"  # 圖形範圍按頁面上看得見的像素收邊；舊論文打開時重算。
 
 
 def _norm(s: str) -> str:
@@ -144,7 +144,7 @@ def _page_stream(extract_dir: Path, n: int):
     chars = json.loads(path.read_text(encoding="utf-8"))
     text, idx = [], []
     for k, c in enumerate(chars):
-        for t in _norm(c[0]):  # 连字 ﬁ/ﬂ 会展开成两个字母，指向同一个字符框
+        for t in _norm(c[0]):  # 連字 ﬁ/ﬂ 會展開成兩個字母，指向同一個字符框
             text.append(t)
             idx.append(k)
     return "".join(text), idx, chars
@@ -169,7 +169,7 @@ def _bounds(boxes: list[list[float]]) -> list[float]:
 
 
 def _boxes(chars, idx, a: int, b: int) -> list[list[float]]:
-    """保留栏间空白：横向不相连的字符分组各有一个框，而不是取整段的外接框。"""
+    """保留欄間空白：橫向不相連的字符分組各有一個框，而不是取整段的外接框。"""
     selected = [chars[i][1:5] for i in set(idx[a:min(b + 1, len(idx))])]
     selected = [box for box in selected if box[2] > box[0] and box[3] > box[1]]
     if not selected:
@@ -255,7 +255,7 @@ def _locate(root: Path) -> dict:
 
 
 def refresh_layout(root: Path) -> None:
-    """沿用上游的版本标记；并发打开同一篇论文时只重算一次。"""
+    """沿用上游的版本標記；併發打開同一篇論文時只重算一次。"""
     with _LAYOUT_LOCK:
         marker = root / "extract" / "locate.version"
         if not (root / "layout.json").exists() or not (root / "paper.json").exists():
@@ -272,7 +272,7 @@ def _overlap_x(a: list, x0: float, x1: float) -> bool:
 
 
 def _column(locs: list[dict], box: list) -> tuple[float, float] | None:
-    """双栏页上 box 所在那一栏的左右边界；单栏页或 box 本身横跨两栏时返回 None。"""
+    """雙欄頁上 box 所在那一欄的左右邊界；單欄頁或 box 本身橫跨兩欄時回傳 None。"""
     left = [l["box"] for l in locs if l["box"][2] <= 0.55]
     right = [l["box"] for l in locs if l["box"][0] >= 0.45]
     if len(left) < 2 or len(right) < 2 or box[2] - box[0] > 0.5:
@@ -288,7 +288,7 @@ def _page_locs(layout: dict, page: int) -> list[dict]:
 
 
 def _extend_captioned(blocks: list[dict], layout: dict, root: Path | None = None):
-    """图优先用 PDF 图形边界；表格或无法识别的图按题注所在栏估算。"""
+    """圖優先用 PDF 圖形邊界；表格或無法識別的圖按題注所在欄估算。"""
     from .figure_geometry import locate_figures
     visual = locate_figures(root, blocks, layout) if root else {}
     for block in blocks:
@@ -305,7 +305,7 @@ def _extend_captioned(blocks: list[dict], layout: dict, root: Path | None = None
         col = _column(others, loc["box"])
         if col:
             x0, x1 = col
-        elif x1 - x0 < 0.45 and abs((x0 + x1) / 2 - 0.5) > 0.1:  # 窄题注偏在一侧：正文绕排的小表/小图
+        elif x1 - x0 < 0.45 and abs((x0 + x1) / 2 - 0.5) > 0.1:  # 窄題注偏在一側：正文繞排的小表/小圖
             x0, x1 = max(0.05, x0 - 0.02), min(0.95, x1 + 0.02)
         else:
             x0, x1 = min(x0, 0.15), max(x1, 0.85)
@@ -317,12 +317,12 @@ def _extend_captioned(blocks: list[dict], layout: dict, root: Path | None = None
             below = [b[1] for b in same_col if b[1] > y1]
             y1 = min(below) - 0.005 if below else 0.92
         loc["box"] = [x0, round(y0, 4), x1, round(y1, 4)]
-        loc.pop("boxes", None)  # 图表框要包含图像本身，按题注扩展后用整个区域。
-        loc["src"] = "caption"  # 撑过的框旁边常有绕排正文，后面截重叠时不能再截它
+        loc.pop("boxes", None)  # 圖表框要包含圖像本身，按題注擴展後用整個區域。
+        loc["src"] = "caption"  # 撐過的框旁邊常有繞排正文，後面截重疊時不能再截它
 
 
 def _clamp_overlaps(layout: dict):
-    """只匹配到开头的块按长度估了结尾，可能压到同一栏的下一块；截到它的上沿。"""
+    """只匹配到開頭的塊按長度估了結尾，可能壓到同一欄的下一塊；截到它的上沿。"""
     by_page = {page: _page_locs(layout, page) for page in {loc["page"] for loc in layout.values()}}
     for locs in by_page.values():
         locs.sort(key=lambda l: l["box"][1])
@@ -340,7 +340,7 @@ def _clamp_overlaps(layout: dict):
 
 
 def _fill_gaps(blocks: list[dict], layout: dict):
-    """公式这类没有英文可匹配的块：放在同一栏里下一块之上、上方最近一块之下。"""
+    """公式這類沒有英文可匹配的塊：放在同一欄裡下一塊之上、上方最近一塊之下。"""
     for i, block in enumerate(blocks):
         bid = block.get("id")
         if not bid or bid in layout or not block.get("page"):
@@ -357,7 +357,7 @@ def _fill_gaps(blocks: list[dict], layout: dict):
         col = _column(locs, ref["box"]) if ref else None
         x0, x1 = col if col else (0.12, 0.88)
         if nxt and not _overlap_x(nxt["box"], x0, x1):
-            nxt = None  # 下一块在另一栏，不能拿它当下沿
+            nxt = None  # 下一塊在另一欄，不能拿它當下沿
         bottom = nxt["box"][1] if nxt else 0.92
         above = [l["box"][3] for l in locs if _overlap_x(l["box"], x0, x1) and l["box"][3] <= bottom + 0.001]
         top = max(above) if above else 0.08
@@ -367,7 +367,7 @@ def _fill_gaps(blocks: list[dict], layout: dict):
 
 
 def engine_image(root: Path, n: int) -> Path:
-    """给翻译模型看的原页图（JPEG，模型工具普遍支持），按需生成。"""
+    """給翻譯模型看的原頁圖（JPEG，模型工具普遍支援），按需生成。"""
     if os.environ.get('PAPERDESK_PDF_WORKER') != '1':
         from .pdf_isolation import run
         return Path(run('engine_image', root, n))
@@ -383,7 +383,7 @@ def engine_image(root: Path, n: int) -> Path:
 
 
 def page_variant(root: Path, rel: str, width: int) -> Path | None:
-    """原页图的缩小版（原图 2.4 倍渲染、约 1500 像素宽，右侧面板用不着那么大）。生成一次缓存在 pages/w{宽}/。"""
+    """原頁圖的縮小版（原圖 2.4 倍渲染、約 1500 像素寬，右側面板用不著那麼大）。生成一次快取在 pages/w{寬}/。"""
     width = max(400, min(2000, width // 100 * 100))
     src = (root / rel).resolve()
     if not src.is_relative_to((root / "pages").resolve()) or not src.is_file():
@@ -408,11 +408,11 @@ def page_variant(root: Path, rel: str, width: int) -> Path | None:
     return out
 
 
-PANEL_WIDTH = 1000  # 原页面板默认要的宽度（阅读页按面板宽度只会要 1000 或 1600）
+PANEL_WIDTH = 1000  # 原頁面板預設要的寬度（閱讀頁按面板寬度只會要 1000 或 1600）
 
 
 def warm_variants(root: Path, width: int = PANEL_WIDTH) -> None:
-    """后台把整篇的面板图都先生成好，打开原页面板时不用等。"""
+    """背景把整篇的面板圖都先生成好，打開原頁面板時不用等。"""
     pages_dir = root / "pages"
     if not pages_dir.exists():
         return
@@ -422,7 +422,7 @@ def warm_variants(root: Path, width: int = PANEL_WIDTH) -> None:
 
 
 def prepare(root: Path) -> list[dict]:
-    """渲染原页 + 抽文字，返回 meta.pages。"""
+    """渲染原頁 + 抽文字，回傳 meta.pages。"""
     meta = json.loads((root / 'paper.json').read_text(encoding='utf-8')).get('meta', {}) if (root / 'paper.json').exists() else {}
     if meta.get('format') == 'epub':
         from .pdf_isolation import run

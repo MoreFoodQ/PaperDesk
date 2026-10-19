@@ -1,5 +1,5 @@
-/* 右侧面板（PDF 原页 / 笔记 / 问 AI）宽度：拖面板左边缘调整，双击恢复默认，记在本机。
-   把手单独挂在 body 上，面板内容重绘不会把它冲掉。 */
+/* 右側面板（PDF 原頁 / 筆記 / 問 AI）寬度：拖面板左邊緣調整，按兩下恢復預設，記在本機。
+   把手單獨掛在 body 上，面板內容重繪不會把它沖掉。 */
 (function (PR) {
   "use strict";
   const body = document.body;
@@ -17,7 +17,7 @@
   let saved = PR.ls.get(KEY, 0);
   setW(saved);
 
-  /* 宽度变了：正文重排并停在刚才读的段，原页按新宽度换合适清晰度的图 */
+  /* 寬度變了：正文重排並停在剛才讀的段，原頁按新寬度換合適清晰度的圖 */
   function relayout() {
     const anchor = PR.readingBlock && PR.readingBlock();
     const node = anchor && document.getElementById("b-" + anchor);
@@ -43,7 +43,7 @@
     document.addEventListener("mousemove", move); document.addEventListener("mouseup", up);
   });
   grip.addEventListener("dblclick", () => { saved = 0; setW(0); PR.ls.set(KEY, 0); relayout(); });
-  /* 窗口变窄时别让面板把正文挤没 */
-  window.addEventListener("resize", () => { if (saved) setW(saved); });  // 同步改，main.js 里防抖后的重排就用上新宽度
+  /* 窗口變窄時別讓面板把正文擠沒 */
+  window.addEventListener("resize", () => { if (saved) setW(saved); });  // 同步改，main.js 裡防抖後的重排就用上新寬度
   new MutationObserver(() => { if (saved) setW(saved); }).observe(body, { attributes: true, attributeFilter: ["class"] });
 })(window.PR);

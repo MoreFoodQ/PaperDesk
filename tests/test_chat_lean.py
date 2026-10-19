@@ -1,4 +1,4 @@
-"""问 AI、回答笔记、重译一段也只带用得到的东西：Claude 只给 Read 工具，Codex 关掉用户的 MCP；不认新参数时退回原样。
+"""問 AI、回答筆記、重譯一段也只帶用得到的東西：Claude 只給 Read 工具，Codex 關掉使用者的 MCP；不認新參數時退回原樣。
 python -m unittest tests.test_chat_lean"""
 import io
 import json
@@ -63,7 +63,7 @@ class ChatClaudeLeanTest(unittest.TestCase):
         with mock.patch.object(engines, "claude_path", lambda c: "claude"), \
                 mock.patch.object(engines, "_popen", lambda a, c: FakeProc(result_lines("答"))):
             "".join(chat._stream_claude({}, "q", Path("."), cancel))
-        self.assertFalse(cancel.is_set())  # 重试要用同一个 cancel，答完不能把它置上
+        self.assertFalse(cancel.is_set())  # 重試要用同一個 cancel，答完不能把它置上
 
 
 class OtherPathsLeanTest(unittest.TestCase):

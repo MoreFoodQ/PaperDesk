@@ -39,9 +39,9 @@ def check_dependencies(python: list[str]) -> None:
 
 
 def main() -> None:
-    sys.stdout.reconfigure(encoding="utf-8")  # Windows 控制台默认不是 UTF-8，下面的中文提示会让脚本崩掉
+    sys.stdout.reconfigure(encoding="utf-8")  # Windows 控制檯預設不是 UTF-8，下面的中文提示會讓指令碼崩掉
     python = python_with_pyinstaller()
-    check_dependencies(python)  # 验证通过后再清理旧产物
+    check_dependencies(python)  # 驗證透過後再清理舊產物
     OUT.mkdir(parents=True, exist_ok=True)
     WORK.mkdir(parents=True, exist_ok=True)
     if not OUT.resolve().is_relative_to(ROOT.resolve()) or not WORK.resolve().is_relative_to(ROOT.resolve()):

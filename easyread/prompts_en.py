@@ -1,6 +1,6 @@
-"""“只读原文”的两段提示词：
-- structure：不翻译，只把原页整理成和译文一样的块（段落、标题、公式、表格），文字都放 en；
-- fill：之后想看中文了，给已经整理好的块就地补上 zh，块 id 不变，笔记、划线都还挂得住。"""
+"""“閱讀原文”的兩段提示詞：
+- structure：不翻譯，只把原頁整理成和譯文一樣的塊（段落、標題、公式、表格），文字都放 en；
+- fill：之後想看中文了，給已經整理好的塊就地補上 zh，塊 id 不變，筆記、劃線都還維持關聯。"""
 from __future__ import annotations
 
 import json
@@ -50,7 +50,7 @@ def structure(ws: Workspace, pages: list[int], engine: str, next_head: str, skip
 
 
 def todo(blocks: list[dict], translate_images: bool = True) -> dict[str, object]:
-    """这些块里还没有中文的地方：{键: 英文}。键同页面：块 id、id#caption、id#image（图内文字）、id#序号、id#head（表头）。"""
+    """這些塊裡還沒有中文的地方：{鍵: 英文}。鍵同頁面：塊 id、id#caption、id#image（圖內文字）、id#序號、id#head（表頭）。"""
     out: dict[str, object] = {}
     for b in blocks:
         t = b.get("type")
@@ -70,7 +70,7 @@ def todo(blocks: list[dict], translate_images: bool = True) -> dict[str, object]
 
 
 def fill(ws: Workspace, pages: list[int], items: dict[str, object]) -> str:
-    """给已经整理好的原文块补译文。"""
+    """給已經整理好的原文塊補譯文。"""
     first = 1 in pages
     target = langs.of_paper(ws.load("paper").get("meta"))
     name = langs.prompt_name(target)

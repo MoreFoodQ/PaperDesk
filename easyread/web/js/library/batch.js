@@ -1,11 +1,11 @@
-/* 文献库批量操作：勾几篇论文，一次放进分类、移出当前分类、切换在读 / 未读 / 已读、翻译、导出引用、移到回收站。
-   进入：点表头“批量操作”，或点缩略图左上角的小方框，或 Ctrl/⌘ + 点论文，或 Ctrl/⌘ + A 全选。
-   多选时：点论文 = 勾上 / 取消；Shift + 点 = 连选一段；Esc 或“完成”退出；勾着的论文可以一起拖到侧栏分类上。
-   换分类、搜索时已勾的都留着；表头的全选框只管当前列表里看得见的。 */
+/* 文獻庫批量操作：勾幾篇論文，一次放進分類、移出當前分類、切換在讀 / 未讀 / 已讀、翻譯、匯出引用、移到回收站。
+   進入：點表頭“批量操作”，或點縮略圖左上角的小方框，或 Ctrl/⌘ + 點論文，或 Ctrl/⌘ + A 全選。
+   多選時：點論文 = 勾上 / 取消；Shift + 點 = 連選一段；Esc 或“完成”退出；勾著的論文可以一起拖到側欄分類上。
+   換分類、搜索時已勾的都留著；表頭的全選框只管當前清單裡看得見的。 */
 (function (PR) {
   "use strict";
   const L = PR.lib;
-  let anchor = null;  // Shift 连选的起点
+  let anchor = null;  // Shift 連選的起點
 
   const pickedItems = () => L.items.filter((i) => L.picked.has(i.id));
   const busy = (i) => i.job && ["queued", "running"].includes(i.job.state);
@@ -28,14 +28,14 @@
     anchor = id;
   }
 
-  /* ---------- 表头 ---------- */
+  /* ---------- 表頭 ---------- */
   const head = PR.$(".list-head"), bar = PR.$("#batchBar"), pickBtn = PR.$("#pickBtn");
   pickBtn.innerHTML = PR.icon("check", "sm") + PR.t("批量操作");
   pickBtn.title = PR.t("勾选几篇论文，一起放进分类、翻译、导出引用（Ctrl/⌘ + 点论文也行）");
   const tool = (act, label, icon, title) => '<button class="btn sm line" data-b="' + act + '"' + (title ? ' title="' + PR.esc(title) + '"' : "") + ">" + (icon ? PR.icon(icon, "sm") : "") + label + "</button>";
 
   PR.renderBatch = function (list) {
-    L.picked.forEach((id) => { if (!L.byId(id)) L.picked.delete(id); });  // 删掉了的不再算
+    L.picked.forEach((id) => { if (!L.byId(id)) L.picked.delete(id); });  // 刪掉了的不再算
     head.classList.toggle("picking", L.picking);
     PR.$("#list").classList.toggle("picking", L.picking);
     pickBtn.disabled = !list.length;
@@ -70,7 +70,7 @@
   function removeFrom(name) {
     const n = setTags((tags) => tags.filter((t) => t !== name));
     PR.toast(PR.t("已把 {n} 篇移出“{name}”", { n, name: PR.esc(name) }));
-    if (name === L.tag) L.endPick();  // 勾着的都不在当前列表了，留着勾选只会让人找不着
+    if (name === L.tag) L.endPick();  // 勾著的都不在當前清單了，留著勾選只會讓人找不著
   }
   async function newCat(then) {
     const name = ((await PR.promptText({ title: PR.t("新建分类"), placeholder: PR.t("分类名"), ok: PR.t("建好放进去"), max: 30 })) || "").trim().slice(0, 30);
@@ -83,8 +83,8 @@
     L.patchMany(pickedItems().filter((i) => Object.keys(fields).some((k) => (k === "status" ? i.status || "unread" : !!i[k]) !== fields[k])).map((i) => [i.id, fields]));
     PR.toast(msg);
   };
-  /* 加入分类：星标 + 自建分类，只往里放；已经全在里面的右边打 ✓。
-     移出只在打开某个分类（或星标）时出现在表头，“全部”里没有移出。 */
+  /* 加入分類：星標 + 自建分類，只往裡放；已經全在裡面的右邊打 ✓。
+     移出只在打開某個分類（或星標）時出現在表頭，“全部”裡沒有移出。 */
   function catMenu(at) {
     const its = pickedItems(), total = its.length;
     const entry = (label, icon, has, add) => ({ label, icon, kbd: its.every(has) ? "✓" : "", fn: add });
@@ -100,7 +100,7 @@
     setFields({ starred: false }, PR.t("{n} 篇已取消星标", { n: L.picked.size }))();
     L.endPick();
   }
-  /* 切换状态：在读 / 未读 / 已读三选一，全都是这个状态的打 ✓ */
+  /* 切換狀態：在讀 / 未讀 / 已讀三選一，全都是這個狀態的打 ✓ */
   function statusMenu(at) {
     const its = pickedItems(), total = its.length;
     const status = (s, label, icon) => ({ label, icon, kbd: its.every((i) => (i.status || "unread") === s) ? "✓" : "", fn: setFields({ status: s }, PR.t("{n} 篇已标为{status}", { n: total, status: label })) });
@@ -162,7 +162,7 @@
     run(act, b);
   });
 
-  /* 抢在 app.js 之前处理：多选时点论文是勾选，不是打开详情 */
+  /* 搶在 app.js 之前處理：多選時點論文是勾選，不是打開詳情 */
   const list = PR.$("#list");
   list.addEventListener("click", (e) => {
     const r = e.target.closest(".row");
@@ -200,7 +200,7 @@
     }
     if (!L.picking) return;
     if (e.key === "Escape") { e.stopPropagation(); return L.endPick(); }
-    // 多选时上下键、回车、S 不去开详情
+    // 多選時上下鍵、回車、S 不去開詳情
     if (["ArrowDown", "ArrowUp", "j", "k", "Enter", "s"].includes(e.key)) e.stopPropagation();
   }, true);
 })(window.PR);

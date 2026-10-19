@@ -1,5 +1,5 @@
-/* 翻译和问 AI 的用量（job.json 的 usage / usage_total，对话里每条回答的 usage）。
-   样子学 Claude 桌面端：订阅额度用进度条 + 什么时候重置；token 数做成小号的明细。 */
+/* 翻譯和問 AI 的用量（job.json 的 usage / usage_total，對話裡每條回答的 usage）。
+   樣子學 Claude 桌面端：訂閱額度用進度條 + 什麼時候重設；token 數做成小號的明細。 */
 window.PR = window.PR || {};
 (function (PR) {
   "use strict";
@@ -28,12 +28,12 @@ window.PR = window.PR || {};
     return PR.t("{month} 月 {day} 日 週{weekday} {time} 重置", {month: d.getMonth() + 1, day: d.getDate(), weekday: "日一二三四五六"[d.getDay()], time}); // i18n-ok weekday symbols
   }
 
-  /* 额度进度条（Claude 订阅才有），排版学 Claude 桌面端：名字在左，“几小时后重置 + 百分比”在右，下面一根细条。
-     额度是整个账号共用的，同时用 Claude Code 干别的也算在里面，所以不拿前后相减去算翻译用了多少 */
+  /* 額度進度條（Claude 訂閱才有），排版學 Claude 桌面端：名字在左，“幾小時後重設 + 百分比”在右，下面一根細條。
+     額度是整個帳號共用的，同時用 Claude Code 幹別的也算在裡面，所以不拿前後相減去算翻譯用了多少 */
   PR.usageBars = function (limits, title) {
     const rows = WINDOWS.filter(([k]) => limits && limits[k] && limits[k].used != null).map(([k, name]) => {
       const w = limits[k];
-      const stale = w.resets_at && w.resets_at * 1000 <= Date.now();  // 记下的是重置前的数，已经不准了
+      const stale = w.resets_at && w.resets_at * 1000 <= Date.now();  // 記下的是重設前的數，已經不準了
       return '<div class="us-limit ' + (stale ? "stale" : level(w.used)) + '"><div class="us-row"><span>' + name + "</span>" +
         "<em>" + (stale ? PR.t("已重置，当时 {pct}", { pct: pct(w.used) }) : resetText(w.resets_at) + "<b>" + pct(w.used) + "</b>") + "</em></div>" +
         '<div class="us-bar"><i style="width:' + (stale ? 0 : Math.min(100, w.used * 100)) + '%"></i></div></div>';
@@ -46,7 +46,7 @@ window.PR = window.PR || {};
     return m < 1 ? PR.t("刚刚") : m < 60 ? PR.t("{n} 分钟前", { n: m }) : m < 1440 ? PR.t("{n} 小时前", { n: Math.round(m / 60) }) : PR.t("{n} 天前", { n: Math.round(m / 1440) });
   }
 
-  /* token 明细：右边大数字，下面一行小字 */
+  /* token 明細：右邊大數字，下面一行小字 */
   PR.usageTokens = function (label, u) {
     if (!u || !u.calls) return "";
     return '<div class="us-tokens"><div class="us-row"><span>' + label + "</span><b>" + tokens(u.input + u.output) + " token</b></div>" +
@@ -54,14 +54,14 @@ window.PR = window.PR || {};
       (u.cost_usd != null && !u.limits ? " · " + PR.t("按官方价约 ${n}", { n: u.cost_usd.toFixed(2) }) : "") + "</div></div>";
   };
 
-  /* 翻译进度旁边的一句话：“已用 12.3 万 token · 5 小时额度用到 24%” */
+  /* 翻譯進度旁邊的一句話：“已用 12.3 萬 token · 5 小時額度用到 24%” */
   PR.usageShort = function (u) {
     if (!u || !u.calls) return "";
     const five = u.limits && u.limits.five_hour;
     return PR.t("已用 {n} token", { n: tokens(u.input + u.output) }) + (five && five.used != null ? " · " + PR.t("5 小时额度用到 {pct}", { pct: pct(five.used) }) : "");
   };
 
-  /* 论文详情里的用量卡片：上次翻译、这篇累计、译完时的额度 */
+  /* 論文詳情裡的用量卡片：上次翻譯、這篇累計、譯完時的額度 */
   PR.usageCard = function (u, total) {
     if (!u || !u.calls) return "";
     return '<div class="us-card">' + PR.usageTokens(PR.t("上次翻译"), u) +
@@ -69,7 +69,7 @@ window.PR = window.PR || {};
       PR.usageBars(u.limits, PR.t("Claude 订阅用量（译完时，整个账号共用）")) + "</div>";
   };
 
-  /* 问 AI：整个对话的合计 */
+  /* 問 AI：整個對話的合計 */
   function threadSum(msgs) {
     const used = (msgs || []).map((m) => m.usage).filter((u) => u && u.calls);
     if (!used.length) return null;
@@ -78,8 +78,8 @@ window.PR = window.PR || {};
     return sum;
   }
 
-  /* 对话输入框底部的小圆环。latest：服务端记下的最近一次额度 {limits, at}，新对话也有；
-     没用过 Claude 订阅时只写这个对话的 token 数 */
+  /* 對話輸入框底部的小圓環。latest：服務端記下的最近一次額度 {limits, at}，新對話也有；
+     沒用過 Claude 訂閱時只寫這個對話的 token 數 */
   PR.usageChip = function (latest, msgs, open) {
     const five = latest && latest.limits && latest.limits.five_hour;
     const live = five && five.used != null && !(five.resets_at && five.resets_at * 1000 <= Date.now());
@@ -96,9 +96,9 @@ window.PR = window.PR || {};
     return latest && latest.limits ? '<button class="' + cls + '" data-c="usage" title="' + PR.t("用量") + '"><span>' + PR.t("用量") + "</span></button>" : "";
   };
 
-  /* 上下文条（学 Claude 的 Context window）：最近一次回答时发给模型的全部内容。每次提问都会连同之前的对话一起发，
-     所以看的是“当前对话多大”，不是累计。分三段：缓存命中的（系统提示、之前的对话）、这次新发的、模型的回答。
-     不知道模型上下文多大时（API、Codex），条按 20 万算，右边只写 token 数 */
+  /* 上下文條（學 Claude 的 Context window）：最近一次回答時發給模型的全部內容。每次提問都會連同之前的對話一起發，
+     所以看的是“當前對話多大”，不是累計。分三段：快取命中的（系統提示、之前的對話）、這次新發的、模型的回答。
+     不知道模型上下文多大時（API、Codex），條按 20 萬算，右邊只寫 token 數 */
   function contextHtml(msgs) {
     const last = (msgs || []).map((m) => m.usage).filter((u) => u && u.calls && u.context).pop();
     if (!last) return '<div class="us-ctx"><div class="us-row"><span>' + PR.t("上下文") + "</span><em>" + PR.t("还没提问") + '</em></div><div class="us-bar"></div></div>';
@@ -110,7 +110,7 @@ window.PR = window.PR || {};
       '<div class="us-legend"><span><i class="cached"></i>' + PR.t("缓存命中") + '</span><span><i class="fresh"></i>' + PR.t("新发送") + '</span><span><i class="out"></i>' + PR.t("回答") + "</span></div></div>";
   }
 
-  /* 点圆环弹出的用量面板 */
+  /* 點圓環彈出的用量面板 */
   PR.usagePop = function (latest, msgs) {
     const bars = latest && latest.limits ? PR.usageBars(latest.limits, PR.t("Claude 订阅用量")) : "";
     return '<div class="us-pop">' + contextHtml(msgs) + bars +

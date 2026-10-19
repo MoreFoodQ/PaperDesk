@@ -1,4 +1,4 @@
-/* 设置 → 云文献库：只管理本地位置，同步交给网盘客户端。 */
+/* 設定 → 雲文獻庫：只管理本機位置，同步交給雲端空間客戶端。 */
 (function (PR) {
   "use strict";
   let busy = false, dismissedHost = "";
@@ -20,7 +20,7 @@
       (off ? " disabled" : "") + ">" + PR.esc(label) + "</button>";
   }
 
-  /* 一张卡片：图标 + 名字 + 路径 + 一句状态，右边是操作按钮 */
+  /* 一張卡片：圖標 + 名字 + 路徑 + 一句狀態，右邊是操作按鈕 */
   function card(icon, label, name, path, stateText, acts, cls) {
     return '<div class="cloud-card' + (cls ? " " + cls : "") + '"><div class="cloud-card-icon">' + PR.icon(icon) + '</div><div class="cloud-card-body">' +
       (label ? '<span class="cloud-label">' + PR.esc(label) + "</span>" : "") + "<b>" + PR.esc(name) + "</b>" +
@@ -28,7 +28,7 @@
       '</div><div class="cloud-card-acts">' + acts + "</div></div>";
   }
 
-  /* 网盘卡片：空的就“迁移到这里”；已有论文就“切换到这里”，合并是第二个按钮；自选的文件夹可以移除 */
+  /* 雲端空間卡片：空的就“移轉到這裡”；已有論文就“切換到這裡”，合併是第二個按鈕；自選的資料夾可以移除 */
   function target(s, item) {
     const name = item.label || PR.t("自选文件夹");
     if (item.incomplete) return card("cloud", "", name, item.path, PR.t("上次迁移到这里没有完成，原文献库不受影响"), button("cleanup", PR.t("清理未完成的迁移"), item.path, busy), "warn");
@@ -41,7 +41,7 @@
     return card(item.label ? "cloud" : "folder", "", name, item.path, stateText, acts + forget);
   }
 
-  function cloudOf(d) {  // 现在的文献库在哪个网盘里
+  function cloudOf(d) {  // 現在的文獻庫在哪個雲端空間裡
     const norm = (p) => String(p || "").replace(/[\\/]+$/, "").replace(/\\/g, "/").toLowerCase() + "/";
     return (d.candidates || []).find((c) => c.root_path && norm(d.path).startsWith(norm(c.root_path)));
   }
@@ -110,7 +110,7 @@
         if (action === "custom") {
           const desktop = window.easyreadDesktop;
           let path = desktop && desktop.pickFolder ? await desktop.pickFolder() : null;
-          if (!(desktop && desktop.pickFolder)) {  // 浏览器版：后端弹系统的选文件夹窗口，弹不出来才让人填路径
+          if (!(desktop && desktop.pickFolder)) {  // 瀏覽器版：後端彈系統的選資料夾窗口，彈不出來才讓人填路徑
             const r = await PR.api("/api/library/pick-folder", { method: "POST", body: {} }).catch(() => ({ supported: false }));
             path = r.supported ? r.path : await PR.promptText({
               title: PR.t("文献库文件夹"), body: PR.t("填写网盘同步文件夹或已有 EasyRead 文献库的完整路径。") + "\n" +
@@ -132,7 +132,7 @@
     },
   };
 
-  /* 确认 → 迁移（复制并核对，成功后以后都存到新位置）/ 切换 / 合并 */
+  /* 確認 → 移轉（複製並核對，成功後以後都存到新位置）/ 切換 / 合併 */
   async function migrate(s, action, target) {
     try {
         busy = true; redraw();

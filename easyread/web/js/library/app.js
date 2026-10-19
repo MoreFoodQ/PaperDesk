@@ -1,4 +1,4 @@
-/* 文献库：列表、筛选、排序、键盘操作、状态轮询。 */
+/* 文獻庫：清單、篩選、排序、鍵盤操作、狀態輪詢。 */
 (function (PR) {
   "use strict";
   const L = (PR.lib = { items: [], view: "all", tag: null, q: "", sort: PR.ls.get("paperdesk-sort", "opened"), selected: null, engine: "claude", picked: new Set(), picking: false });
@@ -32,7 +32,7 @@
   ["click", "auxclick", "contextmenu"].forEach((name) => document.addEventListener(name, prepareReaderLink, true));
   L.patch = async function (id, fields) {
     const it = L.byId(id);
-    if (it) { Object.assign(it, fields.meta_override ? {} : fields); L.render(); }  // 先改界面，再存盘
+    if (it) { Object.assign(it, fields.meta_override ? {} : fields); L.render(); }  // 先改介面，再存盤
     try { await PR.api("/api/p/" + id + "/item", { method: "POST", body: fields }); }
     catch (e) { PR.toast(PR.t("保存失败：{msg}", { msg: PR.esc(e.message) })); }
     await L.load();
@@ -40,7 +40,7 @@
 
   L.load = async function () { apply(await PR.api("/api/library")); };
   function apply(d) {
-    L.lastData = d;  // 切换界面语言前存一份，刷新后先拿它画列表，不闪空白（lang-toggle.js）
+    L.lastData = d;  // 切換介面語言前存一份，重新整理後先拿它畫清單，不閃空白（lang-toggle.js）
     PR.token = d.token;
     L.engine = d.engine;
     L.engineLabel = d.engine_label;
@@ -135,7 +135,7 @@
       '<p class="try">' + PR.t("没有现成的论文？试试") + ' <button class="linkish" onclick="PR.importRef(&quot;1706.03762&quot;)">Attention Is All You Need</button></p></div>';
   }
 
-  /* 顶栏上的引擎状态：一眼看出现在用什么翻译、能不能用 */
+  /* 頂欄上的引擎狀態：一眼看出現在用什麼翻譯、能不能用 */
   async function engineChip() {
     const chip = PR.$("#engineChip");
     chip.innerHTML = '<span class="dot"></span><span>' + PR.esc(L.engineLabel || "") + "</span>";
@@ -188,7 +188,7 @@
     const r = e.target.closest(".row");
     if (r) L.select(r.dataset.id);
   });
-  /* 点列表空白处、侧栏、标题栏空白：收起右侧详情 */
+  /* 點清單空白處、側欄、標題欄空白：收起右側詳情 */
   document.addEventListener("click", (e) => {
     if (!L.selected || e.target.closest(".row, #detail, .dialog-backdrop, .menu, #toast, .topbar button, .topbar input, select")) return;
     if (e.target.closest(".main, .side, .topbar")) L.select(null);
@@ -221,16 +221,16 @@
   });
 
   PR.onSettingsSaved = () => L.load();
-  // 从阅读页按“返回”回来时浏览器可能直接用缓存的旧页面：重新取一次，在读状态、进度马上更新
+  // 從閱讀頁按“回傳”回來時瀏覽器可能直接用快取的舊頁面：重新取一次，在讀狀態、進度馬上更新
   window.addEventListener("pageshow", (e) => { if (e.persisted) L.load().then(restoreReturn).catch(() => {}); });
-  // 等侧栏、详情这些脚本都加载完再取数据：数据先到、脚本还没到时会出错
+  // 等側欄、詳情這些指令碼都載入完再取資料：資料先到、指令碼還沒到時會出錯
   document.addEventListener("DOMContentLoaded", () => {
     const prefsReady = PR.loadPrefs().then((p) => { if (p.reader && p.reader.theme) PR.applyTheme(p.reader.theme); PR.useServerUi(p); L.useServerSide(p); }).catch(() => {});
     try {
       const snap = JSON.parse(sessionStorage.getItem("paperdesk-lib-snap") || "null");
       sessionStorage.removeItem("paperdesk-lib-snap");
       if (snap && Date.now() - snap.t < 15000) apply(snap.d);
-    } catch (e) { /* 没有就等下面取 */ }
+    } catch (e) { /* 沒有就等下面取 */ }
     Promise.all([prefsReady, L.load()]).then(restoreReturn).catch((e) => { PR.$("#list").innerHTML = '<div class="empty-state"><div class="big">' + PR.t("连不上本地服务") + "</div>" + PR.esc(e.message) + "</div>"; });
   });
 })(window.PR);

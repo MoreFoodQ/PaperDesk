@@ -1,9 +1,8 @@
-"""OpenAI 兼容接口：两种格式都支持。
+"""OpenAI 相容 API 的請求與串流處理。
 
-- chat：POST {base}/chat/completions，几乎所有服务商都支持（DeepSeek、智谱、Ollama……）。
-- responses：POST {base}/responses，OpenAI 新接口；DeepSeek 等也已支持。中转站只开了这个时选它。
-
-另外 models() 读 {base}/models，给设置页“获取模型列表”用。
+- chat：使用 {base}/chat/completions。
+- responses：使用 {base}/responses。
+實際可用模型、影像能力與驗證方式由設定的服務商決定。
 """
 from __future__ import annotations
 
@@ -32,7 +31,7 @@ def _hint(code: int) -> str:
             404: tr("（地址、模型名或接口格式不对）"), 429: tr("（被限流了，稍后重试或换个模型）")}.get(code, "")
 
 
-_SESSION = f"easyread-{uuid.uuid4()}"  # 每次启动一个，整个进程内不变
+_SESSION = f"easyread-{uuid.uuid4()}"  # 每次啟動一個，整個行程內不變
 
 
 def kind(o: dict) -> str:
@@ -47,8 +46,8 @@ def _base(o: dict) -> str:
 
 
 def _headers(o: dict, stream: bool = False) -> dict:
-    # 要带 User-Agent：Python 默认的 "Python-urllib/x" 会被 Cloudflare 后面的接口（比如 OpenCode）直接拦掉，报 403 error code: 1010
-    # x-opencode-session：OpenCode Go 要求带一个稳定的会话 ID，不带报 400 MissingSessionID；别的服务商会忽略这个头
+    # 要帶 User-Agent：Python 預設的 "Python-urllib/x" 會被 Cloudflare 後面的介面（比如 OpenCode）直接攔掉，報 403 error code: 1010
+    # x-opencode-session：OpenCode Go 要求帶一個穩定的會話 ID，不帶報 400 MissingSessionID；別的服務商會忽略這個頭
     h = {"Content-Type": "application/json", "User-Agent": f"EasyRead/{__version__}", "x-opencode-session": _SESSION}
     if stream:
         h["Accept"] = "text/event-stream"
@@ -77,12 +76,12 @@ def _body(o: dict, prompt: str, images: list[Path], stream: bool, temperature: f
     if stream:
         body["stream"] = True
         if kind(o) == "chat":
-            body["stream_options"] = {"include_usage": True}  # 最后一块带上 token 用量；不认这个参数的接口会去掉再发
+            body["stream_options"] = {"include_usage": True}  # 最後一塊帶上 token 用量；不認這個參數的介面會去掉再發
     return body
 
 
 def _open(o: dict, body: dict, stream: bool):
-    """发请求。有的模型（推理模型、Kimi K2 系列）不让改 temperature、有的接口不认 stream_options，报 400 时去掉再发。"""
+    """發請求。有的模型（推理模型、Kimi K2 系列）不讓改 temperature、有的介面不認 stream_options，報 400 時去掉再發。"""
     path = "/responses" if kind(o) == "responses" else "/chat/completions"
     for _ in range(3):
         req = urllib.request.Request(_base(o) + path, data=json.dumps(body).encode(), headers=_headers(o, stream))
@@ -103,11 +102,11 @@ def _http_error(e: urllib.error.HTTPError) -> EngineError:
     return EngineError(tr("接口返回 {code}{hint}：{detail}", code=e.code, hint=_hint(e.code), detail=getattr(e, "detail", "")))
 
 
-# ---------- 一次拿到整段（翻译用） ----------
+# ---------- 一次拿到整段（翻譯用） ----------
 def complete(o: dict, prompt: str, images: list[Path], cancel=None, meter=None) -> str:
     body = _body(o, prompt, images, False, None if kind(o) == "responses" else 0.2)
     res = None
-    for attempt in range(4):  # 限流、服务端错误、网络抖动：等一会儿再试
+    for attempt in range(4):  # 限流、服務端錯誤、網路抖動：等一會兒再試
         if cancel is not None and cancel.is_set():
             raise Cancelled()
         try:
@@ -129,7 +128,7 @@ def complete(o: dict, prompt: str, images: list[Path], cancel=None, meter=None) 
 
 
 def _fetch(o: dict, body: dict, cancel) -> dict:
-    """发请求、读完整个回答。请求放在线程里，点取消就不再等它（这次调用的回答丢掉），不然要等接口返回，常常一两分钟。"""
+    """發請求、讀完整個回答。請求放在執行緒裡，點取消就不再等它（這次呼叫的回答丟掉），不然要等介面回傳，常常一兩分鐘。"""
     if cancel is None:
         with _open(o, body, False) as r:
             return json.loads(r.read())
@@ -139,7 +138,7 @@ def _fetch(o: dict, body: dict, cancel) -> dict:
         try:
             with _open(o, body, False) as r:
                 box["res"] = json.loads(r.read())
-        except BaseException as e:  # 原样交回主线程，限流重试、连不上这些分支照旧
+        except BaseException as e:  # 原樣交回主執行緒，限流重試、連不上這些分支照舊
             box["err"] = e
     t = threading.Thread(target=run, daemon=True)
     t.start()
@@ -194,7 +193,7 @@ def _check_response_status(res: dict) -> None:
 
 
 def _retry_after(value: str | None, default: float) -> float:
-    """Retry-After 可以是秒数或 HTTP 日期；不合法时使用正常退避。"""
+    """Retry-After 可以是秒數或 HTTP 日期；不合法時使用正常退避。"""
     if not value:
         return default
     try:
@@ -215,7 +214,7 @@ def _sleep(seconds: float, cancel) -> None:
         time.sleep(0.5)
 
 
-# ---------- 逐字输出（问 AI 用） ----------
+# ---------- 逐字輸出（問 AI 用） ----------
 def stream(o: dict, text: str, cancel, meter=None) -> Iterator[str]:
     if cancel.is_set():
         raise Cancelled()
@@ -237,7 +236,7 @@ _DONE, _EMPTY, _PARTIAL = object(), object(), object()
 
 
 def _payload(data: list[str]):
-    """一条事件的 data 行合起来：[DONE]、空事件、还没收完整的 JSON 分别给标记，否则给解析结果。"""
+    """一條事件的 data 行合起來：[DONE]、空事件、還沒收完整的 JSON 分別給標記，否則給解析結果。"""
     payload = "\n".join(data).strip()
     if payload == "[DONE]":
         return _DONE
@@ -250,9 +249,9 @@ def _payload(data: list[str]):
 
 
 def _events(r, cancel) -> Iterator[dict | None]:
-    """按空行分隔 SSE 事件，同一事件的多个 data 行要合起来解析；[DONE] 给 None。
-    有的中转接口事件之间只隔一个换行，或者最后一条后面没有空行就断开：
-    已攒下的 data 本身就是完整 JSON 时，碰到下一行 data 或连接结束也照样交出去。"""
+    """按空行分隔 SSE 事件，同一事件的多個 data 行要合起來解析；[DONE] 給 None。
+    有的中轉介面事件之間只隔一個換行，或者最後一條後面沒有空行就斷開：
+    已攢下的 data 本身就是完整 JSON 時，碰到下一行 data 或連接結束也照樣交出去。"""
     data = []
     for raw in r:
         if cancel.is_set():
@@ -261,7 +260,7 @@ def _events(r, cancel) -> Iterator[dict | None]:
         is_data = line.startswith("data:") or line == "data"
         if data and (not line or is_data):
             ev = _payload(data)
-            if not (ev is _PARTIAL and is_data):  # 还不完整又来了 data 行：一条事件拆成了多行，接着攒
+            if not (ev is _PARTIAL and is_data):  # 還不完整又來了 data 行：一條事件拆成了多行，接著攢
                 data.clear()
                 if ev is _DONE:
                     yield None
@@ -323,7 +322,7 @@ def _responses_pieces(r, cancel, meter=None) -> Iterator[str]:
 
 
 def _strip_think(pieces: Iterator[str]) -> Iterator[str]:
-    """推理模型把思考过程包在 <think> 里，读者不需要看。"""
+    """推理模型把思考過程包在 <think> 裡，讀者不需要看。"""
     thinking = False
     pending = ""
     for piece in pieces:
@@ -337,7 +336,7 @@ def _strip_think(pieces: Iterator[str]) -> Iterator[str]:
                 pending = pending[index + len(tag):]
                 thinking = not thinking
                 continue
-            # 留下可能是下一个标签开头的后缀，下一片到来后再判断。
+            # 留下可能是下一個標籤開頭的後綴，下一片到來後再判斷。
             keep = next((n for n in range(len(tag) - 1, 0, -1) if pending.endswith(tag[:n])), 0)
             visible = pending[:-keep] if keep else pending
             if not thinking and visible:
@@ -348,9 +347,9 @@ def _strip_think(pieces: Iterator[str]) -> Iterator[str]:
         yield pending
 
 
-# ---------- 模型列表 ----------
+# ---------- 模型清單 ----------
 def models(o: dict) -> list[str]:
-    """GET {base}/models，返回模型名（排好序）。"""
+    """GET {base}/models，回傳模型名（排好序）。"""
     base = (o.get("base_url") or "").strip().rstrip("/")
     if not base:
         raise EngineError(tr("先填接口地址"))
@@ -367,7 +366,7 @@ def models(o: dict) -> list[str]:
     except json.JSONDecodeError:
         raise EngineError(tr("这个地址不提供模型列表，手填模型名"))
     items = res.get("data") if isinstance(res, dict) else res
-    if not isinstance(items, list):  # Gemini 的旧格式是 {"models": [...]}
+    if not isinstance(items, list):  # Gemini 的舊格式是 {"models": [...]}
         items = (res or {}).get("models") or []
     ids = [str(m.get("id") or m.get("name") or "").removeprefix("models/") if isinstance(m, dict) else str(m) for m in items]
     return sorted({i for i in ids if i})

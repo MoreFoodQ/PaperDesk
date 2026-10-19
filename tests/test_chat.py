@@ -1,4 +1,4 @@
-"""“问 AI”的流式输出：用一个本机假的 OpenAI 兼容接口测，包括推理模型的 <think> 被去掉。  python -m unittest tests.test_chat"""
+"""“問 AI”的流式輸出：用一個本機假的 OpenAI 相容介面測，包括推理模型的 <think> 被去掉。  python -m unittest tests.test_chat"""
 import json
 import threading
 import unittest
@@ -83,12 +83,12 @@ class ChatStreamTest(unittest.TestCase):
             ws = Workspace(root)
             refs = [{"anchor": "b", "quote": ""}, {"anchor": "c", "quote": "丙"}]
             plain = chat.prompt(ws, [{"role": "user", "content": "这两段什么关系"}], "b", "", "openai", refs)
-            self.assertNotIn("红色重点", plain)           # 没问到标记，就不带
+            self.assertNotIn("红色重点", plain)           # 沒問到標記，就不帶
             self.assertIn("2 处标记", plain)
             self.assertIn("[c] 读者选中：「丙」", plain)   # 引用的第二段也在
             red = chat.prompt(ws, [{"role": "user", "content": "我标红的那些有什么联系"}], None, "", "openai")
             self.assertIn("红色重点", red)
-            self.assertNotIn("黄色句子", red)              # 只带问到的颜色
+            self.assertNotIn("黄色句子", red)              # 只帶問到的顏色
         finally:
             shutil.rmtree(root, ignore_errors=True)
 

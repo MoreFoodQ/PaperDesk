@@ -18,7 +18,7 @@ class NetcheckTest(unittest.TestCase):
         netcheck._ok.clear()
 
     def test_reachable_when_any_http_response(self):
-        srv = http.server.HTTPServer(("127.0.0.1", 0), http.server.BaseHTTPRequestHandler)  # 什么都 501
+        srv = http.server.HTTPServer(("127.0.0.1", 0), http.server.BaseHTTPRequestHandler)  # 什麼都 501
         threading.Thread(target=srv.serve_forever, daemon=True).start()
         try:
             self.assertIsNone(netcheck.problem(_api(f"http://127.0.0.1:{srv.server_port}/v1")))

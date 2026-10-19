@@ -1,5 +1,5 @@
-/* 段落操作：点一下段落出现操作条（在段落右上方），右键出完整菜单，键盘 J/K 移动当前段。
-   还有：重译一段、展开原文、引用和交叉引用的悬停预览、跳转。 */
+/* 段落操作：點一下段落出現操作條（在段落右上方），右鍵出完整菜單，鍵盤 J/K 移動當前段。
+   還有：重譯一段、展開原文、引用和交叉引用的懸停預覽、跳轉。 */
 (function (PR) {
   "use strict";
   const S = PR.state;
@@ -19,7 +19,7 @@
     const b = PR.blockById[id];
     if (!b) return [];
     const keys = PR.blockKeys(b);
-    const hasEn = PR.hasZh(b) && (b.en || b.caption_en || b.image_en || (b.items || []).some((i) => i.en));  // 只读原文、没译的块正文就是英文
+    const hasEn = PR.hasZh(b) && (b.en || b.caption_en || b.image_en || (b.items || []).some((i) => i.en));  // 閱讀原文、沒譯的塊正文就是英文
     const list = [
       { k: "note", label: PR.t("笔记"), icon: "note", fn: () => PR.startNote({ anchor: id }) },
       { k: "question", label: PR.t("提问"), icon: "question", fn: () => PR.startNote({ anchor: id, kind: "question" }) },
@@ -28,7 +28,7 @@
     if (hasEn && PR.feature("en")) list.push({ k: "en", label: (PR.originalFirst() && PR.prefs.mode !== "bi" ? PR.t("译文") : PR.t("原文")), icon: "en", fn: () => PR.toggleEn(id) });
     if (keys.length && PR.feature("edit")) list.push({ k: "edit", label: PR.t("改译文"), icon: "edit", fn: () => { if (PR.originalFirst()) PR.toggleEn(id, true); const zh = PR.$("#b-" + CSS.escape(id) + " .zh[data-key]"); zh && PR.editZh(zh); } });
     if (b.page && PR.feature("pages")) list.push({ k: "page", label: PR.t("PDF p.{page}", { page: b.page }), icon: "page", fn: () => PR.openPage(b.page, id) });
-    // 重译花 token、容易误点：默认关，开了也只放在“⋯”菜单里
+    // 重譯花 token、容易誤點：預設關，開了也只放在“⋯”菜單裡
     if (keys.length && PR.canAsk() && PR.feature("retranslate")) list.push({ k: "redo", label: PR.t("让模型重译这段…"), icon: "redo", menuOnly: true, fn: () => retranslate(id) });
     list.forEach((a) => { a.kbd = PR.keyOf ? PR.keyOf(a.k) : ""; });
     return list;
@@ -40,7 +40,7 @@
     if (!current) { PR.hideBlockbar(); return; }
     const el = document.getElementById("b-" + current);
     el.classList.add("current");
-    if (opts && opts.scroll) PR.centerOn(el);  // J/K：放到屏幕中间
+    if (opts && opts.scroll) PR.centerOn(el);  // J/K：放到螢幕中間
     if (!opts || opts.bar !== false) showBar();
     if (PR.syncPage && PR.$(".pv-follow input").checked) PR.syncPage(true);
   };
@@ -79,9 +79,9 @@
     items.push("-",
       { label: PR.t("复制译文"), icon: "copy", kbd: PR.keyOf("copy"), fn: () => copyBlock(id, "zh") },
       { label: ((S.paper.meta || {}).format === "epub" ? PR.t("複製原文") : PR.t("复制英文原文")), icon: "copy", fn: () => copyBlock(id, "en") },
-      // 贴进 Obsidian / Notion 是一条 Markdown 链接，点开（EasyRead 开着时）直接回到这一段
+      // 貼進 Obsidian / Notion 是一條 Markdown 連結，點開（EasyRead 開著時）直接回到這一段
       { label: PR.t("复制段落链接（贴进笔记软件）"), icon: "link", fn: () => {
-        const sec = PR.sectionOf ? PR.sectionOf(id) : "";  // 用“论文 · 章节 · 页码”当链接文字，正文里可能有公式，不好截
+        const sec = PR.sectionOf ? PR.sectionOf(id) : "";  // 用“論文 · 章節 · 頁碼”當連結文字，正文裡可能有公式，不好截
         const title = [(S.paper.meta || {}).short_zh || (S.paper.meta || {}).title_zh || PR.t("论文"), sec, b && b.page ? "p." + b.page : ""].filter(Boolean).join(" · ");
         navigator.clipboard.writeText("[" + title.replace(/[[\]]/g, "") + "](" + location.origin + location.pathname + "#b-" + id + ")").then(() => PR.toast(PR.t("已复制 Markdown 链接，贴进笔记里点开就回到这一段")));
       } });
@@ -94,7 +94,7 @@
     navigator.clipboard.writeText(PR.plain(t || (b.tex ? "$$" + b.tex + "$$" : ""))).then(() => PR.toast(PR.t("已复制")));
   }
 
-  /* 点击段落 = 设为当前段并出操作条；再点一次收起 */
+  /* 點選段落 = 設為當前段並出操作條；再點一次收起 */
   document.addEventListener("click", (e) => {
     if (e.target.closest("#blockbar, #selbar, #popover, .menu")) return;
     const blk = e.target.closest("#paper .blk");
@@ -113,7 +113,7 @@
     blockMenu(blk.dataset.id, { x: e.clientX, y: e.clientY });
   });
 
-  /* 段落里的按钮：页码、角标、过期提示 */
+  /* 段落裡的按鈕：頁碼、角標、過期提示 */
   document.addEventListener("click", (e) => {
     const cap = e.target.closest("#paper [data-page-cap]");
     if (cap) return PR.handlePageCap(cap, PR.pid, S.job, () => PR.poll());
@@ -133,7 +133,7 @@
     if (t.dataset.t === "translate-rest") PR.api("/api/p/" + PR.pid + "/translate", { method: "POST", body: {} }).then(() => { PR.toast(PR.t("已开始翻译，译好的页会自动出现")); PR.poll(); });
   });
 
-  /* ---------- 重译 ---------- */
+  /* ---------- 重譯 ---------- */
   function retranslate(id) {
     const el = document.getElementById("b-" + id);
     PR.popover(el.querySelector(".zh") || el, '<div class="hd">' + PR.t("让模型重译这段") + '</div>' +
@@ -162,7 +162,7 @@
     else { PR.toast(PR.t("这段已重译")); setTimeout(() => { const n = document.getElementById("b-" + id); n && n.classList.add("flash"); }, 300); }
   });
 
-  /* ---------- 引用、交叉引用悬停 ---------- */
+  /* ---------- 引用、交叉引用懸停 ---------- */
   let hoverT = null;
   document.addEventListener("mouseover", (e) => {
     const a = e.target.closest && e.target.closest("a.cite, a.xref");
@@ -190,7 +190,7 @@
     return '<div class="hd">' + PR.t("跳到") + '</div><div class="cap">' + PR.esc((b.num ? b.num + "　" : "") + PR.plain(PR.textFor(b.id))) + "</div>";
   }
 
-  /* 所有跳转都用这个：目标放在屏幕正中（比一屏还高的才顶到上面），不被顶栏挡住 */
+  /* 所有跳轉都用這個：目標放在螢幕正中（比一屏還高的才頂到上面），不被頂欄擋住 */
   PR.centerOn = function (el, instant) {
     const r = el.getBoundingClientRect(), bar = (PR.$("#bar") || {}).offsetHeight || 0;
     const room = innerHeight - bar;
@@ -198,18 +198,18 @@
     window.scrollTo({ top: scrollY + top, behavior: instant ? "auto" : "smooth" });
   };
 
-  /* opts：noBack 不记返回点；instant 不要动画；noFlash 不闪 */
+  /* opts：noBack 不記回傳點；instant 不要動畫；noFlash 不閃 */
   PR.jumpTo = function (domId, opts) {
     const el = document.getElementById(domId);
     if (!el) return;
     opts = opts || {};
-    if (!opts.noBack && PR.rememberSpot) PR.rememberSpot(el);  // 跳得远就记下原处，好回去
+    if (!opts.noBack && PR.rememberSpot) PR.rememberSpot(el);  // 跳得遠就記下原處，好回去
     PR.centerOn(el, opts.instant);
     if (!opts.noFlash) { el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); }
     history.replaceState(history.state, "", "#" + domId);
   };
 
-  /* 当前段的键盘操作 */
+  /* 當前段的鍵盤操作 */
   PR.blockAction = function (name) {
     const ids = PR.$$("#paper > .blk").map((x) => x.dataset.id);
     if (name === "next" || name === "prev") {

@@ -1,9 +1,9 @@
-"""翻译 / 回答用的模型后端。
+"""翻譯與問答共用的模型後端。
 
-- claude：本机的 Claude Code 无头模式（claude -p），用你已有的登录，不需要 Key；能自己读原页图核对公式和表格。
-- codex：本机的 Codex CLI（codex exec），同样用已有登录，原页图作为附件发过去。
-- openai：任何 OpenAI 兼容接口（Ollama、智谱、硅基流动、DeepSeek、Gemini……），在设置里填地址、模型和 Key；
-  Chat Completions 和 Responses 两种格式都行（见 openai_api.py）。
+- claude：呼叫已安裝的 Claude Code，沿用其登入與唯讀工具權限。
+- codex：呼叫官方 Codex CLI，沿用既有登入，並可附上原始頁面影像。
+- openai：連接設定中的 API 服務或本機模型服務，支援 Chat Completions
+  與 Responses 格式；實作位於 openai_api.py。
 """
 from __future__ import annotations
 
@@ -32,7 +32,7 @@ class Cancelled(RuntimeError):
     pass
 
 
-ENGINE_NAMES = {"claude": "Claude Code", "codex": "Codex CLI", "openai": "API", "none": "不翻译"}  # i18n-ok 显示时用 engine_name()
+ENGINE_NAMES = {"claude": "Claude Code", "codex": "Codex CLI", "openai": "API", "none": "不翻译"}  # i18n-ok 顯示時用 engine_name()
 
 
 def engine_name(engine: str | None) -> str:
@@ -41,7 +41,7 @@ def engine_name(engine: str | None) -> str:
 
 def run(cfg: dict, prompt: str, cwd: Path, images: list[Path] | None = None, cancel: threading.Event | None = None,
         meter: usage.Meter | None = None) -> str:
-    """meter：传了就把这次调用的 token 用量记进去（整篇翻译时用）。"""
+    """meter：傳了就把這次呼叫的 token 用量記進去（整篇翻譯時用）。"""
     bad = netcheck.problem(cfg)
     if bad:
         raise EngineError(bad)
@@ -69,7 +69,7 @@ def _run(cfg: dict, prompt: str, cwd: Path, images: list[Path] | None, cancel: t
 
 
 def image_mode(cfg: dict) -> str:
-    """提示词里怎么说原页图：claude 自己用 Read 读；codex 和能看图的接口作为附件；其余没有图。"""
+    """提示詞裡怎麼說原頁圖：claude 自己用 Read 讀；codex 和能看圖的介面作為附件；其餘沒有圖。"""
     engine = cfg.get("engine")
     if engine == "claude":
         return "claude"
@@ -85,9 +85,9 @@ def who(cfg: dict) -> str:
     return {"claude": "claude", "codex": "codex"}.get(engine, "")
 
 
-# ---------- 本机 CLI ----------
+# ---------- 本機 CLI ----------
 _NO_WINDOW = 0x08000000 if hasattr(subprocess, "CREATE_NO_WINDOW") else 0
-# stream-json 比 json 多一条 rate_limit_event（订阅额度用了百分之几）；-p 下用它必须加 --verbose
+# stream-json 比 json 多一條 rate_limit_event（訂閱額度用了百分之幾）；-p 下用它必須加 --verbose
 _CLAUDE_ARGS = ["--output-format", "stream-json", "--verbose", "--allowedTools", "Read", "--strict-mcp-config",
                 "--disable-slash-commands", "--no-session-persistence"]
 
@@ -156,8 +156,8 @@ def run_claude(c: dict, prompt: str, cwd: Path, cancel=None, meter=None) -> str:
         raise EngineError("PaperDesk 不允許附加 CLI 參數。")  # i18n-ok
     if c.get("reasoning_effort"):
         args += ["--effort", c["reasoning_effort"]]
-    # lean（翻译时）：只给 Read 一个工具。--allowedTools 只是免确认，别的内置工具的定义照样每次都发，
-    # 实测空调用固定上下文从约 3.2 万 token 降到约 5 千。用户设置（代理、默认模型、登录）照旧读。
+    # lean（翻譯時）：只給 Read 一個工具。--allowedTools 只是免確認，別的內置工具的定義照樣每次都發，
+    # 實測空呼叫固定上下文從約 3.2 萬 token 降到約 5 千。使用者設定（代理、預設模型、登入）照舊讀。
     out = _communicate(_popen(args + CLAUDE_LEAN, cwd), prompt, int(c.get("timeout") or 1200), cancel)
     events = _json_lines(out)
     res = next((e for e in reversed(events) if e.get("type") == "result"), None)
@@ -174,8 +174,8 @@ def run_claude(c: dict, prompt: str, cwd: Path, cancel=None, meter=None) -> str:
 
 
 def run_codex(c: dict, prompt: str, cwd: Path, images: list[Path], cancel=None, meter=None) -> str:
-    """c["lean"]：不拉起用户 Codex 配置里的 MCP 服务（翻译时用，见 codex_lean）。
-    这些覆盖参数让 Codex 报配置错误时，去掉它们照旧再调一次。"""
+    """c["lean"]：不拉起使用者 Codex 設定裡的 MCP 服務（翻譯時用，見 codex_lean）。
+    這些覆蓋參數讓 Codex 報設定錯誤時，去掉它們照舊再調一次。"""
     exe = codex_path(c)
     if not exe:
         raise EngineError(tr("找不到 Codex 命令：{cmd}（先装好并登录 Codex CLI）", cmd=c.get("command") or "codex"))
@@ -199,16 +199,16 @@ def run_codex(c: dict, prompt: str, cwd: Path, images: list[Path], cancel=None, 
 
 _CONFIG_ERR = re.compile(r"error (loading|parsing).*config|mcp_servers|unknown (field|key)|invalid config", re.I)
 _OPTION_ERR = re.compile(r"unknown option|--tools", re.I)
-CLAUDE_LEAN = ["--tools", "Read"]  # 只给 Read 一个工具（见 run_claude）
+CLAUDE_LEAN = ["--tools", "Read"]  # 只給 Read 一個工具（見 run_claude）
 
 
 def option_unknown(err) -> bool:
-    """Claude Code 版本太旧、不认 --tools 时的报错。"""
+    """Claude Code 版本太舊、不認 --tools 時的回報錯誤。"""
     return bool(_OPTION_ERR.search(str(err)))
 
 
 def for_translation(cfg: dict) -> dict:
-    """本机 CLI 只带用得到的东西（见 run_claude、run_codex）：整篇翻译、问 AI、回答笔记、重译一段都走这里。"""
+    """本機 CLI 只帶用得到的東西（見 run_claude、run_codex）：整篇翻譯、問 AI、回答筆記、重譯一段都走這裡。"""
     out = dict(cfg)
     for e in ("claude", "codex"):
         if isinstance(cfg.get(e), dict):
@@ -240,7 +240,7 @@ def _codex_once(exe: str, c: dict, prompt: str, cwd: Path, images: list[Path], c
 
 
 def _json_lines(out: str) -> list[dict]:
-    """CLI 一行一个 JSON 事件；夹杂的非 JSON 行跳过。"""
+    """CLI 一行一個 JSON 事件；夾雜的非 JSON 行跳過。"""
     events = []
     for line in (out or "").splitlines():
         line = line.strip()
@@ -275,16 +275,16 @@ def _communicate(proc, stdin_text: str, timeout: int, cancel) -> str:
     return result.get("out", "")
 
 
-# ---------- OpenAI 兼容接口 ----------
+# ---------- OpenAI 相容介面 ----------
 def run_openai(c: dict, prompt: str, images: list[Path], cancel=None, meter=None) -> str:
-    from . import openai_api  # 它要用本文件的 EngineError，放这里免得循环导入
+    from . import openai_api  # 它要用本檔案的 EngineError，放這裡免得循環匯入
     return openai_api.complete(c, prompt, images, cancel, meter)
 
 
 def parse_json(text: str):
-    """从模型输出里取出 JSON（容忍 ```json 围栏和前后废话）。"""
-    t = re.sub(r"<think>[\s\S]*?</think>", "", text).strip()  # 推理模型（deepseek-r1、qwen3）先输出的思考过程
-    # 先取最外层的 { … }：译文里可能本身带代码块（论文附录的 PyTorch 代码），按 ``` 围栏切会切到半截
+    """從模型輸出裡取出 JSON（容忍 ```json 圍欄和前後廢話）。"""
+    t = re.sub(r"<think>[\s\S]*?</think>", "", text).strip()  # 推理模型（deepseek-r1、qwen3）先輸出的思考過程
+    # 先取最外層的 { … }：譯文裡可能本身帶程式碼塊（論文附錄的 PyTorch 程式碼），按 ``` 圍欄切會切到半截
     bodies = []
     for s in (t, *(m.group(1).strip() for m in re.finditer(r"```(?:json)?\s*([\s\S]*?)```", t))):
         start = min([i for i in (s.find("{"), s.find("[")) if i >= 0], default=-1)
@@ -299,7 +299,7 @@ def parse_json(text: str):
         except json.JSONDecodeError as e:
             first = first or e
     body = bodies[0]
-    # 常见毛病：TeX 反斜杠没写成两个（\alpha、\sum）、字符串里有原样换行
+    # 常見毛病：TeX 反斜槓沒寫成兩個（\alpha、\sum）、字串裡有原樣換行
     fixed = re.sub(r'\\(?!["\\/bfnrtu])', r"\\\\", body)
     try:
         return json.loads(fixed, strict=False)
@@ -316,7 +316,7 @@ def _version(exe: str) -> str:
 
 
 def test(cfg: dict) -> dict:
-    """设置页“测试”按钮：真的让模型回一句，确认引擎能用。"""
+    """設定頁“測試”按鈕：真的讓模型回一句，確認引擎能用。"""
     engine = cfg.get("engine")
     if engine in ("claude", "codex"):
         exe = (claude_path if engine == "claude" else codex_path)(cfg[engine])

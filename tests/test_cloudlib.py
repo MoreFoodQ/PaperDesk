@@ -31,7 +31,7 @@ class CloudLibraryTest(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
-        self.root = Path(self.tmp.name).resolve()  # macOS 的 /var 是软链接、Windows CI 是 RUNNER~1 短路径；代码比较的是解析后的路径
+        self.root = Path(self.tmp.name).resolve()  # macOS 的 /var 是軟連結、Windows CI 是 RUNNER~1 短路徑；程式碼比較的是解析後的路徑
         self.src, self.dst = self.root / "source", self.root / "EasyRead"
         self.src.mkdir()
         for key, value in (("CONFIG_PATH", self.root / "config.json"),):
@@ -55,7 +55,7 @@ class CloudLibraryTest(unittest.TestCase):
         missing = next((Path(f"{letter}:/") for letter in "QZYXWVUTSR" if not Path(f"{letter}:/").exists()), None)
         if missing is None:
             self.skipTest("No unused drive letter available")
-        # 子进程给旧实现设硬超时，回归时不会把整个测试进程卡在根目录循环里。
+        # 子行程給舊實現設硬超時，迴歸時不會把整個測試行程卡在根目錄循環裡。
         script = """
 import json, sys, time
 from pathlib import Path
@@ -322,7 +322,7 @@ print(json.dumps({"errors": errors, "times": times, "status": location.status, "
             self.assertEqual(config.load()["library_dir"], str(self.src))
             self.assertEqual((outside / "secret.txt").read_text(), "never copy")
         finally:
-            # 只移除链接本身；Windows rmdir 不递归，不删除链接目标。
+            # 只移除連結本身；Windows rmdir 不遞歸，不刪除連結目標。
             if os.name == "nt":
                 link.rmdir()
             else:
@@ -371,7 +371,7 @@ if __name__ == "__main__":
 
 
 class MarkerRecoveryTest(unittest.TestCase):
-    """第二轮审查：不可写目录不能卡死；本机没搬完的目标能清理；别的电脑的标记不拦。"""
+    """第二輪審查：不可寫目錄不能卡死；本機沒搬完的目標能清理；別的電腦的標記不攔。"""
 
     setUp = CloudLibraryTest.setUp
     migrate = CloudLibraryTest.migrate
@@ -382,7 +382,7 @@ class MarkerRecoveryTest(unittest.TestCase):
         with patch("easyread.cloudlib.os.open", side_effect=PermissionError("denied")), \
                 patch("easyread.cloudlib.uuid.uuid4", wraps=cloudlib.uuid.uuid4) as probe:
             self.assertFalse(cloudlib.inspect(self.dst)["writable"])
-        self.assertEqual(probe.call_count, 1)  # 只试一次，不像 tempfile 那样重试
+        self.assertEqual(probe.call_count, 1)  # 只試一次，不像 tempfile 那樣重試
         paper(self.src, "paper001")
         with patch("easyread.cloudlib.os.open", side_effect=PermissionError("denied")), \
                 self.assertRaisesRegex(ValueError, "不可写"):
@@ -406,7 +406,7 @@ class MarkerRecoveryTest(unittest.TestCase):
 
     def test_cleanup_restores_target_and_unblocks(self):
         existing = self.locked_merge()
-        info = self.location.location()  # 候选里有没搬完的目标也不能抛错
+        info = self.location.location()  # 候選裡有沒搬完的目標也不能拋錯
         self.assertIn("papers", info)
         from easyread import library_api
         self.assertTrue(library_api.inspect({"path": str(self.dst)})["incomplete"])

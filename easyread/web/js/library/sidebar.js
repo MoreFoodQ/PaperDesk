@@ -1,10 +1,10 @@
-/* 文献库左侧栏，学 Claude / ChatGPT 的侧栏：
-   - 置顶：单篇论文和分类都能置顶，放最上面。
-   - 分类：“全部”固定；在读 / 未读 / 已读 / 星标是内置分类，可以隐藏；自己建的分类可以改名、删除。
-     点“＋”新建；右键或“⋯”打开菜单；把论文拖到分类上就放进去（拖到在读 / 未读 / 已读是改状态，拖到星标是加星标）。一篇论文可以在好几个分类里（存在论文的 tags 里）。
-   - 最近阅读：默认 5 篇，展开最多 10 篇；显示短标题。置顶了的论文、分类只出现在“置顶”里，不在下面重复。
-   - 侧栏右边缘可以拖动调宽度。
-   侧栏的设置（自建分类的顺序、隐藏、置顶）存在 prefs.json 的 library 里。 */
+/* 文獻庫左側欄，學 Claude / ChatGPT 的側欄：
+   - 置頂：單篇論文和分類都能置頂，放最上面。
+   - 分類：“全部”固定；在讀 / 未讀 / 已讀 / 星標是內置分類，可以隱藏；自己建的分類可以改名、刪除。
+     點“＋”新建；右鍵或“⋯”打開菜單；把論文拖到分類上就放進去（拖到在讀 / 未讀 / 已讀是改狀態，拖到星標是加星標）。一篇論文可以在好幾個分類裡（存在論文的 tags 裡）。
+   - 最近閱讀：預設 5 篇，展開最多 10 篇；顯示短標題。置頂了的論文、分類只出現在“置頂”裡，不在下面重複。
+   - 側欄右邊緣可以拖動調寬度。
+   側欄的設定（自建分類的順序、隱藏、置頂）存在 prefs.json 的 library 裡。 */
 (function (PR) {
   "use strict";
   const L = PR.lib;
@@ -15,7 +15,7 @@
     ["done", PR.t("已读"), "check", (i) => i.status === "done"],
     ["starred", PR.t("星标"), "star", (i) => i.starred],
   ];
-  const AUTO = [  // 有内容时才出现，不用管理
+  const AUTO = [  // 有內容時才出現，不用管理
     ["questions", PR.t("有待回答的问题"), "question", (i) => i.open_questions > 0],
     ["translating", PR.t("翻译中"), "sparkle", (i) => i.job && ["queued", "running"].includes(i.job.state)],
   ];
@@ -23,7 +23,7 @@
   const RECENT_SHORT = 5, RECENT_MAX = 10;
   const ui = { adding: false, renaming: null, recentOpen: false };
 
-  /* ---------- 侧栏设置 ---------- */
+  /* ---------- 側欄設定 ---------- */
   L.side = Object.assign({ cats: [], hidden: [], pinned: [] }, PR.ls.get("paperdesk-lib-side", {}));
   function saveSide() {
     PR.ls.set("paperdesk-lib-side", L.side);
@@ -31,7 +31,7 @@
   }
   L.useServerSide = (p) => { if (p && p.library) { Object.assign(L.side, p.library); PR.ls.set("paperdesk-lib-side", L.side); L.render(); } };
 
-  /* 全部自建分类：设置里记下的顺序 + 论文上已有但没记下的（旧版的标签） */
+  /* 全部自建分類：設定裡記下的順序 + 論文上已有但沒記下的（舊版的標籤） */
   L.cats = function () {
     const out = L.side.cats.slice();
     L.items.forEach((i) => (i.tags || []).forEach((t) => { if (!out.includes(t)) out.push(t); }));
@@ -43,7 +43,7 @@
     saveSide(); L.render();
   };
 
-  async function patchMany(changes) {  // [[id, {字段}]]：先改界面，再逐个存（批量操作 batch.js 也用）
+  async function patchMany(changes) {  // [[id, {欄位}]]：先改介面，再逐個存（批量操作 batch.js 也用）
     changes.forEach(([id, f]) => Object.assign(L.byId(id) || {}, f));
     L.render();
     for (const [id, f] of changes) await PR.api("/api/p/" + id + "/item", { method: "POST", body: f }).catch((e) => PR.toast(PR.t("保存失败：{msg}", { msg: PR.esc(e.message) })));
@@ -54,7 +54,7 @@
     name = (name || "").trim().slice(0, 30);
     if (!name) return L.render();
     if (!L.cats().includes(name)) { L.side.cats.push(name); saveSide(); }
-    const add = [].concat(paperId || []).map(L.byId).filter((it) => it && !(it.tags || []).includes(name));  // 一篇的 id，或多选拖过来的一组
+    const add = [].concat(paperId || []).map(L.byId).filter((it) => it && !(it.tags || []).includes(name));  // 一篇的 id，或多選拖過來的一組
     if (add.length) return patchMany(add.map((it) => [it.id, { tags: (it.tags || []).concat(name) }]));
     L.render();
   };
@@ -97,7 +97,7 @@
     L.side.cats = list; saveSide(); L.render();
   };
 
-  /* ---------- 画面 ---------- */
+  /* ---------- 畫面 ---------- */
   const count = (fn) => L.items.filter(fn).length;
   const more = '<span class="more" data-more title="' + PR.t("更多") + '">' + PR.icon("more", "sm") + "</span>";
   function viewRow(v, pinnedRow) {
@@ -110,7 +110,7 @@
     return '<div class="srow' + (L.tag === c ? " on" : "") + '" data-cat="' + PR.esc(c) + '"' + (pinnedRow ? " data-pinrow" : "") + ">" + PR.icon("folder", "sm") +
       '<span class="t">' + PR.esc(c) + '</span><span class="n">' + count((i) => (i.tags || []).includes(c)) + "</span>" + more + "</div>";
   }
-  /* 侧栏放短标题（PR.titles 里定：翻译时起的短标题，或主标题冒号前那半句） */
+  /* 側欄放短標題（PR.titles 裡定：翻譯時起的短標題，或主標題冒號前那半句） */
   const shortTitle = (i) => PR.titles(i).short;
   function paperRow(i, pinnedRow) {
     const title = PR.titles(i).main;
@@ -120,7 +120,7 @@
 
   PR.renderSide = function () {
     const box = PR.$("#side");
-    if (box.contains(document.activeElement) && document.activeElement.matches(".side-input")) return;  // 正在输入分类名
+    if (box.contains(document.activeElement) && document.activeElement.matches(".side-input")) return;  // 正在輸入分類名
     const cats = L.cats();
     const pinned = L.side.pinned.map((key) => {
       const [t, v] = [key.slice(0, 1), key.slice(2)];
@@ -148,7 +148,7 @@
     if (inp) { inp.focus(); inp.select(); }
   };
 
-  /* ---------- 菜单 ---------- */
+  /* ---------- 菜單 ---------- */
   function rowMenu(row, where) {
     if (row.dataset.view) {
       const k = row.dataset.view, key = "v:" + k;
@@ -179,7 +179,7 @@
       ]);
     }
   }
-  /* 论文行（列表里、详情里）用的“放进分类”菜单项 */
+  /* 論文行（清單裡、詳情裡）用的“放進分類”菜單項 */
   L.catMenuItems = function (id) {
     const it = L.byId(id);
     return L.cats().map((c) => ({ label: ((it.tags || []).includes(c) ? "✓ " : "　 ") + c, icon: "folder", fn: () => L.toggleInCat(id, c) }))
@@ -198,7 +198,7 @@
     if (!row) return;
     if (row.dataset.view) { L.view = row.dataset.view; L.tag = null; L.render(); }
     else if (row.dataset.cat) { L.tag = L.tag === row.dataset.cat ? null : row.dataset.cat; L.view = "all"; L.render(); }
-    // 论文行是链接，直接打开
+    // 論文行是連結，直接打開
   });
   side.addEventListener("contextmenu", (e) => {
     const row = e.target.closest(".srow[data-view], .srow[data-cat], .srow[data-paper]");
@@ -209,7 +209,7 @@
   function commitInput(inp, cancel) {
     if (inp.dataset.done) return;
     inp.dataset.done = "1";
-    inp.blur();  // 输入框还有焦点时侧栏不重画（见 renderSide），先让它失焦，回车后新分类才会马上出现
+    inp.blur();  // 輸入框還有焦點時側欄不重畫（見 renderSide），先讓它失焦，回車後新分類才會馬上出現
     const val = inp.value;
     const forPaper = ui.adding === true ? null : ui.adding;
     if (inp.dataset.new !== undefined) { ui.adding = false; if (!cancel) L.addCat(val, forPaper); else L.render(); }
@@ -224,7 +224,7 @@
   });
   side.addEventListener("focusout", (e) => { const inp = e.target.closest(".side-input"); if (inp && inp.isConnected) setTimeout(() => inp.isConnected && commitInput(inp), 0); });
 
-  /* 侧栏宽度：右边缘拖动，记在本机 */
+  /* 側欄寬度：右邊緣拖動，記在本機 */
   const lib = PR.$(".lib");
   const setW = (w) => lib.style.setProperty("--side-w", Math.max(180, Math.min(420, w)) + "px");
   setW(PR.ls.get("paperdesk-side-w", 248));
@@ -239,11 +239,11 @@
   });
   grip.addEventListener("dblclick", () => { setW(248); PR.ls.set("paperdesk-side-w", 248); });
 
-  /* 把论文从列表拖到侧栏的分类上 */
+  /* 把論文從清單拖到側欄的分類上 */
   let dragId = null;
   document.addEventListener("dragstart", (e) => { const r = e.target.closest && e.target.closest(".row[data-id]"); if (r) { dragId = r.dataset.id; e.dataTransfer.setData("text/plain", dragId); e.dataTransfer.effectAllowed = "copy"; side.classList.add("dragging"); } });
   document.addEventListener("dragend", () => { dragId = null; side.classList.remove("dragging"); PR.$$(".srow.drop", side).forEach((x) => x.classList.remove("drop")); });
-  /* 能放的地方：自建分类、在读 / 未读 / 已读（改状态）、星标、“新建分类” */
+  /* 能放的地方：自建分類、在讀 / 未讀 / 已讀（改狀態）、星標、“新建分類” */
   const STATUS = { reading: PR.t("在读"), unread: PR.t("未读"), done: PR.t("已读") };
   const dropTarget = (e) => dragId && e.target.closest(".srow[data-cat], .srow[data-view='starred'], .srow[data-view='reading'], .srow[data-view='unread'], .srow[data-view='done'], .srow[data-add]");
   side.addEventListener("dragover", (e) => {
@@ -256,9 +256,9 @@
     const row = dropTarget(e);
     if (!row) return;
     e.preventDefault();
-    if (row.dataset.add !== undefined) { ui.adding = L.picking && L.picked.has(dragId) ? Array.from(L.picked) : dragId; side.classList.remove("dragging"); return L.render(); }  // 拖到“新建分类”：建一个，把这篇放进去
+    if (row.dataset.add !== undefined) { ui.adding = L.picking && L.picked.has(dragId) ? Array.from(L.picked) : dragId; side.classList.remove("dragging"); return L.render(); }  // 拖到“新建分類”：建一個，把這篇放進去
     side.classList.remove("dragging"); row.classList.remove("drop");
-    // 多选时拖的是勾着的一篇，就把勾着的全部一起放过去
+    // 多選時拖的是勾著的一篇，就把勾著的全部一起放過去
     const its = (L.picking && L.picked.has(dragId) ? Array.from(L.picked) : [dragId]).map(L.byId).filter(Boolean);
     const v = row.dataset.view, c = row.dataset.cat, n = its.length;
     if (v === "starred") { L.patchMany(its.filter((i) => !i.starred).map((i) => [i.id, { starred: true }])); PR.toast(n > 1 ? PR.t("{n} 篇已加星标", { n }) : PR.t("已加星标")); }

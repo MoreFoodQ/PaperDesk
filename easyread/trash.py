@@ -1,4 +1,4 @@
-"""回收站：删掉的论文整个文件夹挪到 文献库/.trash/<id>-<时间>，可以恢复、彻底删除、清空。"""
+"""回收站：刪掉的論文整個資料夾挪到 文獻庫/.trash/<id>-<時間>，可以恢復、徹底刪除、清空。"""
 from __future__ import annotations
 
 import re
@@ -47,13 +47,13 @@ def restore(root: Path, name: str) -> str:
 
 
 def purge(root: Path, name: str) -> int:
-    """彻底删掉回收站里的一篇。"""
+    """徹底刪掉回收站裡的一篇。"""
     shutil.rmtree(_entry(root, name))
     return 1
 
 
 def empty(root: Path) -> int:
-    """清空回收站，返回删掉了几篇。"""
+    """清空回收站，回傳刪掉了幾篇。"""
     targets = [p for p in _dir(root).glob("*") if p.is_dir() and _NAME.match(p.name)] if _dir(root).is_dir() else []
     for p in targets:
         shutil.rmtree(p)

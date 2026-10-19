@@ -87,3 +87,30 @@ available. The isolated EASYREAD_HOME path is now set by a PowerShell step using
 RUNNER_TEMP and GITHUB_ENV before tests. This changes CI setup only; the application
 and its data paths are unchanged. Remote execution must be verified after pushing
 this correction; local regression results do not imply that remote CI passed.
+
+## Traditional Chinese developer documentation (2026-10-19)
+
+Developer-facing Python docstrings and comments, JavaScript/CSS comments and issue
+templates now use Traditional Chinese and Taiwan terminology. Existing reviewed
+README prose, code examples, URLs, third-party notices and license text are retained.
+Outdated explanations of data locations, service grouping, version checks and
+browser lifetime handling were rewritten to match current behavior.
+
+| Problem | Change | Result |
+|---|---|---|
+| Simplified Chinese in developer explanations | Convert only parsed comments/docstrings; review technical terms and ambiguous characters | Documentation-token scan found no remaining Simplified-only candidates |
+| Bulk wording changes could affect execution | Compare Python and JavaScript syntax trees and strip-comment CSS/HTML representations | 129 Python and 87 JavaScript files parsed; application execution trees unchanged; 14 CSS and 2 HTML files retain executable content |
+| Palette tests used a translated comment as a source delimiter | Locate the existing code declarations and validate the boundaries | All 118 JavaScript tests passed |
+| Several explanations described older defaults | Correct data paths, optional updates and provider/network descriptions | Documentation matches current implementation without changing settings |
+
+All 385 Python tests passed, along with the source startup/import/authentication/
+export smoke and release privacy gate. The UI string check reported no missing
+English entries or unwrapped interface strings. No live model calls were made.
+
+Legacy localization keys, model prompts, regular expressions, stored-data labels
+and test fixtures retain their original strings for compatibility. Their presence
+does not mean they are newly added developer prose. Translating those values would
+require separate compatibility and behavior changes. Runtime dependencies, package
+versions, personal libraries and existing installer binaries were not changed.
+The JavaScript tree comparison has one reviewed test-only exception: the palette
+test's source delimiter was replaced with code declarations rather than comment text.

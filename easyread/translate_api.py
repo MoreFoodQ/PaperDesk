@@ -1,4 +1,4 @@
-"""整篇翻译入口：继续确认中的任务、重试失败页、给已整理的原文补译文。"""
+"""整篇翻譯入口：繼續確認中的任務、重試失敗頁、給已整理的原文補譯文。"""
 from __future__ import annotations
 
 from . import figure_translation, paperdata, translate
@@ -20,14 +20,14 @@ def enqueue(jobs, ws, body: dict) -> dict:
         pages = sorted(figure_translation.pending_pages(ws.load("paper")))
         translate_images, read, cap_check = True, False, True
     if pending and not explicit:
-        # 确认的是等待时已算好的页，不能因为后来又整理了原文而扩大范围。
+        # 確認的是等待時已算好的頁，不能因為後來又整理了原文而擴大範圍。
         pages = last.get("pages")
         cap_check = last.get("cap_check") is True
         if pages is not None and body.get("scope") and scope != last.get("scope"):
             selected = translate.scope_pages(ws, scope)
             if selected is not None:
                 pages = [n for n in pages if n in selected]
-                cap_check = False  # 用户已选择更小的明确范围。
+                cap_check = False  # 使用者已選擇更小的明確範圍。
     if body.get("failed"):
         pages = sorted(int(k) for k in (last.get("failed") or {})) or None
         read, model, target = bool(last.get("read")), last.get("model") or "", last.get("target") or ""
@@ -35,7 +35,7 @@ def enqueue(jobs, ws, body: dict) -> dict:
         read = False
         if not explicit and not pending:
             pages = sorted(set((ws.load("paper").get("translation") or {}).get("en_pages", [])))
-            cap_check = True  # 系统生成的页计划仍需确认；用户亲自填 pages 才豁免。
+            cap_check = True  # 系統生成的頁計劃仍需確認；使用者親自填 pages 才豁免。
     jobs.enqueue(ws, pages=pages, translate_after=True, scope=scope, read=read, model=model,
                  confirmed=body.get("confirmed") is True, target=target, cap_check=cap_check,
                  translate_images=translate_images, images_only=images_only,

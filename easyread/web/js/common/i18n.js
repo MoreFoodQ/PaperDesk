@@ -1,5 +1,5 @@
-/* 界面语言。代码里只写中文：PR.t("已导入 {n} 篇", { n })；中文原文就是键，英文在 web/i18n/en.json。
-   后端返回页面时按系统语言（或设置里选的）写好 <html lang>，英文时把词典塞进 #pr-i18n。 */
+/* 介面語言。程式碼裡只寫中文：PR.t("已匯入 {n} 篇", { n })；中文原文就是鍵，英文在 web/i18n/en.json。
+   後端回傳頁面時按系統語言（或設定裡選的）寫好 <html lang>，英文時把詞典放入 #pr-i18n。 */
 window.PR = window.PR || {};
 (function (PR) {
   "use strict";
@@ -7,13 +7,13 @@ window.PR = window.PR || {};
   let dict = {};
   try { dict = JSON.parse((document.getElementById("pr-i18n") || {}).textContent || "{}"); } catch (e) { dict = {}; }
   PR.lang = ["en", "zh-TW"].includes(document.documentElement.lang) ? document.documentElement.lang : "zh";
-  PR.langChoice = document.documentElement.dataset.langChoice || "auto";  // 设置里选的：auto 跟随系统
-  PR.target = document.documentElement.dataset.target || "zh";  // 译文语言（论文翻成什么），名字表在 util.js
+  PR.langChoice = document.documentElement.dataset.langChoice || "auto";  // 設定裡選的：auto 跟隨系統
+  PR.target = document.documentElement.dataset.target || "zh";  // 譯文語言（論文翻成什麼），名字表在 util.js
 
   const fill = (s, vars) => vars ? s.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m)) : s;
   PR.t = (zh, vars) => fill(PR.lang !== "zh" ? dict[zh] || zh : zh, vars);
 
-  /* 写死在 HTML 里的中文：按原文整句对照替换，HTML 不用改 */
+  /* 寫死在 HTML 裡的中文：按原文整句對照替換，HTML 不用改 */
   const CJK = /[一-鿿]/;
   const ATTRS = ["placeholder", "title", "aria-label", "alt"];
   PR.translateDom = function (root) {

@@ -1,8 +1,8 @@
-/* 阅读页的数据与保存。
-   - paper / discussion / layout / job 来自翻译方，只读；
-   - reader（我的修改、笔记、论文笔记、进度）只通过“操作”改：先进浏览器里的待存队列，再发给本地服务，
-     服务确认写进 reader.json 后才从队列删。断网、服务没开、页面崩了，队列都还在，下次自动补发。
-   - 离线版（导出的单文件）没有服务，队列本身就是存储，可导出后并回。 */
+/* 閱讀頁的資料與儲存。
+   - paper / discussion / layout / job 來自翻譯方，唯讀；
+   - reader（我的修改、筆記、論文筆記、進度）只透過“操作”改：先進瀏覽器裡的待存佇列，再發給本機服務，
+     服務確認寫進 reader.json 後才從佇列刪。斷網、服務沒開、頁面崩了，佇列都還在，下次自動補發。
+   - 離線版（匯出的單檔案）沒有服務，佇列本身就是儲存，可匯出後並回。 */
 (function (PR) {
   "use strict";
   const S = (PR.state = { paper: null, discussion: { entries: [] }, reader: {}, layout: {}, item: {}, job: {}, images: {}, versions: {}, engine: "none" });
@@ -17,7 +17,7 @@
 
   PR.store = { get mode() { return mode; }, get pending() { return outbox.length; } };
 
-  /* ---------- 和 Python store.apply_ops 同一套规则 ---------- */
+  /* ---------- 和 Python store.apply_ops 同一套規則 ---------- */
   function applyOps(reader, ops) {
     reader.edits = reader.edits || {};
     reader.notes = reader.notes || {};
@@ -58,10 +58,10 @@
     else setStatus("saved", PR.t("已保存"));
   }
 
-  /* 页面调用这个提交修改 */
+  /* 頁面呼叫這個提交修改 */
   PR.commit = function (op) {
     op.at = op.at || PR.nowIso();
-    // 同一目标还没发出去的旧操作合并掉，避免队列无限长
+    // 同一目標還沒發出去的舊操作合併掉，避免佇列無限長
     if (op.op === "note") outbox = outbox.filter((o) => !(o.op === "note" && o.note.id === op.note.id));
     if (op.op === "edit") outbox = outbox.filter((o) => !(o.op === "edit" && o.block === op.block));
     if (op.op === "progress" || op.op === "paper_note") outbox = outbox.filter((o) => o.op !== op.op);
@@ -87,11 +87,11 @@
       if (r.status === 403) { await reloadToken(); throw new Error("token"); }
       if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.status);
       const res = await r.json();
-      outbox = outbox.filter((o) => !batch.includes(o));   // 已落盘的删掉，期间新加的保留
+      outbox = outbox.filter((o) => !batch.includes(o));   // 已寫入磁碟的刪掉，期間新加的保留
       saveOutbox();
       serverReader = applyOps(JSON.parse(JSON.stringify(serverReader || {})), batch);
       serverReader.rev = res.rev;
-      // 只认 reader 的新版本：paper / layout 等要由轮询去取内容，这里提前记上版本号，轮询就以为没变、不再重画
+      // 只認 reader 的新版本：paper / layout 等要由輪詢去取內容，這裡提前記上版本號，輪詢就以為沒變、不再重畫
       if (res.versions && res.versions.reader) S.versions.reader = res.versions.reader;
       rebuildReader();
       retryMs = 1500;
@@ -108,10 +108,10 @@
   PR.flush = flush;
 
   async function reloadToken() {
-    try { PR.token = (await (await fetch(base() + "/state", { cache: "no-store" })).json()).token; } catch (e) { /* 下次重试 */ }
+    try { PR.token = (await (await fetch(base() + "/state", { cache: "no-store" })).json()).token; } catch (e) { /* 下次重試 */ }
   }
 
-  /* ---------- 载入 ---------- */
+  /* ---------- 載入 ---------- */
   PR.load = async function () {
     const embedded = document.getElementById("pr-data");
     if (embedded) {
@@ -146,7 +146,7 @@
   PR.pdfUrl = (page) => (mode === "static" ? "" : "/p/" + PR.pid + "/source.pdf#page=" + page);
   PR.canAsk = () => mode === "server" && S.engine && S.engine !== "none";
 
-  /* ---------- 轮询：翻译方追加讨论/译文、后台翻译进度、另一个标签页改了笔记 ---------- */
+  /* ---------- 輪詢：翻譯方追加討論/譯文、背景翻譯進度、另一個標籤頁改了筆記 ---------- */
   async function poll() {
     if (mode !== "server" || document.hidden) return;
     let v;
@@ -161,7 +161,7 @@
     for (const name of ["paper", "discussion", "layout", "reader", "job"]) if (v[name] && v[name] !== S.versions[name]) changed.push(name);
     if (!changed.length) return;
     for (const name of changed) {
-      if (name === "reader" && (flushing || outbox.length)) continue; // 自己正在写，等写完
+      if (name === "reader" && (flushing || outbox.length)) continue; // 自己正在寫，等寫完
       const d = await (await fetch(base() + "/part/" + name, { cache: "no-store" })).json();
       S.versions[name] = d.version;
       if (name === "reader") { serverReader = d.data; rebuildReader(); } else S[name] = d.data || {};
@@ -182,7 +182,7 @@
     if (mode === "server" && outbox.some((o) => o.op !== "progress")) { flush(); e.preventDefault(); e.returnValue = ""; }
   });
 
-  /* 让模型做事（回答问题、重译一段）：交给服务的小任务队列 */
+  /* 讓模型做事（回答問題、重譯一段）：交給服務的小任務佇列 */
   PR.ask = async function (kind, body) {
     const job = await PR.api(base() + "/" + kind, { method: "POST", body });
     PR.emit("job-started", job);
@@ -198,7 +198,7 @@
     return job;
   };
 
-  /* ---------- 导出 ---------- */
+  /* ---------- 匯出 ---------- */
   PR.exportOps = function () {
     const ops = [];
     for (const [block, e] of Object.entries(S.reader.edits || {})) if (e.zh != null) ops.push({ op: "edit", block, zh: e.zh, base: e.base, at: e.at });

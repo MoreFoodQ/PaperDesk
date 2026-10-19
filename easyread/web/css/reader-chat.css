@@ -1,4 +1,4 @@
-/* 右侧“问 AI”面板 */
+/* 右側“問 AI”面板 */
 #chatpanel { background: var(--bg); }
 body.ch-open #chatpanel { transform: none; }
 
@@ -89,7 +89,7 @@ body.ch-open #chatpanel { transform: none; }
 .ch-model:disabled { opacity: .5; cursor: wait; }
 .ch-model-effort { color: var(--ink-3); }
 .ch-model-check { margin-left: auto; color: var(--accent); }
-/* 模型菜单底部的思考强度：一排等宽小按钮，和“简明回答”同一种胶囊 */
+/* 模型菜單底部的思考強度：一排等寬小按鈕，和“簡明回答”同一種膠囊 */
 .ch-effort-sec { padding: 8px 10px 6px; border-top: 1px solid var(--rule); margin-top: 4px; }
 .ch-effort-title { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 7px; font: 12.5px var(--ui); color: var(--ink-2); }
 .ch-effort-title small { font-size: 11px; color: var(--ink-3); }
@@ -113,7 +113,7 @@ body.ch-open #chatpanel { transform: none; }
 .ch-menu hr { border: 0; border-top: 1px solid var(--rule); margin: 4px; }
 .ch-menu button[data-c="manage"] { flex-direction: row; align-items: center; gap: 7px; font-size: 13px; color: var(--ink-2); }
 
-/* 导出选项（阅读页里的对话框） */
+/* 匯出選項（閱讀頁裡的對話框） */
 .exp-opts { display: grid; gap: 8px; margin: 4px 0 6px; }
 .exp-opts label { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--ink-2); }
 .exp-opts input { accent-color: var(--accent); width: 15px; height: 15px; margin: 0; }
@@ -131,7 +131,7 @@ body.ch-open #chatpanel { transform: none; }
 #chatpanel.drop-on .ch-compose::after { background: var(--accent-soft-2); }
 .ch-compose { max-width: 780px; width: calc(100% - 24px); margin-left: auto; margin-right: auto; }
 .ch-scroll { padding-left: max(18px, calc((100% - 760px) / 2)); padding-right: max(18px, calc((100% - 760px) / 2)); }
-/* 在线演示：对话只能看 */
+/* 在線演示：對話只能看 */
 .ch-readonly { display: grid; gap: 6px; padding: 14px 16px; font-size: 12.5px; color: var(--ink-3); line-height: 1.6; }
 .ch-readonly b { font-size: 13.5px; color: var(--ink); font-weight: 500; }
 .ch-readonly .btn { justify-self: start; margin-top: 4px; }

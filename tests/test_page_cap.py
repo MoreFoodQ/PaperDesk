@@ -1,4 +1,4 @@
-"""整篇任务超过页数上限先确认；假引擎保留真实的翻译调度和落盘路径。"""
+"""整篇任務超過頁數上限先確認；假引擎保留真實的翻譯調度和寫入磁碟路徑。"""
 import json
 import re
 import tempfile
@@ -144,7 +144,7 @@ class PageCapTest(unittest.TestCase):
         summary = self.lib.summary(ws)["job"]
         self.assertEqual((summary["pages"], summary["cap_check"]), (pages, True))
         self.assertEqual(self.calls, [])
-        # 等确认时后来又整理了页，确认的仍是最初计划，不能扩大到整篇。
+        # 等確認時後來又整理了頁，確認的仍是最初計劃，不能擴大到整篇。
         ws.update("paper", lambda p: p["translation"].update(done_pages=list(range(1, 91)), en_pages=list(range(1, 91))))
         translate_api.enqueue(self.jobs, ws, {"confirmed": True})
         self.drain()

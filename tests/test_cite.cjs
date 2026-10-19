@@ -170,7 +170,7 @@ test("author names separated by and export as separate authors", () => {
   assert.match(PR.cite({ ...paper, authors: "Brandon Smith" }, "gb"), /^SMITH B\./);
 });
 
-// 对话框只需要节点与事件的轻量桩；测试预览、格式记忆、顺序、补信息跳转和空列表。
+// 對話框只需要節點與事件的輕量樁；測試預覽、格式記憶、順序、補資訊跳轉和空清單。
 function dialog() {
   const PR = formatter(), nodes = new Map(), memory = new Map(), copied = [];
   const node = (key) => {
@@ -223,7 +223,7 @@ test("export order: by author, by year, or dragged by hand (numbering follows th
   assert.deepEqual(firsts(), ["LOVELACE", "MILLER E", "YOUNG Z."]);
   order("year");
   assert.deepEqual(firsts(), ["LOVELACE", "YOUNG Z.", "MILLER E"]);
-  r.PR.citeMove(2, 0);  // 把最后一篇拖到最前
+  r.PR.citeMove(2, 0);  // 把最後一篇拖到最前
   assert.deepEqual(firsts(), ["MILLER E", "LOVELACE", "YOUNG Z."]);
   assert.equal(r.memory.get("paperdesk-cite-order"), "custom");
   assert.match(r.node("textarea").value, /^\[1\] MILLER/);

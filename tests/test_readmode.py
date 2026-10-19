@@ -1,4 +1,4 @@
-"""只读原文：整理成只有英文的块，之后翻译时就地补中文、块 id 不变。  python -m unittest tests.test_readmode"""
+"""閱讀原文：整理成只有英文的塊，之後翻譯時就地補中文、塊 id 不變。  python -m unittest tests.test_readmode"""
 import json
 import shutil
 import threading
@@ -10,7 +10,7 @@ from tests.test_translate import make_ws
 
 
 def structure_engine(calls: list):
-    """只读原文：每页一个段落、一个表，只有英文。"""
+    """閱讀原文：每頁一個段落、一個表，只有英文。"""
     def run(cfg, prompt, cwd, images=None, cancel=None, meter=None):
         assert "不要翻译" in prompt
         page = int(prompt.split("这次只处理第 ")[1].split(" ")[0].split(",")[0])
@@ -23,7 +23,7 @@ def structure_engine(calls: list):
 
 
 def fill_engine(calls: list, skip: set = frozenset()):
-    """补译文：把要译的键都译成“中文 键”，skip 里的键故意漏掉。"""
+    """補譯文：把要譯的鍵都譯成“中文 鍵”，skip 裡的鍵故意漏掉。"""
     def run(cfg, prompt, cwd, images=None, cancel=None, meter=None):
         assert "这次只翻译第" in prompt
         items = json.loads(prompt.split("要翻译的内容（键 → 英文）：\n", 1)[1])
@@ -66,7 +66,7 @@ class ReadModeTest(unittest.TestCase):
             failed = translate.translate_pages(self.ws, self.cfg, [1, 2, 3], threading.Event(), lambda *a: None)
         self.assertEqual(failed, {})
         paper = self.ws.load("paper")
-        self.assertEqual([b["id"] for b in paper["blocks"]], ids)  # 块 id 不变，笔记还挂得住
+        self.assertEqual([b["id"] for b in paper["blocks"]], ids)  # 塊 id 不變，筆記還維持關聯
         self.assertEqual(paper["translation"]["en_pages"], [])
         self.assertEqual(paper["translation"]["scope"], "全文")
         p1 = next(b for b in paper["blocks"] if b["id"] == "p1-1")
@@ -81,8 +81,8 @@ class ReadModeTest(unittest.TestCase):
         calls = []
         with mock.patch.object(engines, "run", fill_engine(calls, skip={"p2-1"})):
             failed = translate.translate_pages(self.ws, self.cfg, [2], threading.Event(), lambda *a: None)
-        self.assertIn(2, failed)  # 两次都漏，记为没译成功
-        self.assertEqual(calls[1], ["p2-1"])  # 重试时只问漏掉的那一处
+        self.assertIn(2, failed)  # 兩次都漏，記為沒譯成功
+        self.assertEqual(calls[1], ["p2-1"])  # 重試時只問漏掉的那一處
         paper = self.ws.load("paper")
         self.assertEqual(paper["translation"]["en_pages"], [1, 2, 3])
         self.assertEqual(next(b for b in paper["blocks"] if b["id"] == "tab2")["caption_zh"], "中文 tab2#caption")

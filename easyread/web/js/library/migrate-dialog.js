@@ -1,6 +1,6 @@
-/* 迁移 / 切换 / 合并文献库前的确认窗：居中、带遮罩，“从哪 → 到哪”分两行写清楚，注意事项单列。
+/* 移轉 / 切換 / 合併文獻庫前的確認窗：居中、帶遮罩，“從哪 → 到哪”分兩行寫清楚，注意事項單列。
    PR.migrateDialog({title, from, to, meta, notes, ok}) → Promise<boolean>
-   Enter 确定，Esc 或点遮罩取消。 */
+   Enter 確定，Esc 或點遮罩取消。 */
 (function (PR) {
   "use strict";
 

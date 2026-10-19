@@ -1,6 +1,6 @@
-"""后台翻译：一批几页交给模型，校验后并进 paper.json。每批落盘，中断了下次接着译。
+"""背景翻譯：一批幾頁交給模型，驗證後並進 paper.json。每批寫入磁碟，中斷了下次接著譯。
 
-一批失败会重试；还是失败就记下来跳过，接着译后面的页，最后在页面上给“重试失败的页”。
+一批失敗會重試；還是失敗就記下來跳過，接著譯後面的頁，最後在頁面上給“重試失敗的頁”。
 """
 from __future__ import annotations
 
@@ -17,8 +17,8 @@ from .log import log
 from .paperdata import add_discussion, fill_zh, merge_blocks, set_block_text
 from .store import Workspace, now_iso
 
-_merge_lock = threading.Lock()  # 并发翻译时，并入 paper.json 和重算原页定位一次只做一个
-# 用量到顶、余额不足这类错误，后面的批次也一定失败：直接停，剩下的页记为没译，等额度恢复后一键重试
+_merge_lock = threading.Lock()  # 併發翻譯時，併入 paper.json 和重算原頁定位一次只做一個
+# 用量到頂、餘額不足這類錯誤，後面的批次也一定失敗：直接停，剩下的頁記為沒譯，等額度恢復後一鍵重試
 _QUOTA = re.compile(r"session limit|usage limit|rate limit reached|insufficient_quota|余额不足|额度|接口返回 40[12]|insufficient balance|API returned 40[12]", re.I)  # i18n-ok
 _REF_LINE = re.compile(r"^\s*(\d+\.?\s*)?(references|bibliography|参考文献)\s*$", re.I | re.M)  # i18n-ok
 
@@ -26,7 +26,7 @@ _REF_LINE = re.compile(r"^\s*(\d+\.?\s*)?(references|bibliography|参考文献)\
 def prepare(ws: Workspace) -> None:
     pages = pdfwork.prepare(ws.root)
     extra = {}
-    try:  # 本地拖进来的 PDF：从第一页的 arXiv 编号或 DOI 补上作者、年份、出处
+    try:  # 本機拖進來的 PDF：從第一頁的 arXiv 編號或 DOI 補上作者、年份、出處
         first = ws.root / "extract" / "page-001.txt"
         if first.exists() and config.load().get('metadata_lookup') is True:
             extra = sources.enrich(first.read_text(encoding="utf-8", errors="replace"), ws.load("paper").get("meta", {}))
@@ -43,7 +43,7 @@ def prepare(ws: Workspace) -> None:
 
 
 def references_page(ws: Workspace) -> int | None:
-    """参考文献从哪一页开始（找单独成行的 References 标题）。找不到返回 None。"""
+    """參考文獻從哪一頁開始（找單獨成行的 References 標題）。找不到回傳 None。"""
     n = ws.load("paper").get("meta", {}).get("page_count") or 0
     for p in range(2, n + 1):
         f = ws.root / "extract" / f"page-{p:03d}.txt"
@@ -53,7 +53,7 @@ def references_page(ws: Workspace) -> int | None:
 
 
 def scope_pages(ws: Workspace, scope: str | None) -> list[int] | None:
-    """翻译范围：all 全文；body 到参考文献那页为止；range:A-B 第 A 到 B 页；first:N 前 N 页（旧写法）。返回 None 表示全文。"""
+    """翻譯範圍：all 全文；body 到參考文獻那頁為止；range:A-B 第 A 到 B 頁；first:N 前 N 頁（舊寫法）。回傳 None 表示全文。"""
     n = ws.load("paper").get("meta", {}).get("page_count") or 0
     if scope == "body":
         ref = references_page(ws)
@@ -72,7 +72,7 @@ def scope_pages(ws: Workspace, scope: str | None) -> list[int] | None:
 
 
 def _next_head(ws: Workspace, n: int, whole: bool = False) -> str:
-    """下一页开头的抽取文字。whole：整页都给（不能看图的引擎在分段交界处，续文可能排在表格、图注后面）。"""
+    """下一頁開頭的抽取文字。whole：整頁都給（不能看圖的引擎在分段交界處，續文可能排在表格、圖注後面）。"""
     p = ws.root / "extract" / f"page-{n:03d}.txt"
     if not p.exists():
         return ""
@@ -81,7 +81,7 @@ def _next_head(ws: Workspace, n: int, whole: bool = False) -> str:
 
 
 def _normalize(data: dict, pages: list[int], taken: set[str]) -> dict:
-    """补页码、去掉和已有块撞车的 id、丢掉明显无效的块。"""
+    """補頁碼、去掉和已有塊衝突的 id、丟掉明顯無效的塊。"""
     if isinstance(data, list):
         data = {"blocks": data}
     blocks = []
@@ -104,7 +104,7 @@ def _normalize(data: dict, pages: list[int], taken: set[str]) -> dict:
             b['level'] = b.get('level') if type(b.get('level')) is int and 1 <= b['level'] <= 6 else 1
         if b["type"] == "figure":
             b['src'] = ''  # Model output cannot name files; prepare_figures generates assets.
-            normalize_figure(b)  # 截图要等合并锁里 id 最终去重之后，见 prepare_figures
+            normalize_figure(b)  # 截圖要等合併鎖裡 id 最終去重之後，見 prepare_figures
         blocks.append(b)
     data["blocks"] = blocks
     return data
@@ -120,13 +120,13 @@ def _problems(data: dict) -> list[str]:
 
 
 def journal(ws: Workspace, line: str) -> None:
-    """每篇论文自己的翻译记录 job.log，页面上“查看记录”看的就是它。"""
+    """每篇論文自己的翻譯記錄 job.log，頁面上“檢視記錄”看的就是它。"""
     with open(ws.root / "job.log", "a", encoding="utf-8") as f:
         f.write(f"{now_iso()[:19].replace('T', ' ')}  {line}\n")
 
 
 def _fill_batch(ws: Workspace, cfg: dict, batch: list[int], cancel, say, meter=None) -> None:
-    """只读原文整理过的页：不重排，只给已有的块补译文。漏译的键抛错，重试时只译剩下的。"""
+    """閱讀原文整理過的頁：不重排，只給已有的塊補譯文。漏譯的鍵拋錯，重試時只譯剩下的。"""
     blocks = [b for b in ws.load("paper").get("blocks", []) if b.get("page") in batch]
     images_enabled = figure_translation.enabled(cfg)
     items = prompts_en.todo(blocks, translate_images=images_enabled)
@@ -143,7 +143,7 @@ def _fill_batch(ws: Workspace, cfg: dict, batch: list[int], cancel, say, meter=N
         fill_zh(ws, {}, batch, set())
         _mark_figure_policy(ws, cfg, batch)
         return
-    marked, ends = sentences.mark_items(blocks, items)  # 英文先按句插好 ‖，译文照着插，记句子对齐
+    marked, ends = sentences.mark_items(blocks, items)  # 英文先按句插好 ‖，譯文照著插，記句子對齊
     text = engines.run(cfg, prompts_en.fill(ws, batch, marked), ws.root, None, cancel, meter)
     data = engines.parse_json(text)
     if not isinstance(data, dict) or not isinstance(data.get("zh"), dict):
@@ -186,12 +186,12 @@ def _mark_figure_policy(ws: Workspace, cfg: dict, batch: list[int]) -> None:
 
 def _one_batch(ws: Workspace, cfg: dict, batch: list[int], total_pages: int, cancel, say, meter=None, read=False,
                skip_head=False, peek=(), front=False) -> None:
-    """read：只读原文，整理成块但不翻译。skip_head：上一页由另一段同时在译，页首续文归它。
-    peek：分段交界处顺便看一眼的相邻页（见 prompts.peek_note）。front：带上前文参考（每段第一批，见 front_context）。"""
+    """read：閱讀原文，整理成塊但不翻譯。skip_head：上一頁由另一段同時在譯，頁首續文歸它。
+    peek：分段交界處順便看一眼的相鄰頁（見 prompts.peek_note）。front：帶上前文參考（每段第一批，見 front_context）。"""
     mode = engines.image_mode(cfg)
     images = [pdfwork.engine_image(ws.root, n) for n in sorted({*batch, *peek})] if mode != "text" else []
     nxt = batch[-1] + 1
-    # 分段交界、引擎不能看图：前一段最后一批拿下一页全文补完跨页那段（后一段第一批会跳过页首续文，这里补不全就丢了）
+    # 分段交界、引擎不能看圖：前一段最後一批拿下一頁全文補完跨頁那段（後一段第一批會跳過頁首續文，這裡補不全就丟了）
     head = _next_head(ws, nxt, whole=mode == "text" and nxt in peek) if nxt <= total_pages else ""
     if read:
         prompt = prompts_en.structure(ws, batch, mode, head, skip_head, peek)
@@ -217,7 +217,7 @@ def _one_batch(ws: Workspace, cfg: dict, batch: list[int], total_pages: int, can
     figure_translation.apply(data["blocks"], ws.load("paper").get("blocks", []),
                              read or figure_translation.enabled(cfg))
     problems = _problems(data)
-    if problems:  # 给一次修的机会
+    if problems:  # 給一次修的機會
         say(tr("第 {page} 页起有 {n} 处公式或格式问题，正在让模型修正", page=batch[0], n=len(problems)))
         try:
             fixed = engines.parse_json(engines.run(cfg, prompts.repair(prompts.dump(data), problems), ws.root, None, cancel, meter))
@@ -228,10 +228,10 @@ def _one_batch(ws: Workspace, cfg: dict, batch: list[int], total_pages: int, can
                 data = fixed
         except engines.EngineError as e:
             journal(ws, tr("第 {pages} 页修正失败，保留原译：{err}", pages=batch, err=e))
-    if not data["blocks"] and not data.get("references"):  # 整页都是参考文献时只有 references，没有新块，也算译完
+    if not data["blocks"] and not data.get("references"):  # 整頁都是參考文獻時只有 references，沒有新塊，也算譯完
         raise engines.EngineError(tr("模型没有整理出任何内容") if read else tr("模型没有译出任何内容"))
     with _merge_lock:
-        data = _normalize(data, batch, _taken(ws, batch))  # 并发时别的批可能刚占用了同名 id
+        data = _normalize(data, batch, _taken(ws, batch))  # 併發時別的批可能剛佔用了同名 id
         figure_translation.apply(data["blocks"], ws.load("paper").get("blocks", []),
                                  read or figure_translation.enabled(cfg))
         prepare_figures(ws.root, data["blocks"], total_pages)
@@ -241,14 +241,14 @@ def _one_batch(ws: Workspace, cfg: dict, batch: list[int], total_pages: int, can
         _save_checks(ws, data.get("checks"), batch)
         try:
             pdfwork.locate(ws.root)
-        except Exception:  # noqa: BLE001 —— 定位失败不影响阅读
+        except Exception:  # noqa: BLE001 —— 定位失敗不影響閱讀
             log.exception("locate 失败 %s", ws.id)
 
 
 def _one_references(ws: Workspace, data: dict, batch: list[int]) -> list[str]:
-    """全文只留一个“参考文献”块（页面上它会把整张参考文献表画出来，两个就画两遍）。
-    参考文献跨了几批（分段并行时可能两段各起一个）时留页码最早的那个；这批的更早，就接过已有那块的 id
-    （挂在上面的笔记还挂得住），返回要在合并时一并删掉的旧块 id。在合并锁里调。"""
+    """全文只留一個“參考文獻”塊（頁面上它會把整張參考文獻表畫出來，兩個就畫兩遍）。
+    參考文獻跨了幾批（分段並行時可能兩段各起一個）時留頁碼最早的那個；這批的更早，就接過已有那塊的 id
+    （掛在上面的筆記還維持關聯），回傳要在合併時一併刪掉的舊塊 id。在合併鎖裡調。"""
     mine = [b for b in data["blocks"] if b.get("type") == "references"]
     if not mine:
         return []
@@ -265,13 +265,13 @@ def _one_references(ws: Workspace, data: dict, batch: list[int]) -> list[str]:
 
 
 def _unify_terms(ws: Workspace, data: dict, batch: list[int], en_of: dict | None = None) -> None:
-    """这批新报的术语和术语表里已有的译法不同（分段并行时几段各自先定了译法）：译文改成已有的说法。在合并锁里调。"""
+    """這批新報的術語和術語表裡已有的譯法不同（分段並行時幾段各自先定了譯法）：譯文改成已有的說法。在合併鎖裡調。"""
     for en, mine, old in terms.unify(ws.load("paper").get("glossary", []), data, en_of):
         journal(ws, tr("第 {page} 页起术语统一：{en} 的“{mine}”改成已有的“{old}”", page=batch[0], en=en, mine=mine, old=old))
 
 
 def _save_checks(ws: Workspace, checks, batch: list[int]) -> None:
-    """模型发现的原文问题 → 页边的“原文核对提示”。重译这几页时，先去掉上次翻译留下的那几条。"""
+    """模型發現的原文問題 → 頁邊的“原文核對提示”。重譯這幾頁時，先去掉上次翻譯留下的那幾條。"""
     pages = {b["id"]: b.get("page") for b in ws.load("paper").get("blocks", [])}
     old = [e["id"] for e in ws.load("discussion").get("entries", [])
            if e.get("kind") == "check" and e.get("by") == "translator" and pages.get(e.get("anchor")) in batch]
@@ -288,7 +288,7 @@ def _save_checks(ws: Workspace, checks, batch: list[int]) -> None:
 
 
 def _batches(pages: list[int], size: int, en_pages: set[int]) -> list[list[int]]:
-    """分批：只把连续的页放一批（续传时中间隔着已译的页，跨页续文对不上）；只读原文整理过的页（补译文）和要从头译的页不混在一批里。"""
+    """分批：只把連續的頁放一批（續傳時中間隔著已譯的頁，跨頁續文對不上）；閱讀原文整理過的頁（補譯文）和要從頭譯的頁不混在一批裡。"""
     out: list[list[int]] = []
     for n in pages:
         if out and n == out[-1][-1] + 1 and len(out[-1]) < size and (out[-1][0] in en_pages) == (n in en_pages):
@@ -299,31 +299,31 @@ def _batches(pages: list[int], size: int, en_pages: set[int]) -> list[list[int]]
 
 
 def translate_pages(ws: Workspace, cfg: dict, pages: list[int], cancel, report, meter=None, read=False) -> dict[int, str]:
-    """翻译给定的页（已完成的页会重译并替换；只读原文整理过的页就地补译文）。report(done, total, message)；
-    meter 收集 token 用量。read：只读原文，把页整理成块但不翻译。返回没做成的页 {页码: 原因}。"""
-    cfg = engines.for_translation(cfg)  # 本机 CLI 不加载用户的 MCP、多余的工具定义（问 AI 不走这里）
+    """翻譯給定的頁（已完成的頁會重譯並替換；閱讀原文整理過的頁就地補譯文）。report(done, total, message)；
+    meter 收集 token 用量。read：閱讀原文，把頁整理成塊但不翻譯。回傳沒做成的頁 {頁碼: 原因}。"""
+    cfg = engines.for_translation(cfg)  # 本機 CLI 不載入使用者的 MCP、多餘的工具定義（問 AI 不走這裡）
     paper = ws.load("paper")
     total_pages = paper.get("meta", {}).get("page_count") or 0
     en_pages = set() if read else set(paper.get("translation", {}).get("en_pages", []))
     en_pages |= set(cfg.get("_figure_fill_pages", ())) if not read else set()
     size = max(1, int(cfg.get("batch_pages") or 2))
-    # 分段并行：切成几段连续的页同时译，段内一批接一批（见 segments.py）
+    # 分段並行：切成幾段連續的頁同時譯，段內一批接一批（見 segments.py）
     k = segments.workers(cfg.get("concurrency"), len(_batches(pages, size, en_pages)))
     lanes = [_batches(seg, size, en_pages) for seg in segments.plan(pages, size, k, ws.root)]
     batches = [b for lane in lanes for b in lane]
     verb = tr("正在整理原文") if read else tr("正在翻译")
     workers = max(1, len(lanes))
     job_pages = set(pages)
-    had = set(paper.get("translation", {}).get("done_pages", [])) - en_pages  # 开译前已经有译文的页
+    had = set(paper.get("translation", {}).get("done_pages", [])) - en_pages  # 開譯前已經有譯文的頁
     lane_of = {n: i for i, lane in enumerate(lanes) for b in lane for n in b}
-    state = {"done": 0, "active": set(), "quota": "", "ok": set()}  # ok：这次已经做成的页
+    state = {"done": 0, "active": set(), "quota": "", "ok": set()}  # ok：這次已經做成的頁
     failed: dict[int, str] = {}
     lock = threading.Lock()
     bad = netcheck.problem(cfg)
     if bad:
         raise engines.EngineError(bad)
-    if not read and not paper.get("meta", {}).get("target"):  # 第一次翻译时记下译文语言，之后改设置不影响这篇
-        old_zh = any(b.get("zh") or b.get("caption_zh") for b in paper.get("blocks", []))  # 1.3 以前译的都是中文
+    if not read and not paper.get("meta", {}).get("target"):  # 第一次翻譯時記下譯文語言，之後改設定不影響這篇
+        old_zh = any(b.get("zh") or b.get("caption_zh") for b in paper.get("blocks", []))  # 1.3 以前譯的都是中文
         target = "zh" if old_zh else langs.of_paper(paper.get("meta"), cfg)
         ws.update("paper", lambda p: p.setdefault("meta", {}).setdefault("target", target))
     journal(ws, (tr("只读原文（不翻译）") if read else "") + tr("开始：{pages} 页，{batches} 批，引擎 {engine}，并发 {workers}", pages=len(pages), batches=len(batches), engine=engines.engine_name(cfg.get("engine")), workers=workers))
@@ -343,7 +343,7 @@ def translate_pages(ws: Workspace, cfg: dict, pages: list[int], cancel, report, 
     def work(batch):
         if cancel.is_set():
             return
-        if state["quota"]:  # 额度用完了，不再白跑
+        if state["quota"]:  # 額度用完了，不再白跑
             with lock:
                 state["done"] += len(batch)
                 for n in batch:
@@ -351,14 +351,14 @@ def translate_pages(ws: Workspace, cfg: dict, pages: list[int], cancel, report, 
             return
         with lock:
             state["active"].add(tuple(batch))
-            p = batch[0] - 1  # 上一页这次也要译、还没译好（在别的段里同时译）：跨页那段归它，这批跳过页首续文
+            p = batch[0] - 1  # 上一頁這次也要譯、還沒譯好（在別的段裡同時譯）：跨頁那段歸它，這批跳過頁首續文
             skip_head = p in job_pages and p not in state["ok"] and p not in en_pages
-            # 交界两边都看一眼相邻页的原页图：后一段第一批看上一页末尾，前一段最后一批看下一页开头
+            # 交界兩邊都看一眼相鄰頁的原頁圖：後一段第一批看上一頁末尾，前一段最後一批看下一頁開頭
             q = batch[-1] + 1
-            # 下一页存在、不在本段（别的段在译，或者断点续传时已经译过、跳过了页首续文）：本批负责把跨页那段补完整
+            # 下一頁存在、不在本段（別的段在譯，或者斷點續傳時已經譯過、跳過了頁首續文）：本批負責把跨頁那段補完整
             owner = q <= total_pages and lane_of.get(q) != lane_of[batch[-1]] and q not in en_pages
             peek = ([p] if skip_head else []) + ([q] if owner else [])
-            # 每段第一批、上一页还没有译文（同时在别的段里译，或从没译过）：给原文的前文参考
+            # 每段第一批、上一頁還沒有譯文（同時在別的段裡譯，或從沒譯過）：給原文的前文參考
             front = batch is lanes[lane_of[batch[0]]][0] and batch[0] > 1 and (p not in had or skip_head)
         say()
         err = None
@@ -402,11 +402,11 @@ def translate_pages(ws: Workspace, cfg: dict, pages: list[int], cancel, report, 
     with ThreadPoolExecutor(max_workers=workers) as pool:
         futures = [pool.submit(run_lane, lane) for lane in lanes]
         for f in futures:
-            f.result()  # Cancelled 在这里抛出去
+            f.result()  # Cancelled 在這裡拋出去
     if cancel.is_set():
         raise engines.Cancelled()
     if not read and len(batches) > 1 and not state["quota"] and state["ok"] - set(cfg.get("_figure_fill_pages", ())):
-        try:  # 检查失败或这时取消，都不影响已经译好的内容：照常结束，不算取消
+        try:  # 檢查失敗或這時取消，都不影響已經譯好的內容：照常結束，不算取消
             report(state["done"], len(pages), tr("正在检查术语一致性"))
             consistency.check(ws, cfg, sorted(state["ok"] - set(cfg.get("_figure_fill_pages", ()))), cancel, meter, journal, _merge_lock)
         except engines.Cancelled:

@@ -1,7 +1,7 @@
-"""页眉、页脚带的范围：图的标签不能连到页眉页脚里去。
+"""頁眉、頁腳帶的範圍：圖的標籤不能連到頁眉頁腳裡去。
 
-两种依据：顶部 / 底部的整宽横线；在多页同一位置重复出现的文字行（去掉数字后相同，
-例如“Page 11”“NIST AI 100-1”、单独的页码）。
+兩種依據：頂部 / 底部的整寬橫線；在多頁同一位置重複出現的文字行（去掉數字後相同，
+例如“Page 11”“NIST AI 100-1”、單獨的頁碼）。
 """
 from __future__ import annotations
 
@@ -9,12 +9,12 @@ import json
 import re
 from pathlib import Path
 
-_BAND = .1  # 只在页面上下各 10% 里找页眉页脚
+_BAND = .1  # 只在頁面上下各 10% 裡找頁眉頁腳
 _DIGITS = re.compile(r"[\d\s]+")
 
 
 def _lines(chars):
-    """页面上下边带里的文字行：[(框, 去掉数字和空白的文字)]。"""
+    """頁面上下邊帶裡的文字行：[(框, 去掉數字和空白的文字)]。"""
     chars = sorted((c for c in chars if c[2] < _BAND or c[4] > 1 - _BAND), key=lambda c: (c[2], c[1]))
     lines = []
     for c in chars:
@@ -27,7 +27,7 @@ def _lines(chars):
 
 
 def running_lines(extract_dir: Path, page_count: int) -> dict[int, list[list[float]]]:
-    """在至少 3 页、且不少于四分之一的页上同一高度重复出现的行，按页返回它们的框。"""
+    """在至少 3 頁、且不少於四分之一的頁上同一高度重複出現的行，按頁回傳它們的框。"""
     per_page = {}
     for pn in range(1, page_count + 1):
         path = extract_dir / f"page-{pn:03d}.chars.json"
@@ -45,7 +45,7 @@ def running_lines(extract_dir: Path, page_count: int) -> dict[int, list[list[flo
 
 
 def margins(separators, running=()) -> tuple[float, float]:
-    """页眉带下沿和页脚带上沿，至少留页边 6%。"""
+    """頁眉帶下沿和頁腳帶上沿，至少留頁邊 6%。"""
     rules = [b for b in separators if b[2] - b[0] > b[3] - b[1]]
     top = max([b[3] for b in rules if b[3] < .12] + [b[3] for b in running if b[3] < .5] + [.06])
     bottom = min([b[1] for b in rules if b[1] > .88] + [b[1] for b in running if b[1] > .5] + [.94])

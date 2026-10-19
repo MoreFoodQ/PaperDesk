@@ -1,4 +1,4 @@
-"""翻译时本机 CLI 只带用得到的东西：Claude 只给 Read 工具，Codex 关掉用户的 MCP 和用不到的功能；不认新参数时退回原样。
+"""翻譯時本機 CLI 只帶用得到的東西：Claude 只給 Read 工具，Codex 關掉使用者的 MCP 和用不到的功能；不認新參數時退回原樣。
 python -m unittest tests.test_engine_lean"""
 import json
 import shutil
@@ -47,7 +47,7 @@ class CodexLeanTest(unittest.TestCase):
         self.assertIn("mcp_servers.node_repl.enabled=false", pairs)
         self.assertIn("notify=[]", pairs)
         self.assertIn("features.plugins=false", pairs)
-        self.assertFalse(any("provider" in p or p.startswith("model") for p in pairs))  # 用户的 provider、模型不动
+        self.assertFalse(any("provider" in p or p.startswith("model") for p in pairs))  # 使用者的 provider、模型不動
         self.assertNotIn("--ignore-user-config", a)
 
     def test_missing_or_odd_config_only_turns_features_off(self):
@@ -62,7 +62,7 @@ class CodexLeanTest(unittest.TestCase):
 
 
 def fake_popen(calls, replies):
-    """记下每次的命令行，按顺序返回 replies 里的 (stdout, 'stderr' 或 None)。"""
+    """記下每次的命令列，按順序回傳 replies 裡的 (stdout, 'stderr' 或 None)。"""
     def popen(args, cwd):
         calls.append(list(args))
         return replies[len(calls) - 1]
@@ -76,7 +76,7 @@ class EngineLeanTest(unittest.TestCase):
         self.assertTrue(out["claude"]["lean"] and out["codex"]["lean"])
         self.assertEqual(out["claude"]["model"], "opus")
         self.assertNotIn("lean", out["openai"])
-        self.assertNotIn("lean", cfg["claude"])  # 原设置不改（问 AI 还用它）
+        self.assertNotIn("lean", cfg["claude"])  # 原設定不改（問 AI 還用它）
 
     def run_claude(self, c, outcomes):
         calls = []
@@ -102,7 +102,7 @@ class EngineLeanTest(unittest.TestCase):
         self.assertEqual(calls[0][calls[0].index("--tools") + 1], "Read")
         self.assertIn("opus", calls[0])
         self.assertIn("high", calls[0])
-        _, calls = self.run_claude({"model": "opus"}, ["ok"])  # 问 AI：不加
+        _, calls = self.run_claude({"model": "opus"}, ["ok"])  # 問 AI：不加
         self.assertIn("--tools", calls[0])
 
     def test_claude_falls_back_when_option_unknown(self):

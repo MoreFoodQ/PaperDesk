@@ -1,4 +1,4 @@
-/* 文献库多选（js/library/batch.js）：表头换成操作条，论文缩略图左上角出勾选框 */
+/* 文獻庫多選（js/library/batch.js）：表頭換成操作條，論文縮略圖左上角出勾選框 */
 #pickBtn { flex: none; }
 .batch-bar { display: none; }
 .list-head.picking > :not(.batch-bar) { display: none; }
@@ -12,7 +12,7 @@
 .batch-tools [data-b="trash"] { color: var(--danger); }
 .batch-tools[data-empty] { opacity: .55; }
 
-/* 勾选框：平时悬停才出现；多选时一直在 */
+/* 勾選框：平時懸停才出現；多選時一直在 */
 .row .pick {
   position: absolute; left: 4px; top: 8px; z-index: 1; width: 20px; height: 20px; border-radius: 6px;
   display: grid; place-items: center; background: var(--surface); color: transparent; cursor: pointer;

@@ -1,4 +1,4 @@
-"""界面语言：系统语言判断、tr 填占位符、页面注入词典，以及所有界面文字都有英文。  python -m unittest tests.test_i18n"""
+"""介面語言：系統語言判斷、tr 填佔位符、頁面注入詞典，以及所有介面文字都有英文。  python -m unittest tests.test_i18n"""
 import os
 import json
 import re
@@ -54,7 +54,7 @@ class I18nTest(unittest.TestCase):
             out = i18n.inject(page, "en")
         self.assertIn('<html lang="en"', out)
         self.assertIn('id="pr-i18n"', out)
-        self.assertNotIn("Settings</script>", out)  # 词典里的 < 要转义，不能提前结束 script
+        self.assertNotIn("Settings</script>", out)  # 詞典裡的 < 要轉義，不能提前結束 script
 
     def test_every_ui_string_has_english(self):
         result = subprocess.run([sys.executable, str(ROOT / "scripts" / "i18n_check.py")], capture_output=True, text=True, encoding="utf-8")

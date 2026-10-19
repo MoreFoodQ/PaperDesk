@@ -1,13 +1,13 @@
-/* 功能开关和快捷键（文献库页、阅读页、设置共用）。
-   存在本机 prefs.json：ui.features（哪些功能开着）、ui.keys_on（快捷键总开关）、keys（改过的键位）。
-   浏览器 localStorage 里留一份缓存，打开页面时先用缓存，服务端的到了再以服务端为准。 */
+/* 功能開關和快捷鍵（文獻庫頁、閱讀頁、設定共用）。
+   存在本機 prefs.json：ui.features（哪些功能開著）、ui.keys_on（快捷鍵總開關）、keys（改過的鍵位）。
+   瀏覽器 localStorage 裡留一份快取，打開頁面時先用快取，服務端的到了再以服務端為準。 */
 (function (PR) {
   "use strict";
 
-  /* 阅读页排版的默认值（Aa 面板和设置 → 阅读共用；主题单独存） */
-  PR.TYPE_DEFAULTS = { fs: 21, measure: 35, lh: 1.9, font: "serif", margin: true };  // 只管排版；显示方式（mode / lead）不在这里，恢复默认不碰它
+  /* 閱讀頁排版的預設值（Aa 面板和設定 → 閱讀共用；主題單獨存） */
+  PR.TYPE_DEFAULTS = { fs: 21, measure: 35, lh: 1.9, font: "serif", margin: true };  // 只管排版；顯示方式（mode / lead）不在這裡，恢復預設不碰它
 
-  /* [id, 名字, 默认开关, 说明] */
+  /* [id, 名字, 預設開關, 說明] */
   PR.FEATURES = [
     ["chat", PR.t("问 AI"), true, PR.t("阅读页右侧边读边问；段落操作条、选中文字、笔记卡片上的“问 AI”")],
     ["edit", PR.t("改译文"), true, PR.t("段落操作条里的“改译文”（也可以双击段落）")],
@@ -15,7 +15,7 @@
     ["pages", PR.t("原页面板"), true, PR.t("右上角“原页”，对照 PDF 原页")],
     ["retranslate", PR.t("让模型重译一段"), false, PR.t("会花 token，容易误点，默认关；开了之后在段落的“⋯”菜单里")],
   ];
-  /* [id, 名字, 默认键, 分组, 依赖的功能] */
+  /* [id, 名字, 預設鍵, 分組, 相依性的功能] */
   PR.KEY_ACTIONS = [
     ["next", PR.t("下一段"), "j", PR.t("阅读")], ["prev", PR.t("上一段"), "k", PR.t("阅读")],
     ["mode", PR.t("单语 / 双语"), "b", PR.t("阅读")], ["toc", PR.t("目录"), "t", PR.t("阅读")],
@@ -47,7 +47,7 @@
     return a ? a[0] : null;
   };
 
-  /* 设置页保存时调用：{features, keys_on, keys} */
+  /* 設定頁儲存時呼叫：{features, keys_on, keys} */
   PR.applyUi = function (next, persist) {
     if (next.features) PR.features = Object.assign({}, DEF_FEATURES, next.features);
     if (next.keys_on != null) PR.keysOn = !!next.keys_on;
@@ -63,7 +63,7 @@
   };
   PR.defaultKeys = () => Object.assign({}, DEF_KEYS);
 
-  /* 服务端 prefs 到了之后以它为准 */
+  /* 服務端 prefs 到了之後以它為準 */
   PR.useServerUi = function (p) {
     const keys = p.keys ? Object.fromEntries(Object.entries(p.keys).filter(([, v]) => v !== null)) : null;
     PR.applyUi({ features: (p.ui || {}).features || PR.features, keys_on: (p.ui || {}).keys_on, keys: keys ? Object.assign({}, DEF_KEYS, keys) : PR.keymap }, false);

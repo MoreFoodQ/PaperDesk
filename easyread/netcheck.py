@@ -1,8 +1,8 @@
-"""翻译、提问前先看一眼网络：连不上就立刻用中文说清楚怎么办（国内多半是没开梯子），不让人干等到超时。
+"""在模型請求前檢查連線，並提供具體的錯誤說明。
 
-- problem(cfg)：按引擎找到它真正要连的地址，发一个请求；收到任何 HTTP 响应都算通。
-- explain(cfg, msg)：引擎跑到一半报错时，报错像网络问题就补一句该怎么办。
-- proxy_env()：梯子只开了“系统代理”时 Claude Code / Codex 读不到，把它转成 HTTPS_PROXY 传过去。
+- problem(cfg)：依模型設定取得實際連線位址，檢查是否能收到 HTTP 回應。
+- explain(cfg, msg)：補充連線、憑證或服務限制相關的錯誤資訊。
+- proxy_env()：將系統代理設定轉為 CLI 可讀取的 HTTPS_PROXY 環境變數。
 """
 from __future__ import annotations
 
@@ -22,20 +22,20 @@ from .presets import NEEDS_VPN, PRESETS
 
 
 
-_OK_TTL = 120  # 通过一次后两分钟内不再测，一篇论文几十批不用每批都测
+_OK_TTL = 120  # 透過一次後兩分鐘內不再測，一篇論文幾十批不用每批都測
 _ok: dict[str, float] = {}
 _LOCAL = {"localhost", "127.0.0.1", "::1"}
 _NET = re.compile(r"ECONNREFUSED|ETIMEDOUT|ENOTFOUND|ECONNRESET|EAI_AGAIN|fetch failed|connection error|unable to connect"
-                  r"|error sending request|stream disconnected|timed out|getaddrinfo|连不上|can't connect", re.I)  # i18n-ok 匹配报错
+                  r"|error sending request|stream disconnected|timed out|getaddrinfo|连不上|can't connect", re.I)  # i18n-ok 匹配回報錯誤
 _REGION = re.compile(r"unsupported_country|not available in your (country|region)|request not allowed", re.I)
-# 自己给出的连不上 / 证书提示里一定带的词（中英文各一套），见到就不再追加建议
+# 自己給出的連不上 / 證書提示裡一定帶的詞（中英文各一套），見到就不再追加建議
 _MARKS = ("先把它打开", "請檢查網路", "check your network", "start it first")  # i18n-ok
 _CERT_MARKS = ("证书校验失败", "certificate verification failed")  # i18n-ok
 _CERT = re.compile(r"CERTIFICATE_VERIFY_FAILED|certificate verify failed|self.signed certificate|unknown issuer", re.I)
 
 
 def _claude_base() -> str:
-    """Claude Code 可能配了中转（CC Switch 之类写在 ~/.claude/settings.json 的 env 里），国内中转不用梯子。"""
+    """讀取 Claude Code 自訂的 ANTHROPIC_BASE_URL；未設定時使用官方位址。"""
     base = os.environ.get("ANTHROPIC_BASE_URL")
     if not base:
         try:
@@ -61,7 +61,7 @@ def _codex_base() -> str:
 
 
 def target(cfg: dict) -> dict | None:
-    """{name, url, vpn}：vpn 表示国内要开梯子才连得上。"""
+    """回傳服務名稱、連線位址與舊版相容旗標 vpn；旗標不代表必須使用代理。"""
     e = cfg.get("engine")
     if e == "claude":
         url = _claude_base()
@@ -99,7 +99,7 @@ def _certificate(t: dict) -> str:
 
 
 def problem(cfg: dict, timeout: float = 6) -> str | None:
-    """连得上返回 None，连不上返回给用户看的一句话。"""
+    """連得上回傳 None，連不上回傳給使用者看的一句話。"""
     t = target(cfg)
     u = urlparse(t["url"]) if t else None
     if not u or not u.hostname:
@@ -107,13 +107,13 @@ def problem(cfg: dict, timeout: float = 6) -> str | None:
     origin = f"{u.scheme}://{u.netloc}/"
     if time.time() - _ok.get(origin, 0) < _OK_TTL:
         return None
-    for attempt in range(2):  # 梯子偶尔抖一下，失败一次不算
+    for attempt in range(2):  # 避免短暫連線不穩造成誤判，最多嘗試兩次
         try:
             http.urlopen(origin, timeout=timeout).close()
-        except urllib.error.HTTPError as e:  # 有 HTTP 响应就说明网络是通的
+        except urllib.error.HTTPError as e:  # 有 HTTP 回應就說明網路是通的
             if _REGION.search(e.read(2000).decode("utf-8", "replace")):
                 return _region(t)
-        except Exception as e:  # noqa: BLE001  DNS 失败、拒绝连接、超时、证书被劫持……
+        except Exception as e:  # noqa: BLE001  DNS 失敗、拒絕連接、超時、證書被劫持……
             if _CERT.search(str(e)):
                 log.info("证书校验失败 %s：%s", origin, e)
                 return _certificate(t)
@@ -141,12 +141,12 @@ def explain(cfg: dict, msg: str) -> str:
 
 
 def offline(msg: str) -> bool:
-    """这条报错是不是网络 / 地区问题（是的话剩下的页不用再试了）。"""
+    """這條回報錯誤是不是網路 / 地區問題（是的話剩下的頁不用再試了）。"""
     return any(k in msg for k in _MARKS + _CERT_MARKS)
 
 
 def proxy_env() -> dict | None:
-    """Windows / macOS 的系统代理 Python 读得到，Node 写的 Claude Code 读不到；没设 HTTPS_PROXY 时替它补上。"""
+    """Windows / macOS 的系統代理 Python 讀得到，Node 寫的 Claude Code 讀不到；沒設 HTTPS_PROXY 時替它補上。"""
     if any(os.environ.get(k) for k in ("HTTPS_PROXY", "https_proxy", "ALL_PROXY", "all_proxy")):
         return None
     p = urllib.request.getproxies()

@@ -1,7 +1,7 @@
-"""按原页渲染结果确认图形真的画在页面上。
+"""按原頁渲染結果確認圖形真的畫在頁面上。
 
-PDF 里的白色背景矩形、被裁剪路径挡住的内容、嵌入图片自带的白边，在对象坐标里都有范围，
-但页面上看不见；只按对象坐标取范围会把图框撑到正文或页眉。这里把每个候选框收到看得见的像素上。
+PDF 裡的白色背景矩形、被裁剪路徑擋住的內容、嵌入圖片自帶的白邊，在物件座標裡都有範圍，
+但頁面上看不見；只按物件座標取範圍會把圖框撐到正文或頁眉。這裡把每個候選框收到看得見的像素上。
 """
 from __future__ import annotations
 
@@ -10,13 +10,13 @@ from contextlib import closing
 from pathlib import Path
 
 SCALE = 2
-_WHITE = 245  # 三个通道都不低于这个值就算页面底色
+_WHITE = 245  # 三個通道都不低於這個值就算頁面底色
 
 
 def visible_mask(pdf: Path, page_index: int, erase: list[list[float]]):
-    """渲染一页，返回两张“非底色”像素的黑白图（255 为有内容）：(图形, 全部)。
-    图形那张抹掉 erase 里的框（PDF 文字、页眉分隔线）：文字由题注、标签那套规则单独处理，
-    不能让正文或页眉线把图形范围撑开。全部那张用来确认文字本身看得见（被裁掉的文字不算标签）。"""
+    """渲染一頁，回傳兩張“非底色”像素的黑白圖（255 為有內容）：(圖形, 全部)。
+    圖形那張抹掉 erase 裡的框（PDF 文字、頁眉分隔線）：文字由題注、標籤那套規則單獨處理，
+    不能讓正文或頁眉線把圖形範圍撐開。全部那張用來確認文字本身看得見（被裁掉的文字不算標籤）。"""
     from PIL import ImageChops, ImageDraw, ImageFilter
 
     from .pdfwork import open_pdf
@@ -30,12 +30,12 @@ def visible_mask(pdf: Path, page_index: int, erase: list[list[float]]):
     draw = ImageDraw.Draw(mask)
     for x0, y0, x1, y1 in erase:
         draw.rectangle([x0 * width - 1, y0 * height - 1, x1 * width + 1, y1 * height + 1], fill=0)
-    # 去掉文字抗锯齿留下的孤立噪点；1 像素宽的细线在 3x3 邻域里有 3 个点，会保留。
+    # 去掉文字抗鋸齒留下的孤立噪點；1 像素寬的細線在 3x3 鄰域裡有 3 個點，會保留。
     return mask.filter(ImageFilter.BoxBlur(1)).point(lambda v: 255 if v >= 70 else 0), ink
 
 
 def trim(mask, box: list[float]) -> list[float] | None:
-    """把框收到框内可见像素的范围；整块都是底色时返回 None。"""
+    """把框收到框內可見像素的範圍；整塊都是底色時回傳 None。"""
     width, height = mask.size
     left, top = int(box[0] * width), int(box[1] * height)
     right = max(left + 1, math.ceil(box[2] * width))
@@ -48,6 +48,6 @@ def trim(mask, box: list[float]) -> list[float] | None:
 
 
 def inked(ink, box: list[float]) -> bool:
-    """文字框里真的有字：可见像素横向铺满一半以上（只是边上压到别的字不算）。"""
+    """文字框裡真的有字：可見像素橫向鋪滿一半以上（只是邊上壓到別的字不算）。"""
     found = trim(ink, box)
     return bool(found) and found[2] - found[0] >= (box[2] - box[0]) * .5

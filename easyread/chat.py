@@ -1,11 +1,11 @@
-"""阅读页右侧的“问 AI”：提示词和流式输出（回答一个字一个字流出来）。
+"""閱讀頁右側的“問 AI”：提示詞和流式輸出（回答一個字一個字流出來）。
 
-- 用哪个模型：chat_models.py（设置里的一张短名单）。
-- 对话记录：chat_store.py（每篇论文可以有多个对话）。
-- 上下文：论文标题、摘要、读者指着的段落和前后几段、读者引用的几处原文、术语表。
-  读者的标记（按颜色分好的划线、笔记、问题）只在问题提到“标红的”“划线”“笔记”时才带上，
-  提到具体颜色就只带那种颜色，所以可以问“我标红的那些公式之间有什么联系”。
-  Claude Code 还能自己 Read paper.json、reader.json 看全文和全部标记。
+- 用哪個模型：chat_models.py（設定裡的一張短名單）。
+- 對話記錄：chat_store.py（每篇論文可以有多個對話）。
+- 上下文：論文標題、摘要、讀者指著的段落和前後幾段、讀者引用的幾處原文、術語表。
+  讀者的標記（按顏色分好的劃線、筆記、問題）只在問題提到“標紅的”“劃線”“筆記”時才帶上，
+  提到具體顏色就只帶那種顏色，所以可以問“我標紅的那些公式之間有什麼聯繫”。
+  Claude Code 還能自己 Read paper.json、reader.json 看全文和全部標記。
 """
 from __future__ import annotations
 
@@ -22,13 +22,13 @@ from .log import log
 from .prompts import _block_text
 from .store import Workspace
 
-HISTORY = 12  # 带上最近几轮对话
+HISTORY = 12  # 帶上最近幾輪對話
 COLOR_NAMES = {"yellow": "黄", "green": "绿", "blue": "蓝", "pink": "红"}  # i18n-ok
-MARKS_BUDGET = 9000  # 标记部分最多带多少字
-PAPER_BUDGET = 30000  # STE 问答带上正文，长论文各段取节选，保留后面的结果和结论
+MARKS_BUDGET = 9000  # 標記部分最多帶多少字
+PAPER_BUDGET = 30000  # STE 問答帶上正文，長論文各段取節選，保留後面的結果和結論
 
 
-# ---------- 提示词 ----------
+# ---------- 提示詞 ----------
 def _context(ws: Workspace, anchor: str | None, quote: str, refs: list[dict] | None = None) -> str:
     paper = ws.load("paper")
     meta = paper.get("meta", {})
@@ -64,7 +64,7 @@ def _context(ws: Workspace, anchor: str | None, quote: str, refs: list[dict] | N
 
 
 def _paper_context(ws: Workspace) -> str:
-    """跨段或全文问题也能读到后面的结果；明确标出未提供的内容。"""
+    """跨段或全文問題也能讀到後面的結果；明確標出未提供的內容。"""
     paper = ws.load("paper")
     blocks = paper.get("blocks", [])
     parts = []
@@ -102,7 +102,7 @@ def _paper_context(ws: Workspace) -> str:
 
 
 def _marks(ws: Workspace, colors: set[str] | None = None) -> str:
-    """读者的全部标记，按颜色分组；每处带上所在段落的译文（含 $TeX$），这样问“红色那些公式”也答得上。"""
+    """讀者的全部標記，按顏色分組；每處帶上所在段落的譯文（含 $TeX$），這樣問“紅色那些公式”也答得上。"""
     paper = ws.load("paper")
     blocks = {b.get("id"): b for b in paper.get("blocks", [])}
     order = {b.get("id"): i for i, b in enumerate(paper.get("blocks", []))}
@@ -120,7 +120,7 @@ def _marks(ws: Workspace, colors: set[str] | None = None) -> str:
         b = blocks.get(n.get("anchor")) or {}
         line = f"- [{n.get('anchor')}] {kinds.get(n.get('kind'), '笔记')}"  # i18n-ok
         if n.get("quote"):
-            line += f"：「{n['quote']}」" + ("（英文原文）" if n.get("side") == "en" else "")  # i18n-ok 发给模型的上下文
+            line += f"：「{n['quote']}」" + ("（英文原文）" if n.get("side") == "en" else "")  # i18n-ok 發給模型的上下文
         if n.get("body"):
             line += f"；读者写道：{n['body'][:300]}"  # i18n-ok
         if b and b.get("id") not in shown:
@@ -132,7 +132,7 @@ def _marks(ws: Workspace, colors: set[str] | None = None) -> str:
         for line in groups.get(color, []):
             if used > MARKS_BUDGET:
                 break
-            if not parts or not parts[-1].startswith(f"【{color}"):  # i18n-ok 发给模型的上下文
+            if not parts or not parts[-1].startswith(f"【{color}"):  # i18n-ok 發給模型的上下文
                 parts.append(f"【{color}色】" if color != "无颜色" else "【没有颜色的笔记和问题】")  # i18n-ok
             parts.append(line)
             used += len(line)
@@ -144,7 +144,7 @@ MARK_WORDS = re.compile(r"标[红黄绿蓝记了过的出注]|划线|划过|划�
 
 
 def wants_marks(text: str) -> tuple[bool, set[str] | None]:
-    """问题里提到“标红的”“划线”“我的笔记”这类词，才把读者的标记带上；提到具体颜色就只带那几种。"""
+    """問題裡提到“標紅的”“劃線”“我的筆記”這類詞，才把讀者的標記帶上；提到具體顏色就只帶那幾種。"""
     if not MARK_WORDS.search(text or ""):
         return False, None
     colors = {c for c in "红黄绿蓝" if re.search(c + "[色的]|标" + c, text)}  # i18n-ok
@@ -190,9 +190,9 @@ def prompt(ws: Workspace, messages: list[dict], anchor: str | None, quote: str, 
             + f"\n\n读者现在问：{ask}")  # i18n-ok
 
 
-# ---------- 流式输出 ----------
+# ---------- 流式輸出 ----------
 def stream(ecfg: dict, text: str, cwd: Path, cancel: threading.Event, on_model=None, meter=None) -> Iterator[str]:
-    """on_model(实际模型名)：Claude Code 开头会报它实际用的模型。meter：传了就记下这次回答的 token 用量。"""
+    """on_model(實際模型名)：Claude Code 開頭會報它實際用的模型。meter：傳了就記下這次回答的 token 用量。"""
     e = ecfg.get("engine")
     bad = netcheck.problem(ecfg)
     if bad:
@@ -212,15 +212,15 @@ def stream(ecfg: dict, text: str, cwd: Path, cancel: threading.Event, on_model=N
                 with budget.call(local):
                     yield from openai_api.stream(ecfg["openai"], text, cancel, local)
             finally: budget.forward(local, meter)
-        else:  # codex 没有逐字输出，整段给；不拉起用户的 MCP 和用不到的功能（见 codex_lean）
+        else:  # codex 沒有逐字輸出，整段給；不拉起使用者的 MCP 和用不到的功能（見 codex_lean）
             yield engines.run(engines.for_translation(ecfg), text, cwd, None, cancel, meter)
     except engines.EngineError as err:
         raise engines.EngineError(netcheck.explain(ecfg, str(err))) from None
 
 
 def _stream_claude(c: dict, text: str, cwd: Path, cancel, on_model=None, meter=None) -> Iterator[str]:
-    """只给 Read 一个工具（--tools Read）：其余内置工具的定义每问一次都要发，约 2.7 万 token。
-    这版 Claude Code 不认 --tools、还没输出任何字时，去掉它再问一次。"""
+    """只給 Read 一個工具（--tools Read）：其餘內置工具的定義每問一次都要發，約 2.7 萬 token。
+    這版 Claude Code 不認 --tools、還沒輸出任何字時，去掉它再問一次。"""
     exe = engines.claude_path(c)
     if not exe:
         raise engines.EngineError(tr("找不到 Claude Code 命令（先装好并登录 Claude Code）"))
@@ -284,4 +284,4 @@ def _stream_once(args: list[str], text: str, cwd: Path, cancel, on_model=None, m
         timer.cancel()
         if proc.poll() is None:
             proc.kill()
-        done.set()  # 让 kill_on_cancel 线程退出
+        done.set()  # 讓 kill_on_cancel 執行緒退出

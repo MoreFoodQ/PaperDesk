@@ -4,7 +4,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const { test } = require('node:test');
 
-/* 句子对齐的渲染：有 sents 一句一个 span；旧数据、译文改过、对不上的都按整段 */
+/* 句子對齊的渲染：有 sents 一句一個 span；舊資料、譯文改過、對不上的都按整段 */
 function load(blocks, edits = {}) {
   const PR = {
     state: { reader: { edits, notes: {} }, paper: { blocks } },
@@ -42,7 +42,7 @@ test('stale or broken sents fall back', () => {
   const PR = load([{ ...para, zh: '甲。乙丙。' }, { ...para, id: 'p2', sents: [[4, 2], [3, 4]] }, { ...para, id: 'p3', en: '**A b. C** d.', sents: [[6, 2], [13, 4]] }]);
   assert.equal(PR.alignOf('p1'), null);
   assert.equal(PR.alignOf('p2'), null);
-  assert.equal(PR.sentMd('p3', 'en', '**A b. C** d.'), '<**A b. C** d.>');  // 句界切在粗体中间
+  assert.equal(PR.sentMd('p3', 'en', '**A b. C** d.'), '<**A b. C** d.>');  // 句界切在粗體中間
 });
 
 test('list items align per item; captions never', () => {

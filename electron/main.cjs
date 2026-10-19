@@ -13,13 +13,13 @@ const openTarget = require("./open-target.cjs");
 const { registerCodexLogin } = require("./codex-login.cjs");
 const deepLink = require("./deep-link.cjs");
 
-// 窗口缓存等放 %APPDATA%\EasyRead（默认会用 package.json 的 name，叫 easyread-desktop）。
-// 论文和设置不放这里：打包后的后端默认用 ~/EasyRead，和 pip 安装版同一个位置，用户找得到、好备份。
+// 窗口快取等放 %APPDATA%\EasyRead（預設會用 package.json 的 name，叫 easyread-desktop）。
+// 論文和設定不放這裡：打包後的後端預設用 ~/EasyRead，和 pip 安裝版同一個位置，使用者找得到、好備份。
 app.setPath("userData", process.env.PAPERDESK_DESKTOP_PROFILE || path.join(app.getPath("appData"), "PaperDesk"));
 const background = process.env.PAPERDESK_BACKGROUND === "1";
 startup.mark(app, "electron-entry");
 
-// 桌面版自己的几句报错跟系统语言走（界面语言由后端决定，见 easyread/i18n.py）
+// 桌面版自己的幾句回報錯誤跟系統語言走（介面語言由後端決定，見 easyread/i18n.py）
 const isZh = () => app.getLocale().toLowerCase().startsWith("zh");
 let backend;
 let mainWindow;
@@ -55,15 +55,15 @@ function backendCommand() {
   return { command, args: ["-m", "easyread", "serve", "--port", "0"], cwd: root };
 }
 
-// macOS / Linux 从启动台、桌面图标打开时，拿不到终端里配的 PATH（Homebrew、npm 全局目录），
-// 后端会找不到 claude / codex。向用户的登录 shell 要一份 PATH 补上。
+// macOS / Linux 從啟動臺、桌面圖標打開時，拿不到終端裡配的 PATH（Homebrew、npm 全局目錄），
+// 後端會找不到 claude / codex。向使用者的登入 shell 要一份 PATH 補上。
 function startBackend() {
   // On macOS an app can stay alive after its last window closes. Reopening
   // the window must reuse that backend, rather than orphaning the old one.
   if (backendReady) return backendReady;
   backendReady = (async () => {
   const launch = backendCommand();
-  const env = { ...process.env, PYTHONUTF8: "1", EASYREAD_SYSTEM_LANG: app.getLocale() };  // 后端按它决定界面语言
+  const env = { ...process.env, PYTHONUTF8: "1", EASYREAD_SYSTEM_LANG: app.getLocale() };  // 後端按它決定介面語言
   startup.mark(app, "shell-path-start");
   const shellPath = await startup.loginShellPath(process.platform);
   startup.mark(app, "shell-path-ready");
@@ -146,7 +146,7 @@ async function stopBackendGracefully() {
   if (!child) return;
   const info = await backendJson("/api/library");
   await backendJson("/api/shutdown", info.token);
-  // 后端清掉占用标记、关闭 HTTP 服务后才启动新进程。
+  // 後端清掉佔用標記、關閉 HTTP 服務後才啟動新行程。
   if (backend !== child) return;
   await new Promise((resolve, reject) => {
     const timer = setTimeout(() => { child.removeListener("exit", exited); reject(new Error(isZh() ? "後端尚未結束，請稍後重試" : "The backend has not exited yet. Try again later.")); }, 8000);
@@ -195,7 +195,7 @@ function stopBackend() {
   }
 }
 
-// 窗口还在启动时先记下，后端就绪后 createWindow 直接打开这篇
+// 窗口還在啟動時先記下，後端就緒後 createWindow 直接打開這篇
 function openLink(target) {
   if (!target) return;
   if (!mainWindow || windowOpening || !backendUrl) {
@@ -267,7 +267,7 @@ async function createWindow() {
     app.quit();
   } finally {
     windowOpening = false;
-    // 加载文献库期间又点了 easyread:// 链接，openLink 只记下了它，这里补开
+    // 載入文獻庫期間又點了 easyread:// 連結，openLink 只記下了它，這裡補開
     if (pendingOpen && mainWindow === openingWindow && !quitting) openLink(pendingOpen);
   }
 }
@@ -282,7 +282,7 @@ if (!app.requestSingleInstanceLock()) {
   Menu.setApplicationMenu(process.platform === "darwin"
     ? Menu.buildFromTemplate([{ role: "appMenu" }, { role: "editMenu" }, { role: "windowMenu" }])
     : null);
-  // macOS 用 open-url 传链接，可能早于 ready
+  // macOS 用 open-url 傳連結，可能早於 ready
   app.on("open-url", (event, link) => {
     event.preventDefault();
     openLink(deepLink.openPath(link));
@@ -295,7 +295,7 @@ if (!app.requestSingleInstanceLock()) {
       getWindow: () => mainWindow,
       prepareInstall: stopBackendGracefully,
       recover: async () => {
-        if (backend) return;  // 后端没停（正在翻译、拒绝关闭）：页面别刷新，弹窗留着显示原因
+        if (backend) return;  // 後端沒停（正在翻譯、拒絕關閉）：頁面別重新整理，彈窗留著顯示原因
         const url = await startBackend();
         if (mainWindow) await mainWindow.loadURL(url);
       },

@@ -1,4 +1,4 @@
-"""给模型的提示词：分批翻译、回答用户问题、重译一段。"""
+"""給模型的提示詞：分批翻譯、回答使用者問題、重譯一段。"""
 from __future__ import annotations
 
 import json
@@ -39,7 +39,7 @@ id 规则：段落 p{页}-{序号}，标题 s{编号，点换成横线}，公式
 注意 JSON 里 TeX 的反斜杠要写两个（\\\\frac、\\\\text、\\\\bar）。字符串里的中文引号用“”或「」，不要出现没转义的英文双引号 "。表格和图放在正文第一次提到它的段落之后。"""
 
 
-# 译成中文以外的语言时，把只适用于中文的说法换掉；中文的提示词保持原样
+# 譯成中文以外的語言時，把只適用於中文的說法換掉；中文的提示詞保持原樣
 _RULES_SWAP = [
     ("可以调整中文语序、拆长句，读起来要像中文母语者写的学术文字。", "可以调整语序、拆长句，读起来要像{L}母语者写的学术文字。"),
     ("首次出现的核心术语写“中文（English）”。已有术语表必须遵守。统计学里 standard error 译“标准误差”。", "首次出现的核心术语写“{L}译名（English）”。已有术语表必须遵守。"),
@@ -82,7 +82,7 @@ def schema(target: str = "zh") -> str:
 
 
 _NOTE = re.compile(r"^\s*(\$\^|[¹²³⁴⁵⁶⁷⁸⁹*†‡]|\d{1,2}\s*https?:)|^\S*https?://\S*\s*$")
-# 不带上标、直接写成 “3 That is, …” 的脚注（DeepSeek 常这么写）：开头 1–2 位数字接大写单词，块又很短
+# 不帶上標、直接寫成 “3 That is, …” 的腳註（DeepSeek 常這麼寫）：開頭 1–2 位數字接大寫單詞，塊又很短
 _NOTE_PLAIN = re.compile(r"^\s*\d{1,2}\s?[A-Z][a-z]")
 
 
@@ -97,8 +97,8 @@ _ENDS = (".", "?", "!", ":", ";", "。", "？", "！", "：", ")", "]", "\"", "�
 
 
 def _context(ws: Workspace, pages: list[int], new_blocks: bool = True, skip_head: bool = False) -> str:
-    """new_blocks=False：只给已有的块补译文（只读原文之后再翻译），不用提块 id 和上一批的续文。
-    skip_head：上一页由另一段同时在译（分段并行的交界），跨页那段由它补完整，这批跳过页首续文。"""
+    """new_blocks=False：只給已有的塊補譯文（閱讀原文之後再翻譯），不用提塊 id 和上一批的續文。
+    skip_head：上一頁由另一段同時在譯（分段並行的交界），跨頁那段由它補完整，這批跳過頁首續文。"""
     paper = ws.load("paper")
     meta = paper.get("meta", {})
     blocks = paper.get("blocks", [])
@@ -120,24 +120,24 @@ def _context(ws: Workspace, pages: list[int], new_blocks: bool = True, skip_head
                      f"所以第 {p} 页开头如果是接着上一页没写完的句子（不是新段落或新标题的开头），这半段不要输出，"
                      f"从第 {p} 页第一个新段落、标题、公式或图表开始。")
         return "\n".join(lines)
-    # 只看紧挨着的前两页：再往前的段落不可能续到本批（分段并行时更早的页可能是别的段译的）
-    # 脚注不算：模型常把脚注排在页的最后一块，拿它当“上一段”会让下一批误把页首正文当续文跳过
+    # 只看緊挨著的前兩頁：再往前的段落不可能續到本批（分段並行時更早的頁可能是別的段譯的）
+    # 腳註不算：模型常把腳註排在頁的最後一塊，拿它當“上一段”會讓下一批誤把頁首正文當續文跳過
     near = [b for b in blocks if pages[0] - 2 <= (b.get("page") or 0) < pages[0] and not _is_note(b)]
     prev = next((b for b in reversed(near) if b.get("en") and b.get("type") != "references"), None)
     if prev:
         end = prev["en"].rstrip()
         lines.append(f"上一批最后一段（{prev['id']}，第 {prev['page']} 页）的英文结尾：……{end[-300:]}")
-        # 只有最后一块就是这个段落、而且停在半句时才算没补完；后面跟着标题的，那段已经结束了
-        tail = end[:-1].rstrip() if end.endswith("$") and end.count("$") % 2 == 0 else end  # “…$x=1.$”看公式里面的句号
+        # 只有最後一塊就是這個段落、而且停在半句時才算沒補完；後面跟著標題的，那段已經結束了
+        tail = end[:-1].rstrip() if end.endswith("$") and end.count("$") % 2 == 0 else end  # “…$x=1.$”看公式裡面的句號
         last = near[-1]
         if last is not prev and last.get("type") in ("math", "table", "figure"):
-            # 上一页以公式、表、图结尾：本页开头常是公式后面接着的半句（where …、“… independent questions.”），
-            # 它不是上一段的续文，上一批也不会译它
+            # 上一頁以公式、表、圖結尾：本頁開頭常是公式後面接著的半句（where …、“… independent questions.”），
+            # 它不是上一段的續文，上一批也不會譯它
             lines.append(f"上一页最后是{'公式' if last.get('type') == 'math' else '图表'}（{last['id']}）。本批第一页开头如果是接在它后面的文字"
                          "（比如公式后的 where …，或者公式前那句话的后半句），要译出来：单独成一段，紧接公式的加 \"cont\": true。")
         elif last is not prev or prev.get("type") != "para" or tail.endswith(_ENDS) or end.endswith("$$"):
             lines.append("如果本批第一页开头是这一段的续文，不要再输出这段续文。")
-        else:  # 上一批没能把这段补完（下一页开头的抽取文字里常先排着表格、公式），续文得由这批译
+        else:  # 上一批沒能把這段補完（下一頁開頭的抽取文字裡常先排著表格、公式），續文得由這批譯
             lines.append("这一段在上一批停在了半句，没有补完。本批第一页开头接着这段的续文要译出来：单独成一段并加 \"cont\": true，"
                          "从续文的第一个词开始，不要重复上一批已经译了的部分。")
     return "\n".join(lines)
@@ -152,12 +152,12 @@ def _page_texts(ws: Workspace, pages: list[int]) -> str:
 
 
 def peek_note(engine: str, pages: list[int], peek: list[int]) -> str:
-    """分段并行的交界：两边的批次都看一眼相邻那页的原页图，按同一张图判断跨页那段在哪结束。
-    只靠抽取文字不行：下一页的抽取文字常常先排着表格或图，开头 1500 字里可能根本没有那段的后半句。"""
+    """分段並行的交界：兩邊的批次都看一眼相鄰那頁的原頁圖，按同一張圖判斷跨頁那段在哪結束。
+    只靠抽取文字不行：下一頁的抽取文字常常先排著表格或圖，開頭 1500 字裡可能根本沒有那段的後半句。"""
     if engine not in ("claude", "attached"):
         return ""
     out = []
-    if engine == "attached" and peek:  # 附图不带页码：说清楚顺序（translate 里按页码排好了）
+    if engine == "attached" and peek:  # 附圖不帶頁碼：說清楚順序（translate 裡按頁碼排好了）
         out.append("附上的原页图按页码排，依次是第 " + "、".join(map(str, sorted({*pages, *peek}))) + " 页。")
     for n in peek:
         img = f"Read 看 extract/page-{n:03d}.jpg" if engine == "claude" else f"看附上的第 {n} 页原页图"
@@ -169,7 +169,7 @@ def peek_note(engine: str, pages: list[int], peek: list[int]) -> str:
 
 
 def translate(ws: Workspace, pages: list[int], engine: str, next_head: str, skip_head: bool = False, peek=(), front: str = "") -> str:
-    """front：分段并行时每段第一批的前文参考（见 front_context）。"""
+    """front：分段並行時每段第一批的前文參考（見 front_context）。"""
     look = ""
     if next_head:
         look = ("\n===== 下一页开头（只用来把本批最后一段补完整，其余不要翻译）=====\n" + next_head)
@@ -187,7 +187,7 @@ def translate(ws: Workspace, pages: list[int], engine: str, next_head: str, skip
 
 
 def consistency(items: list[dict], agree: dict[str, int], target_name: str) -> str:
-    """译完后的术语一致性检查（见 consistency.py）：模型只判断用哪个说法、每段里哪个是另一种说法，不改写段落。"""
+    """譯完後的術語一致性檢查（見 consistency.py）：模型只判斷用哪個說法、每段裡哪個是另一種說法，不改寫段落。"""
     terms = {}
     for it in items:
         for t in it["terms"]:
@@ -209,7 +209,7 @@ def repair(original_json: str, problems: list[str]) -> str:
 
 
 def _block_text(b: dict) -> str:
-    """块的正文：有译文用译文，只读原文、还没译的块用英文。"""
+    """塊的正文：有譯文用譯文，閱讀原文、還沒譯的塊用英文。"""
     if b.get("type") == "list":
         return "\n".join(f"- {it.get('zh') or it.get('en', '')}" for it in b.get("items", []))
     if b.get("type") in ("table", "figure"):
@@ -240,7 +240,7 @@ def answer(ws: Workspace, note: dict) -> str:
 
 
 def retranslate(ws: Workspace, key: str, hint: str) -> tuple[str, tuple | None]:
-    """返回（提示词，段落和列表项的（英文, 句尾）或 None）：英文按句插好 ‖，新译文照着插，重译后句子还对得上。"""
+    """回傳（提示詞，段落和清單項的（英文, 句尾）或 None）：英文按句插好 ‖，新譯文照著插，重譯後句子還對得上。"""
     paper = ws.load("paper")
     bid, _, field = key.partition("#")
     blocks = paper.get("blocks", [])

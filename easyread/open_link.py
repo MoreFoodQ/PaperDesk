@@ -1,4 +1,4 @@
-"""给外部工具（Zotero 插件等）的稳定入口：/api/version 和 /open。约定见 docs/api.md，改坏兼容要升 API_VERSION。"""
+"""給外部工具（Zotero 插件等）的穩定入口：/api/version 和 /open。約定見 docs/api.md，改壞相容要升 API_VERSION。"""
 from __future__ import annotations
 
 import re
@@ -14,7 +14,7 @@ def version() -> dict:
 
 
 def target(lib, query: dict[str, list[str]]) -> str:
-    """/open?sha256=…&block=… 或 /open?id=…：找到论文就去阅读页（带段落锚点），找不到回文献库。"""
+    """/open?sha256=…&block=… 或 /open?id=…：找到論文就去閱讀頁（帶段落錨點），找不到迴文獻庫。"""
     first = lambda key: (query.get(key) or [""])[0].strip()  # noqa: E731
     sha, pid, block = first("sha256").lower(), first("id"), first("block")
     ws = None

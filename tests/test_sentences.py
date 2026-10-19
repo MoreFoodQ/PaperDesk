@@ -1,4 +1,4 @@
-"""句子级对齐：模型插的 ‖ 去掉后记成 sents；旧数据没有 sents 照常；补译、重译、修正都兼容。  python -m unittest tests.test_sentences"""
+"""句子級對齊：模型插的 ‖ 去掉後記成 sents；舊資料沒有 sents 照常；補譯、重譯、修正都相容。  python -m unittest tests.test_sentences"""
 import json
 import shutil
 import threading
@@ -22,7 +22,7 @@ class UnmarkTest(unittest.TestCase):
         b = {"id": "p1-1", "type": "para", "en": "A. ‖ B. ‖ C.", "zh": "甲。‖乙丙。", "sents": [[1, 1], [2, 2]]}
         sentences.attach([b])
         self.assertEqual((b["en"], b["zh"]), ("A. B. C.", "甲。乙丙。"))
-        self.assertNotIn("sents", b)  # 对不上就不记，旧的也去掉
+        self.assertNotIn("sents", b)  # 對不上就不記，舊的也去掉
 
     def test_empty_sentence_is_not_alignment(self):
         self.assertEqual(sentences.unmark("A. ‖‖ B."), ("A. B.", None))
@@ -50,7 +50,7 @@ class UnmarkTest(unittest.TestCase):
     def test_utf16_offsets_for_astral_chars(self):
         b = {"id": "p", "type": "para", "en": "𝑥 is big. ‖ Yes.", "zh": "𝑥 很大。‖是的。"}
         sentences.attach([b])
-        self.assertEqual(b["sents"][0], [10, 6])  # 𝑥 在 JS 里占 2
+        self.assertEqual(b["sents"][0], [10, 6])  # 𝑥 在 JS 裡佔 2
         self.assertTrue(sentences.valid(b))
 
     def test_list_items_and_stray_marks(self):
@@ -66,9 +66,9 @@ class UnmarkTest(unittest.TestCase):
     def test_valid_rejects_changed_text(self):
         b = {"en": "A. B.", "zh": "甲。乙。", "sents": [[2, 2], [5, 4]]}
         self.assertTrue(sentences.valid(b))
-        self.assertFalse(sentences.valid(dict(b, zh="甲。乙乙。")))  # 译文被改过
+        self.assertFalse(sentences.valid(dict(b, zh="甲。乙乙。")))  # 譯文被改過
         self.assertFalse(sentences.valid(dict(b, sents=[[5, 4]])))
-        self.assertFalse(sentences.valid({"en": "A.", "zh": "甲。"}))  # 旧数据
+        self.assertFalse(sentences.valid({"en": "A.", "zh": "甲。"}))  # 舊資料
 
 
 class SplitTest(unittest.TestCase):
@@ -169,7 +169,7 @@ class PipelineTest(unittest.TestCase):
             translate.translate_pages(self.ws, self.cfg, [1, 2], threading.Event(), lambda *a: None, read=True)
         with mock.patch.object(engines, "run", fill):
             self.assertEqual(translate.translate_pages(self.ws, self.cfg, [1, 2], threading.Event(), lambda *a: None), {})
-        self.assertEqual(seen[0], {"p1-1": "First. ‖ Second one.", "s1": "Intro. Part"})  # 标题不切
+        self.assertEqual(seen[0], {"p1-1": "First. ‖ Second one.", "s1": "Intro. Part"})  # 標題不切
         p = next(b for b in self.ws.load("paper")["blocks"] if b["id"] == "p1-1")
         self.assertEqual((p["en"], p["zh"], p["sents"]), ("First. Second one.", "第一。第二。", [[6, 3], [18, 6]]))
         self.assertEqual(next(b for b in self.ws.load("paper")["blocks"] if b["id"] == "s1")["zh"], "标题")

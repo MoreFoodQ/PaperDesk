@@ -1,36 +1,36 @@
-"""句子级对齐：模型在 para / list 每一项的 en 和 zh 里，于两边都断句的地方各插一个 ‖，个数相同。
-并进 paper.json 前把 ‖ 去掉，记成 sents：[[英文句尾, 译文句尾], …]，按 UTF-16 计（页面上 JS 直接切），
-最后一项就是两边的总长，页面拿它核对文字没被改过。对不上（个数不同、有空句）就不记，页面按整段对应。
+"""句子級對齊：模型在 para / list 每一項的 en 和 zh 裡，於兩邊都斷句的地方各插一個 ‖，個數相同。
+並進 paper.json 前把 ‖ 去掉，記成 sents：[[英文句尾, 譯文句尾], …]，按 UTF-16 計（頁面上 JS 直接切），
+最後一項就是兩邊的總長，頁面拿它核對文字沒被改過。對不上（個數不同、有空句）就不記，頁面按整段對應。
 
-只读原文之后补译时，英文已经定了：程序先按句号切好、插上 ‖ 发给模型，译文照着插（mark_en）。"""
+閱讀原文之後補譯時，英文已經定了：程式先按句號切好、插上 ‖ 發給模型，譯文照著插（mark_en）。"""
 from __future__ import annotations
 
 import re
 
 MARK = "‖"
 _MATH = re.compile(r"\$\$.+?\$\$|(?<!\\)\$(?:\\\$|[^$])+?(?<!\\)\$", re.S)
-# 句号后面跟着这些缩写不算断句（Fig. 3、et al. (2020)、e.g. the …）
+# 句號後面跟著這些縮寫不算斷句（Fig. 3、et al. (2020)、e.g. the …）
 _ABBR = {"e.g", "i.e", "al", "fig", "figs", "eq", "eqs", "sec", "secs", "tab", "ref", "refs", "vs", "cf", "etc", "resp",
          "approx", "no", "dr", "mr", "ms", "prof", "st", "app", "ch", "thm", "lem", "def", "prop", "cor", "viz", "ca"}
 
 
 def u16(s: str) -> int:
-    """JS 字符串长度（UTF-16 码元）：数学斜体这类补充平面字符算 2。"""
+    """JS 字串長度（UTF-16 碼元）：數學斜體這類補充平面字符算 2。"""
     return len(s.encode("utf-16-le")) // 2
 
 
 def _wide(c: str) -> bool:
-    """中日文字和全角标点：两句之间不加空格。韩文句间要空格，不算。"""
+    """中日文字和全角標點：兩句之間不加空白。韓文句間要空白，不算。"""
     o = ord(c)
     return o >= 0x2E80 and not (0xAC00 <= o <= 0xD7AF or 0x1100 <= o <= 0x11FF or 0x3130 <= o <= 0x318F)
 
 
-# 句界 ‖ 前面通常是句末或分句标点；原文本来就有的 ‖（范数 ‖w‖ 写在公式外）前后贴着字母，不当句界
-_BEFORE = set("‖.?!:;,)]\"'”’。？！：；，、）】」』")  # i18n-ok 标点表
+# 句界 ‖ 前面通常是句末或分句標點；原文本來就有的 ‖（範數 ‖w‖ 寫在公式外）前後貼著字母，不當句界
+_BEFORE = set("‖.?!:;,)]\"'”’。？！：；，、）】」』")  # i18n-ok 標點表
 
 
 def _pieces(text: str) -> list[str]:
-    """按句界 ‖ 切开：公式外、前面是标点或两边都是空白的才算；公式里的和贴着字母的是范数符号，不动。"""
+    """按句界 ‖ 切開：公式外、前面是標點或兩邊都是空白的才算；公式裡的和貼著字母的是範數符號，不動。"""
     out, last = [], 0
     spans = [m.span() for m in _MATH.finditer(text)]
     for i, c in enumerate(text):
@@ -46,7 +46,7 @@ def _pieces(text: str) -> list[str]:
 
 
 def unmark(text: str) -> tuple[str, list[int] | None]:
-    """去掉 ‖，返回（干净的文字，除最后一句外每句的句尾位置）。没有 ‖ 返回 None；有空句也返回 None（不算对齐）。"""
+    """去掉 ‖，回傳（乾淨的文字，除最後一句外每句的句尾位置）。沒有 ‖ 回傳 None；有空句也回傳 None（不算對齊）。"""
     if not isinstance(text, str) or MARK not in text:
         return text, None
     parts = _pieces(text)
@@ -62,13 +62,13 @@ def unmark(text: str) -> tuple[str, list[int] | None]:
         if out:
             ends.append(u16(out))
             if not (_wide(out[-1]) or _wide(p[0])):
-                out += " "  # 西文两句之间留一个空格，空格算下一句的开头
+                out += " "  # 西文兩句之間留一個空白，空白算下一句的開頭
         out += p
     return out, None if empty or not ends else ends
 
 
 def _pair(en: str, zh: str):
-    """返回（干净的 en、干净的 zh、sents 或 None）。"""
+    """回傳（乾淨的 en、乾淨的 zh、sents 或 None）。"""
     en2, ee = unmark(en)
     zh2, ze = unmark(zh)
     if ee and ze and len(ee) == len(ze):
@@ -89,7 +89,7 @@ def _apply(obj: dict) -> None:
 
 
 def attach(blocks: list) -> None:
-    """就地处理一批块：para 和 list 每一项记 sents，其他文字里误插的 ‖ 也去掉。并进 paper.json 前调。"""
+    """就地處理一批塊：para 和 list 每一項記 sents，其他文字裡誤插的 ‖ 也去掉。並進 paper.json 前調。"""
     for b in blocks or []:
         if not isinstance(b, dict):
             continue
@@ -109,7 +109,7 @@ def strip(text) -> str:
 
 
 def valid(obj: dict) -> bool:
-    """sents 还对得上这块的文字（译文被重译、术语替换改过就对不上了）。"""
+    """sents 還對得上這塊的文字（譯文被重譯、術語替換改過就對不上了）。"""
     s = obj.get("sents")
     if not isinstance(s, list) or len(s) < 2 or not all(isinstance(x, list) and len(x) == 2 for x in s):
         return False
@@ -118,12 +118,12 @@ def valid(obj: dict) -> bool:
     return all(s[i][0] < s[i + 1][0] and s[i][1] < s[i + 1][1] for i in range(len(s) - 1)) and s[0][0] > 0 and s[0][1] > 0
 
 
-# ---------- 英文已经定了：程序切句（补译、重译一段时用） ----------
+# ---------- 英文已經定了：程式切句（補譯、重譯一段時用） ----------
 _END = re.compile(r"[.?!][\"'”’)\]]*(?=\s+[\"'“(\[$A-Z0-9])")
 
 
 def split_en(text: str) -> list[int]:
-    """英文按句切，返回除最后一句外每句的句尾（Python 下标，不含后面的空格）。公式里、缩写和人名首字母后不切。"""
+    """英文按句切，回傳除最後一句外每句的句尾（Python 下標，不含後面的空白）。公式裡、縮寫和人名首字母后不切。"""
     if not text:
         return []
     math = [m.span() for m in _MATH.finditer(text)]
@@ -137,16 +137,16 @@ def split_en(text: str) -> list[int]:
         if w in _ABBR or (word and len(word.group(1)) == 1 and word.group(1).isupper()):
             continue  # Fig. 3 / et al. / J. Smith
         if re.search(r"\d$", text[:i]) and re.match(r"\s*\d", text[m.end():]):
-            continue  # 3. 5 这种小数被断行拆开
+            continue  # 3. 5 這種小數被斷行拆開
         ends.append(m.end())
     return [e for e in ends if text[e:].strip()]
 
 
 def mark_en(text: str, sents=None) -> tuple[str, list[int]]:
-    """给英文插上 ‖ 发给模型，返回（带 ‖ 的英文，除最后一句外每句的 UTF-16 句尾）。有 sents 就照它切，没有就程序切。"""
+    """給英文插上 ‖ 發給模型，回傳（帶 ‖ 的英文，除最後一句外每句的 UTF-16 句尾）。有 sents 就照它切，沒有就程式切。"""
     if sents:
         cuts, pos16, i = [], {}, 0
-        for k in range(len(text) + 1):  # UTF-16 位置 → Python 下标
+        for k in range(len(text) + 1):  # UTF-16 位置 → Python 下標
             pos16[i] = k
             if k < len(text):
                 i += u16(text[k])
@@ -164,7 +164,7 @@ def mark_en(text: str, sents=None) -> tuple[str, list[int]]:
 
 
 def zh_sents(en: str, en_ends: list[int], zh_marked: str):
-    """英文是程序切的，模型照着在译文里插 ‖：返回（干净的译文、sents 或 None）。"""
+    """英文是程式切的，模型照著在譯文裡插 ‖：回傳（乾淨的譯文、sents 或 None）。"""
     zh, ze = unmark(zh_marked)
     if en_ends and ze and len(ze) == len(en_ends):
         return zh, [[a, b] for a, b in zip(en_ends, ze)] + [[u16(en), u16(zh)]]
@@ -172,7 +172,7 @@ def zh_sents(en: str, en_ends: list[int], zh_marked: str):
 
 
 def mark_items(blocks: list[dict], items: dict) -> tuple[dict, dict]:
-    """补译前给段落和列表项的英文插 ‖：返回（发给模型的 {键: 英文}，{键: (英文, 句尾)}）。只有一句的不插。"""
+    """補譯前給段落和清單項的英文插 ‖：回傳（發給模型的 {鍵: 英文}，{鍵: (英文, 句尾)}）。只有一句的不插。"""
     by_id = {b.get("id"): b for b in blocks}
     out, ends = dict(items), {}
     for key, en in items.items():
@@ -186,7 +186,7 @@ def mark_items(blocks: list[dict], items: dict) -> tuple[dict, dict]:
 
 
 def unmark_fill(zh: dict, ends: dict) -> dict:
-    """补译的输出：就地去掉 ‖，返回 {键: sents}（个数对不上的键不在里面）。"""
+    """補譯的輸出：就地去掉 ‖，回傳 {鍵: sents}（個數對不上的鍵不在裡面）。"""
     got = {}
     for key, v in list(zh.items()):
         if not isinstance(v, str):

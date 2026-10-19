@@ -1,7 +1,7 @@
-"""检查新版本：问 GitHub 最新的 Release，比当前版本新就告诉页面（文献库顶栏显示“有新版本”）。
+"""選用的版本資訊查詢。
 
-一天最多问一次，结果记在数据目录的 update.json；没网、GitHub 连不上就当没有新版本，不报错。
-帮助里关掉“自动检查新版本”后，只有点“检查更新”时才联网。
+目前 REPO 未設定，因此不啟用遠端更新來源。未來若指定本專案的更新來源，
+才會查詢 GitHub Release 並快取版本資訊；此模組不下載或安裝更新。
 """
 from __future__ import annotations
 
@@ -17,8 +17,8 @@ from .store import read_json, write_json_atomic
 
 REPO = ""  # Configure a fork-owned feed only when this product is published.
 API = f"https://api.github.com/repos/{REPO}/releases/latest"
-EVERY = 24 * 3600   # 成功问到后多久再问
-RETRY = 3 * 3600    # 没问到（没网）多久后再试
+EVERY = 24 * 3600   # 成功問到後多久再問
+RETRY = 3 * 3600    # 沒問到（沒網）多久後再試
 _lock = threading.Lock()
 
 
@@ -27,7 +27,7 @@ def _path():
 
 
 def parse(v: str) -> tuple[int, ...]:
-    """'v1.2.10' → (1, 2, 10)；认不出的部分当 0。"""
+    """'v1.2.10' → (1, 2, 10)；認不出的部分當 0。"""
     return tuple(int(x) for x in re.findall(r"\d+", v or "")[:3]) or (0,)
 
 
@@ -44,19 +44,19 @@ def _fetch() -> dict:
 
 
 def check(force: bool = False) -> dict:
-    """{"current", "latest", "newer", "url", "notes", "published", "enabled"}。force：手动点“检查更新”，关掉自动检查也照样问。"""
+    """{"current", "latest", "newer", "url", "notes", "published", "enabled"}。force：手動點“檢查更新”，關掉自動檢查也照樣問。"""
     out = {"current": __version__, "latest": "", "newer": False, "enabled": bool(config.load().get("check_updates", True))}
     if not REPO:
         return {**out, "enabled": False, "supported": False}
     if not out["enabled"] and not force:
         return out
-    with _lock:  # 两个页面同时打开只问一次
+    with _lock:  # 兩個頁面同時打開只問一次
         cache = read_json(_path(), {}) or {}
         age = time.time() - cache.get("checked", 0)
         if force or age > (EVERY if cache.get("latest") else RETRY):
             try:
                 cache = {**_fetch(), "checked": time.time()}
-            except Exception as e:  # noqa: BLE001  没网、限流、GitHub 改了格式：都当没有新版本
+            except Exception as e:  # noqa: BLE001  沒網、限流、GitHub 改了格式：都當沒有新版本
                 log.info("检查新版本没成功：%s", e)
                 cache = {**cache, "checked": time.time()}
             try:

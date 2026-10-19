@@ -1,4 +1,4 @@
-"""同步目录中的设备占用提醒；它不是跨设备互斥锁。"""
+"""同步目錄中的設備佔用提醒；它不是跨設備互斥鎖。"""
 from __future__ import annotations
 
 import os
@@ -40,7 +40,7 @@ class LibraryMarker:
             return ""
 
     def refresh(self):
-        self.other_device()  # 写自身心跳之前，记下另一台电脑的近期心跳。
+        self.other_device()  # 寫自身心跳之前，記下另一臺電腦的近期心跳。
         write_json_atomic(self.path, {"host": self.host, "pid": self.pid, "at": now_iso(), "owner": self.owner})
 
     def start(self):

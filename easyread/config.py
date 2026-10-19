@@ -1,7 +1,7 @@
-"""配置和数据位置。
+"""設定與資料儲存位置。
 
-从源码目录运行时，数据就放在源码目录（library/、config.json）；pip 安装后放在 ~/EasyRead。
-环境变量 EASYREAD_HOME 改数据目录，EASYREAD_LIBRARY 临时指定文献库（测试、多库）。
+原始碼版預設使用專案下的 data/；安裝版預設使用使用者目錄下的 PaperDesk/。
+EASYREAD_HOME 可指定設定與資料目錄；EASYREAD_LIBRARY 可暫時指定文獻庫。
 """
 from __future__ import annotations
 
@@ -38,7 +38,7 @@ PACKAGE = Path(__file__).resolve().parent
 WEB = PACKAGE / "web"
 _SOURCE = PACKAGE.parent
 HOME = Path(os.environ.get("EASYREAD_HOME") or (_SOURCE / "data" if (_SOURCE / "pyproject.toml").exists() else Path.home() / "PaperDesk"))
-PROJECT = HOME  # 旧名，cli 里还在用
+PROJECT = HOME  # 舊名，cli 裡還在用
 CONFIG_PATH = HOME / "config.json"
 LOG_PATH = HOME / "easyread.log"
 SERVER_INFO = HOME / ".server.json"
@@ -50,18 +50,18 @@ DEFAULTS = {
     "port": 8876,
     "engine": "codex",          # Use the locally authenticated Codex CLI by default.
     "translate_images": True,   # Translate figure labels; captions are always translated.
-    "auto_translate": True,      # 导入后自动开始翻译
+    "auto_translate": True,      # 匯入後自動開始翻譯
     "target": "zh-TW",
     "check_updates": False,      # This fork has no release feed yet.
-    "batch_pages": 2,            # 每次交给模型的页数
-    "page_cap": 60,              # 全文超过多少页先确认；0 表示不限
-    "concurrency": 0,            # 同时译几段（分段并行，见 segments.py）；0 是自动，每段约 2 批、最多 4 段；手动最多 8 段
-    "concurrency_v": 2,          # 1.3.1 起 concurrency 的意思变了，旧配置的 1 当成自动，见 load
+    "batch_pages": 2,            # 每次交給模型的頁數
+    "page_cap": 60,              # 全文超過多少頁先確認；0 表示不限
+    "concurrency": 0,            # 同時譯幾段（分段並行，見 segments.py）；0 是自動，每段約 2 批、最多 4 段；手動最多 8 段
+    "concurrency_v": 2,          # 1.3.1 起 concurrency 的意思變了，舊設定的 1 當成自動，見 load
     "claude": {"command": "claude", "model": "", "reasoning_effort": "", "extra_args": [], "timeout": 1200},
     "codex": {"command": "codex", "model": "", "reasoning_effort": "", "service_tier": "", "extra_args": [], "timeout": 1200},
-    # api：chat（/chat/completions）| responses（/responses），见 openai_api.py
+    # api：chat（/chat/completions）| responses（/responses），見 openai_api.py
     "openai": {"preset": "", "base_url": "", "api": "chat", "api_key": "", "model": "", "vision": False, "timeout": 600},
-    # 阅读页右侧“问 AI”的模型名单和默认模型，见 chat_models.py
+    # 閱讀頁右側“問 AI”的模型名單和預設模型，見 chat_models.py
     "chat": copy.deepcopy(DEFAULT_CHAT),
 }
 
@@ -79,11 +79,11 @@ def is_first_run() -> bool:
 def _saved() -> dict:
     raw = secret_store.transform(read_json(CONFIG_PATH, {}) or {}, decrypt=True)
     if raw.get("concurrency_v") != 2 and raw.get("concurrency") == 1:
-        # 以前默认 1，而且切到本机 CLI 时设置页会强制改回 1，旧配置里的 1 多半不是自己选的：当成自动。
-        # 存过一次之后带上 concurrency_v，再选 1 就是真的要一段一段译
+        # 以前預設 1，而且切到本機 CLI 時設定頁會強制改回 1，舊設定裡的 1 多半不是自己選的：當成自動。
+        # 存過一次之後帶上 concurrency_v，再選 1 就是真的要一段一段譯
         raw["concurrency"] = 0
     elif raw.get("concurrency_v") != 2 and isinstance(raw.get("concurrency"), int) and raw["concurrency"] > 4:
-        raw["concurrency"] = 4  # 以前的 6 是“同时 6 批”，现在是“同时 6 段”：升级时不替老用户开到 4 段以上
+        raw["concurrency"] = 4  # 以前的 6 是“同時 6 批”，現在是“同時 6 段”：升級時不替老使用者開到 4 段以上
     raw["concurrency_v"] = 2
     return raw
 
@@ -91,7 +91,7 @@ def _saved() -> dict:
 def load() -> dict:
     cfg = _merge(DEFAULTS, _saved())
     lib = os.environ.get("EASYREAD_LIBRARY") or os.environ.get("COREAD_LIBRARY")
-    if lib:  # 测试或多库时临时指定文献库
+    if lib:  # 測試或多庫時臨時指定文獻庫
         cfg["library_dir"] = lib
     return cfg
 
@@ -107,8 +107,8 @@ def save(patch: dict) -> dict:
 
 
 def with_key(o: dict) -> dict:
-    """页面提交的 openai 设置 → 要存的样子。每家服务商的 Key 分开存（keys[预设]），换来换去不用重填；
-    页面发回来的打码 Key 或空 Key 表示不改。"""
+    """頁面提交的 openai 設定 → 要存的樣子。每家服務商的 Key 分開存（keys[預設]），換來換去不用重填；
+    頁面發回來的打碼 Key 或空 Key 表示不改。"""
     cur = load()["openai"]
     o = dict(o)
     key = o.pop("api_key", None)
@@ -116,7 +116,7 @@ def with_key(o: dict) -> dict:
     keys = dict(cur.get("keys") or {})
     bindings = dict(cur.get('key_origins') or {})
     url = o.get('base_url', cur.get('base_url', ''))
-    if cur.get("api_key") and not keys:  # 旧配置只有一个 Key
+    if cur.get("api_key") and not keys:  # 舊設定只有一個 Key
         keys[cur.get("preset") or ""] = cur["api_key"]
     if key and not key.startswith("••••"):
         validate_api(url, key)
@@ -131,7 +131,7 @@ def with_key(o: dict) -> dict:
 
 
 def public(cfg: dict) -> dict:
-    """给页面看的配置：密钥只露后四位。"""
+    """給頁面看的設定：密鑰只露後四位。"""
     out = copy.deepcopy(cfg)
     key = out["openai"].get("api_key") or ""
     out["openai"]["api_key"] = ("••••" + key[-4:]) if key else ""

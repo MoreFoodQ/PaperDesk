@@ -1,19 +1,19 @@
-/* 边注：共读讨论（discussion.json）和我的笔记（reader.json）。
-   宽屏排在正文右侧、贴着对应段落；窄屏或开着侧面板时收成段尾角标，点开在段落下方。 */
+/* 邊注：共讀討論（discussion.json）和我的筆記（reader.json）。
+   寬屏排在正文右側、貼著對應段落；窄屏或開著側面板時收成段尾角標，點開在段落下方。 */
 (function (PR) {
   "use strict";
   const S = PR.state;
   const KIND_LABEL = { explain: PR.t("AI · 解释"), qa: PR.t("AI · 问答"), insight: PR.t("AI · 补充"), reply: PR.t("AI · 回答你的问题"), check: PR.t("原文核对提示") };
   const expanded = new Set();
   PR.editingNote = null;
-  PR.asking = new Set();   // 正在等模型回答的问题
+  PR.asking = new Set();   // 正在等模型回答的問題
 
   PR.myNotes = () => Object.values(S.reader.notes || {}).filter((n) => !n.deleted);
   PR.repliesTo = (nid) => (S.discussion.entries || []).filter((e) => e.reply_to === nid);
   const anchorOf = (a) => (a && (a === "head" || PR.blockById[a]) ? a : "head");
   PR.anchorOfEntry = (e) => anchorOf(e.anchor || (((S.reader.notes || {})[e.reply_to] || {}).anchor));
 
-  /* 按锚点分组：组内按时间，agent 的回复紧跟在被回复的笔记后面 */
+  /* 按錨點分組：組內按時間，agent 的回覆緊跟在被回覆的筆記後面 */
   function collect() {
     const groups = {};
     const push = (anchor, item) => { item.anchor = anchor; (groups[anchor] = groups[anchor] || []).push(item); };
@@ -100,7 +100,7 @@
   function prepCard(card) {
     const body = card.querySelector(".body");
     const id = card.dataset.card || card.dataset.note;
-    if (body && body.scrollHeight > 220) {  // 长的先收起；展开过的也留一个“收起全文”（#31）
+    if (body && body.scrollHeight > 220) {  // 長的先收起；展開過的也留一個“收起全文”（#31）
       const open = expanded.has(id);
       card.classList.toggle("clamp", !open);
       card.insertAdjacentHTML("beforeend", '<button class="more" data-a="more">' + (open ? PR.t("收起全文") : PR.t("展开全文")) + "</button>");
@@ -109,7 +109,7 @@
     if (ta) PR.autosize(ta);
   }
 
-  /* 宽屏：卡片贴着锚点，放不下就往下顺延 */
+  /* 寬屏：卡片貼著錨點，放不下就往下順延 */
   PR.layoutMargin = function () {
     if (!PR.marginWide()) return;
     const margin = PR.$("#margin");
@@ -117,7 +117,7 @@
     const cards = PR.$$(".card", margin).map((c) => {
       const host = document.getElementById("b-" + c.dataset.anchor);
       let y = host ? host.getBoundingClientRect().top - mTop : 0;
-      // 划线所在的那边可能藏着（原文模式藏译文）：取看得见的划线，没有就取另一边的同步标记
+      // 劃線所在的那邊可能藏著（原文模式藏譯文）：取看得見的劃線，沒有就取另一邊的同步標記
       const sel = c.dataset.note ? 'mark[data-note="' + c.dataset.note + '"], [data-mirror="' + c.dataset.note + '"]' : 'mark[data-card="' + c.dataset.card + '"]';
       const mark = PR.$$(sel).find((m) => m.getClientRects().length);
       if (mark) y = Math.max(y, mark.getBoundingClientRect().top - mTop - 4);
@@ -133,7 +133,7 @@
     margin.style.minHeight = Math.max(0, bottom) + "px";
   };
 
-  /* ---------- 笔记的增删改 ---------- */
+  /* ---------- 筆記的增刪改 ---------- */
   const noteById = (id) => (S.reader.notes || {})[id];
   PR.saveNote = function (note) { note.updated = PR.nowIso(); PR.commit({ op: "note", note }); };
 
@@ -171,7 +171,7 @@
     PR.renderMargin();
     PR.applyMarks && PR.applyMarks();
   };
-  /* 结束编辑：空笔记有原话就退回成划线，没有就删掉 */
+  /* 結束編輯：空筆記有原話就退回成劃線，沒有就刪掉 */
   PR.finishNote = function (n, value) {
     const body = value.trim();
     if (!body && n.kind !== "highlight") {
@@ -191,13 +191,13 @@
     }
   }, 600);
 
-  /* 笔记卡片上的“让 AI 回答 / 点评 / 追问”：在右侧“问 AI”面板里实时回答，答案同时成为这条笔记的回复 */
+  /* 筆記卡片上的“讓 AI 回答 / 點評 / 追問”：在右側“問 AI”面板裡即時回答，答案同時成為這條筆記的回覆 */
   PR.askModel = function (nid) {
     const n = noteById(nid);
     if (!n) return;
     const answered = PR.repliesTo(nid).length > 0;
     if (n.kind === "question" && answered) return PR.chatAsk({ anchor: n.anchor, quote: n.quote, draft: "" });
-    const text = n.kind === "question" ? n.body : "这是我读这里时写的笔记，请点评：我理解得对不对、有没有漏掉或想错的地方、还可以往哪想。\n\n我的笔记：" + n.body;  // i18n-ok 发给模型的提示词
+    const text = n.kind === "question" ? n.body : "这是我读这里时写的笔记，请点评：我理解得对不对、有没有漏掉或想错的地方、还可以往哪想。\n\n我的笔记：" + n.body;  // i18n-ok 發給模型的提示詞
     PR.chatAsk({ anchor: n.anchor, quote: n.quote, text, note: nid });
   };
   PR.on("job-finished", (j) => {
@@ -207,7 +207,7 @@
     PR.renderMargin(); PR.notesPanelOpen && PR.notesPanelOpen() && PR.renderNotesPanel();
   });
 
-  /* ---------- 卡片上的交互（边注和笔记面板共用） ---------- */
+  /* ---------- 卡片上的交互（邊注和筆記面板共用） ---------- */
   document.addEventListener("input", (e) => {
     if (e.target.matches("#margin .card textarea, .inline-notes .card textarea")) { PR.autosize(e.target); PR.autosaveNote(); PR.layoutMargin(); }
   });
@@ -220,7 +220,7 @@
     if (!e.target.matches("#margin .card textarea, .inline-notes .card textarea")) return;
     setTimeout(() => {
       const card = e.target.closest(".card");
-      if (!card || !card.isConnected) return;   // 卡片被重排替换掉了，新卡片已接手编辑
+      if (!card || !card.isConnected) return;   // 卡片被重排替換掉了，新卡片已接手編輯
       if (card.contains(document.activeElement)) return;
       if (PR.editingNote === card.dataset.note) { PR.autosaveNote.flush(); PR.closeNoteEditor(); }
     }, 150);
@@ -238,7 +238,7 @@
       card.classList.toggle("clamp", !open);
       a.textContent = open ? PR.t("收起全文") : PR.t("展开全文");
       PR.layoutMargin();
-      if (!open && card.getBoundingClientRect().top < 0) card.scrollIntoView({ block: "nearest" });  // 收起后卡片顶端跑到屏幕上方了，拉回来
+      if (!open && card.getBoundingClientRect().top < 0) card.scrollIntoView({ block: "nearest" });  // 收起後卡片頂端跑到螢幕上方了，拉回來
       return true;
     }
     if (card.dataset.card && a && (a.dataset.a === "adel" || a.dataset.a === "regen")) { delAgent(card.dataset.card, a.dataset.a === "regen", a); return true; }
@@ -269,7 +269,7 @@
   };
   document.addEventListener("click", (e) => { if (e.target.closest("#margin, .inline-notes")) PR.cardClick(e, false); });
 
-  /* AI 写的卡片：删除；回答类的还能重新回答（删掉旧的，再问一次） */
+  /* AI 寫的卡片：刪除；回答類的還能重新回答（刪掉舊的，再問一次） */
   async function delAgent(id, regen, btn) {
     const e = (S.discussion.entries || []).find((x) => x.id === id);
     if (!e) return;

@@ -1,4 +1,4 @@
-"""文献库位置切换：只复制，核对完成才更新配置；旧库和目标已有文件都保留。"""
+"""文獻庫位置切換：只複製，核對完成才更新設定；舊庫和目標已有檔案都保留。"""
 from __future__ import annotations
 
 import hashlib
@@ -21,7 +21,7 @@ STAGING_PREFIX = ".easyread-copy-"
 
 
 class Incomplete(ValueError):
-    """目标里留着本机一次没完成的迁移；页面可以提供“清理”。"""
+    """目標裡留著本機一次沒完成的移轉；頁面可以提供“清理”。"""
 
     def __init__(self, root: Path):
         self.path = str(root)
@@ -36,10 +36,10 @@ def _incomplete(root: Path) -> bool:
         if _linked(marker):
             return True
         data = read_json(marker, {})
-        # ready 先于配置切换写入，表示目标已完整发布；不比较路径，同一个网盘目录在另一台电脑上路径不同。
+        # ready 先於設定切換寫入，表示目標已完整發布；不比較路徑，同一個雲端空間目錄在另一臺電腦上路徑不同。
         if data.get("state") == "ready":
             return False
-        # 别的电脑留下的标记随网盘同步过来：那边的事，这里只是普通文献库，不拦。
+        # 別的電腦留下的標記隨雲端空間同步過來：那邊的事，這裡只是普通文獻庫，不攔。
         host = data.get("host")
         return not (host and host != socket.gethostname())
     except (OSError, ValueError, AttributeError):
@@ -47,7 +47,7 @@ def _incomplete(root: Path) -> bool:
 
 
 def _writable(folder: Path) -> bool:
-    """只试一次：tempfile 在 Windows 上遇到没权限的目录会重试 TMP_MAX（约 21 亿）次，后端就卡死了。"""
+    """只試一次：tempfile 在 Windows 上遇到沒權限的目錄會重試 TMP_MAX（約 21 億）次，後端就卡死了。"""
     probe = folder / f".easyread-probe-{uuid.uuid4().hex}"
     try:
         fd = os.open(probe, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
@@ -63,12 +63,12 @@ def _writable(folder: Path) -> bool:
 
 def _linked(path: Path) -> bool:
     info = path.lstat()
-    # 云端占位文件也带 REPARSE_POINT，不能一律拒绝；只拒绝符号链接和目录联接。
+    # 雲端佔位檔案也帶 REPARSE_POINT，不能一律拒絕；只拒絕符號連結和目錄聯接。
     return stat.S_ISLNK(info.st_mode) or getattr(info, "st_reparse_tag", 0) in (0xA0000003, 0xA000000C)
 
 
 def _manifest(root: Path) -> dict[str, tuple[int, int]]:
-    """逐级检查再遍历，不能让链接把范围带出论文目录。"""
+    """逐級檢查再遍歷，不能讓連結把範圍帶出論文目錄。"""
     files = {}
     if _linked(root):
         raise ValueError(tr("文献库中有符号链接或目录联接，请改用普通文件夹：{path}", path=str(root)))
@@ -122,7 +122,7 @@ def inspect(path: str | Path, *, exact: bool = False) -> dict:
         if parent == parent.parent:
             raise ValueError(tr("路径不存在：{path}", path=str(root)))
         parent = parent.parent
-    # 实际创建一个文件检测 ACL；不创建用户选择的目标目录。
+    # 實際創建一個檔案檢測 ACL；不創建使用者選擇的目標目錄。
     writable = _writable(parent)
     return {"path": str(root), "exists": root.exists(), "writable": writable, "papers": len(papers), "bytes": size}
 
@@ -152,7 +152,7 @@ def _copy_verified(src: Path, dst: Path):
             raise ValueError(tr("复制核对失败，文献库位置没有更改"))
         return {".": (before.st_size, before.st_mtime_ns)}
     before = _manifest(src)
-    # 先建目录、逐文件复制，禁止 copytree 默认跟随链接。
+    # 先建目錄、逐檔案複製，禁止 copytree 預設跟隨連結。
     dst.mkdir()
     for rel in before:
         source, target = src / rel, dst / rel
@@ -220,7 +220,7 @@ def move(src: str | Path, dst: str | Path, mode: str) -> dict:
                 entries.append((p, target))
     dst.mkdir(parents=True, exist_ok=True)
     staging = dst / f"{STAGING_PREFIX}{uuid.uuid4().hex}"
-    staging.mkdir()  # 不用 mkdtemp：同样会在没权限时无限重试
+    staging.mkdir()  # 不用 mkdtemp：同樣會在沒權限時無限重試
     marker = dst / MIGRATION_MARKER
     created, parents = [], []
     marker_owned, ready, committed = False, False, False
@@ -237,13 +237,13 @@ def move(src: str | Path, dst: str | Path, mode: str) -> dict:
             snapshots.append(_copy_verified(source, staging / str(i)))
         if any(_manifest(source) != snapshot for (source, _), snapshot in zip(entries, snapshots)):
             raise ValueError(tr("复制过程中源文件发生变化，请重试"))
-        # 持久标记先于任何论文发布；崩溃或回滚被网盘锁住时，半库不能再被接管。
+        # 持久標記先於任何論文發佈；崩潰或回滾被雲端空間鎖住時，半庫不能再被接管。
         with marker.open("x", encoding="utf-8") as output:
             marker_owned = True
             json.dump(transaction, output)
             output.flush()
             os.fsync(output.fileno())
-        # 此时尚未改配置；目标同名项即使在复制期间出现，也不能覆盖。
+        # 此時尚未改設定；目標同名項即使在複製期間出現，也不能覆蓋。
         for i, (_, relative) in enumerate(entries):
             target = dst / relative
             if not target.parent.resolve().is_relative_to(dst):
@@ -253,7 +253,7 @@ def move(src: str | Path, dst: str | Path, mode: str) -> dict:
                 parents.append(target.parent)
             if target.exists() or target.is_symlink():
                 raise ValueError(tr("目标中已有同名文件或文件夹，不会覆盖：{name}", name=str(relative)))
-            # mkdir 是跨平台排他占位；之后逐个移动，只写入自己刚建的目录。
+            # mkdir 是跨平臺排他佔位；之後逐個移動，只寫入自己剛建的目錄。
             staged = staging / str(i)
             if staged.is_dir():
                 target.mkdir(exist_ok=False)
@@ -282,10 +282,10 @@ def move(src: str | Path, dst: str | Path, mode: str) -> dict:
                     transaction["state"] = "rollback"
                     write_json_atomic(marker, transaction)
                 except OSError:
-                    # 不能把仍标记 ready 的完整目标删成半库；源库和配置仍原样保留。
+                    # 不能把仍標記 ready 的完整目標刪成半庫；源庫和設定仍原樣保留。
                     log.exception("回滚标记被锁住，保留完整的目标副本")
                     raise
-            # 只移除本次独占创建、身份未变的项；保留合并目标原来的每一个文件。
+            # 只移除本次獨佔創建、身份未變的項；保留合併目標原來的每一個檔案。
             for target, device, inode in reversed(created):
                 try:
                     info = target.lstat()
@@ -320,7 +320,7 @@ def move(src: str | Path, dst: str | Path, mode: str) -> dict:
                 marker.unlink()
             except OSError:
                 cleanup_warning(tr("迁移已完成，但临时标记 {path} 没删掉，可以手动删", path=str(marker)))
-        # 只清理本次在目标下生成的随机 staging；绝不清理源库或目标已有目录。
+        # 只清理本次在目標下生成的隨機 staging；絕不清理源庫或目標已有目錄。
         try:
             if staging.parent == dst and staging.resolve().parent == dst and staging.name.startswith(STAGING_PREFIX) and not _linked(staging):
                 shutil.rmtree(staging)
@@ -329,7 +329,7 @@ def move(src: str | Path, dst: str | Path, mode: str) -> dict:
 
 
 def _drop_ready_marker(root: Path):
-    """接入一个已完整发布的库后，顺手删掉留下的 ready 标记；删不掉也不要紧。"""
+    """接入一個已完整發布的庫後，順手刪掉留下的 ready 標記；刪不掉也不要緊。"""
     marker = root / MIGRATION_MARKER
     try:
         if marker.exists() and not _linked(marker) and read_json(marker, {}).get("state") == "ready":
@@ -339,7 +339,7 @@ def _drop_ready_marker(root: Path):
 
 
 def cleanup(path: str | Path, current: str | Path) -> dict:
-    """清理本机一次没完成的迁移：只删标记里记录的、本次要新建的项和临时目录，目标原有的论文不动。"""
+    """清理本機一次沒完成的移轉：只刪標記裡記錄的、本次要新建的項和暫存目錄，目標原有的論文不動。"""
     root = Path(path).resolve()
     marker = root / MIGRATION_MARKER
     if root == Path(current).resolve():
@@ -347,7 +347,7 @@ def cleanup(path: str | Path, current: str | Path) -> dict:
     if not marker.exists() or _linked(marker):
         raise ValueError(tr("这里没有需要清理的迁移"))
     data = read_json(marker, {}) or {}
-    if data.get("state") == "ready":  # 完整的库，只是标记没删掉
+    if data.get("state") == "ready":  # 完整的庫，只是標記沒刪掉
         marker.unlink()
         return {"ok": True, "removed": 0}
     names = list(data.get("entries") or []) + [data.get("staging") or ""]
@@ -356,7 +356,7 @@ def cleanup(path: str | Path, current: str | Path) -> dict:
     for name in dict.fromkeys(n for n in names if n):
         target = (root / name)
         rel = Path(name)
-        # 只认标记里写的相对路径，且必须还在这个库里面
+        # 只認標記裡寫的相對路徑，且必須還在這個庫裡面
         if rel.is_absolute() or ".." in rel.parts or not target.parent.resolve().is_relative_to(root):
             continue
         if not target.exists() and not target.is_symlink():

@@ -1,4 +1,4 @@
-"""回答方式从 HTTP 请求、提示词、流式输出一直保留到对话和页边笔记。"""
+"""回答方式從 HTTP 請求、提示詞、流式輸出一直保留到對話和頁邊筆記。"""
 import contextlib
 import json
 import tempfile

@@ -1,12 +1,12 @@
-/* 把 paper.json 的块排成正文。译文优先取“我的修改”，否则取译者稿。
-   只读原文（不翻译）整理出来的块没有 zh，正文直接排英文；之后翻译了就地换成中文。 */
+/* 把 paper.json 的塊排成正文。譯文優先取“我的修改”，否則取譯者稿。
+   閱讀原文（不翻譯）整理出來的塊沒有 zh，正文直接排英文；之後翻譯了就地換成中文。 */
 (function (PR) {
   "use strict";
   const S = PR.state;
 
-  /* ---------- 译文取值：key 形如 "s1-p1"、"tab1#caption"、"s1-recs#2" ---------- */
+  /* ---------- 譯文取值：key 形如 "s1-p1"、"tab1#caption"、"s1-recs#2" ---------- */
   PR.blockById = {};
-  function fields(key) {  // [译文, 原文]
+  function fields(key) {  // [譯文, 原文]
     const [id, field] = key.split("#");
     const b = PR.blockById[id];
     if (!b) return ["", ""];
@@ -16,7 +16,7 @@
     return [b.zh || "", b.en || ""];
   }
   PR.agentText = function (key) { const [zh, en] = fields(key); return zh || en; };
-  /* 这处还没有译文、正文排的是英文原文（只读原文） */
+  /* 這處還沒有譯文、正文排的是英文原文（閱讀原文） */
   PR.isEnKey = function (key) { const [zh, en] = fields(key); return !zh && !!en && !PR.editOf(key); };
   PR.hasZh = (b) => !!(b.zh || b.caption_zh || b.image_zh || (Array.isArray(b.items) && b.items.some((i) => i && i.zh)));
   PR.editOf = function (key) { const e = (S.reader.edits || {})[key]; return e && e.zh != null ? e : null; };
@@ -49,13 +49,13 @@
   }
 
   function staleTag(key) { return PR.isStale(key) ? '<button class="stale-tag" data-t="stale" title="' + PR.t("你改过这段之后，译者稿又更新了") + '">' + PR.t("译者稿有更新") + "</button>" : ""; }
-  // 段落和列表项有句子对齐时一句一个 span（sentences.js），没有就整段
+  // 段落和清單項有句子對齊時一句一個 span（sentences.js），沒有就整段
   const sentMd = (key, side, text) => (PR.sentMd ? PR.sentMd(key, side, text) : PR.md(text));
   function zhDiv(key) {
     const en = PR.isEnKey(key) ? ' lang="en"' : "";
     return '<div class="zh' + (en ? " en-main" : "") + '"' + en + ' data-key="' + PR.esc(key) + '">' + sentMd(key, "zh", PR.textFor(key)) + staleTag(key) + "</div>";
   }
-  const enIfZh = (key, text) => (PR.isEnKey(key) ? "" : enDiv(text, key));  // 正文已经是英文了，就不再附一份原文
+  const enIfZh = (key, text) => (PR.isEnKey(key) ? "" : enDiv(text, key));  // 正文已經是英文了，就不再附一份原文
   function enDiv(text, key) { return text ? '<div class="en" lang="en">' + (key ? sentMd(key, "en", text) : PR.md(text)) + "</div>" : ""; }
 
   function captionHtml(b) {
@@ -136,7 +136,7 @@
       '<div class="inline-note"><div class="lbl">' + PR.t("这一块没能显示") + '</div><p>' + PR.t("块 {id} 的数据格式有问题，其他内容仍可阅读。", { id }) + '</p></div></section>';
   }
 
-  /* 在线演示的署名和许可（CC BY 要求写明出处），网址做成链接 */
+  /* 在線演示的署名和許可（CC BY 要求寫明出處），網址做成連結 */
   function creditHtml() {
     const c = S.demo && S.demo.credit;
     if (!c) return "";
@@ -165,13 +165,13 @@
       (by ? '<p class="byline">' + by + "</p>" : "") + '<p class="scope">' + scope + "</p>" + figureStatus + creditHtml() + "</header>";
   }
 
-  /* 还没译的页：放原页图，边译边读 */
+  /* 還沒譯的頁：放原頁圖，邊譯邊讀 */
   const origFig = (p) => '<figure class="orig-page" id="orig-' + PR.esc(p.n) + '"><figcaption>' + PR.esc(PR.t("原文第 {n} 页", { n: p.n })) + '</figcaption><img loading="lazy" src="' + PR.esc(PR.imageUrl(p.img)) + '" alt="' + PR.esc(PR.t("原文第 {n} 页", { n: p.n })) + '"></figure>';
   const failedOf = () => ((S.job || {}).state === "partial" && S.job.failed) || {};
   const jobRunning = () => ["queued", "running"].includes((S.job || {}).state);
-  const reading = () => !!((S.job || {}).read || ((S.paper.translation || {}).en_pages || []).length);  // 这篇是只读原文
+  const reading = () => !!((S.job || {}).read || ((S.paper.translation || {}).en_pages || []).length);  // 這篇是閱讀原文
 
-  /* 中间漏掉的页（多半是译失败了）：就地放原页，给重试 */
+  /* 中間漏掉的頁（多半是譯失敗了）：就地放原頁，給重試 */
   function gapHtml(pages) {
     const failed = failedOf();
     const bad = pages.filter((p) => failed[p.n]);
@@ -227,17 +227,17 @@
       }
     }
     PR.$("#paper").innerHTML = html + pendingHtml(lastPage);
-    // 一段译文都没有（只读原文）：顶栏的“译文 / 对照”没意义，藏起来
+    // 一段譯文都沒有（閱讀原文）：頂欄的“譯文 / 對照”沒意義，藏起來
     document.body.classList.toggle("en-only", (S.paper.blocks || []).length > 0 && !(S.paper.blocks || []).some((b) => b && PR.hasZh(b)));
-    // 译文语言决定正文字体（base.css 按 data-target 换字体）；1.3 以前译的论文没记语言，都是中文
+    // 譯文語言決定正文字體（base.css 按 data-target 換字體）；1.3 以前譯的論文沒記語言，都是中文
     const target = (S.paper.meta || {}).target || ((S.paper.blocks || []).some((b) => b && PR.hasZh(b)) ? "zh" : PR.target);
     document.documentElement.dataset.target = target;
     const paperEl = document.getElementById("paper");
-    if (paperEl) paperEl.lang = target === "zh" ? "zh-CN" : target;  // 让浏览器选对日文、韩文字形，西文能断词
+    if (paperEl) paperEl.lang = target === "zh" ? "zh-CN" : target;  // 讓瀏覽器選對日文、韓文字形，西文能斷詞
     PR.emit("rendered");
   };
 
-  /* 只重排一个块（编辑保存后用），不动别的块 */
+  /* 只重排一個塊（編輯儲存後用），不動別的塊 */
   PR.renderBlock = function (id) {
     const b = PR.blockById[id];
     const node = document.getElementById("b-" + id);
@@ -254,13 +254,13 @@
     PR.emit("block-rendered", id);
   };
 
-  /* 版心放不下的长公式、宽表格：先缩小字号，再不行才横向滚动。
-     公式原本多宽只和字号、字体有关，量一次记下来；开关侧栏、改窗口大小只是版心变了，不用再把几百个公式复原重量一遍
-     （复原再量要整页重排，长论文一两百毫秒，点“原页”“笔记”会明显顿一下）。 */
-  // 记的是 { w, over }：over 为真时 w 是放不下时量到的真实宽度；为假时只知道“宽 w 的版心放得下”，版心变窄得重量
+  /* 版心放不下的長公式、寬表格：先縮小字號，再不行才橫向滾動。
+     公式原本多寬只和字號、字體有關，量一次記下來；開關側欄、改窗口大小只是版心變了，不用再把幾百個公式復原重量一遍
+     （復原再量要整頁重排，長論文一兩百毫秒，點“原頁”“筆記”會明顯頓一下）。 */
+  // 記的是 { w, over }：over 為真時 w 是放不下時量到的真實寬度；為假時只知道“寬 w 的版心放得下”，版心變窄得重量
   const natural = new WeakMap();
   let typeface = "";
-  PR.fitWide = function (scope, remeasure) {  // remeasure：字体刚加载完这类，量过的也不作数
+  PR.fitWide = function (scope, remeasure) {  // remeasure：字體剛載入完這類，量過的也不作數
     const paper = PR.$("#paper");
     const cs = getComputedStyle(paper);
     const tf = cs.fontSize + "|" + cs.fontFamily;
@@ -270,9 +270,9 @@
     const avail = boxes.map((box) => box.clientWidth);
     const todo = boxes.filter((box, i) => {
       const n = !fresh && natural.get(box.firstElementChild);
-      return !n || !n.w || (!n.over && avail[i] < n.w - 1);  // w 为 0：上次量时藏着（比如对照模式的英文）
+      return !n || !n.w || (!n.over && avail[i] < n.w - 1);  // w 為 0：上次量時藏著（比如對照模式的英文）
     });
-    // 要重量的：先全部复原、再一起量、最后一起改，边改边量会让浏览器每个公式都重排一次整页
+    // 要重量的：先全部復原、再一起量、最後一起改，邊改邊量會讓瀏覽器每個公式都重排一次整頁
     todo.forEach((box) => { box.firstElementChild.style.fontSize = ""; });
     todo.forEach((box) => {
       const need = box.firstElementChild.scrollWidth, w = box.clientWidth;
@@ -292,7 +292,7 @@
   PR.on("rendered", () => PR.fitWide());
   PR.on("block-rendered", (id) => PR.fitWide(document.getElementById("b-" + id)));
 
-  /* 保持阅读位置不动地整页重排 */
+  /* 保持閱讀位置不動地整頁重排 */
   PR.rerenderKeepingPlace = function () {
     const anchor = PR.readingBlock && PR.readingBlock();
     const node = anchor && document.getElementById("b-" + anchor);

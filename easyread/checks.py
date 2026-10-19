@@ -1,4 +1,4 @@
-"""检查 paper.json / discussion.json：块 id、引用号、锚点、被 JSON 吃掉的反斜杠、全部 TeX 能否渲染。"""
+"""檢查 paper.json / discussion.json：塊 id、引用號、錨點、被 JSON 吃掉的反斜槓、全部 TeX 能否渲染。"""
 from __future__ import annotations
 
 import json
@@ -49,7 +49,7 @@ def block_problems(blocks: list[dict], refs: set[str] | None = None) -> tuple[li
             continue
         bid = b.get("id")
         if not bid:
-            problems.append(f"缺 id：{str(b)[:80]}")  # i18n-ok 交给模型修正的问题清单
+            problems.append(f"缺 id：{str(b)[:80]}")  # i18n-ok 交給模型修正的問題清單
         elif bid in ids:
             problems.append(f"id 重复：{bid}")  # i18n-ok
         ids.add(bid)

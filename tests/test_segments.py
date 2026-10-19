@@ -1,4 +1,4 @@
-"""分段并行：怎么切段、交界怎么告诉模型、术语冲突怎么统一。  python -m unittest tests.test_segments"""
+"""分段並行：怎麼切段、交界怎麼告訴模型、術語衝突怎麼統一。  python -m unittest tests.test_segments"""
 import json
 import shutil
 import threading
@@ -33,26 +33,26 @@ class PlanTest(unittest.TestCase):
         self.assertEqual(segments.plan([], 2, 4, self.ws.root), [])
 
     def test_slowest_lane_not_longer_than_needed(self):
-        pages = list(range(1, 15))  # 7 批，4 段时最慢一段 2 批
+        pages = list(range(1, 15))  # 7 批，4 段時最慢一段 2 批
         plan = segments.plan(pages, 2, 4, self.ws.root)
         self.assertEqual([p for seg in plan for p in seg], pages)
         self.assertTrue(all(len(seg) <= 4 for seg in plan), plan)
 
     def test_fewer_lanes_when_same_speed(self):
-        plan = segments.plan(list(range(1, 11)), 2, 4, self.ws.root)  # 5 批：3 段（2,2,1 批）就和 4 段一样快
+        plan = segments.plan(list(range(1, 11)), 2, 4, self.ws.root)  # 5 批：3 段（2,2,1 批）就和 4 段一樣快
         self.assertEqual(len(plan), 3, plan)
 
     def test_cut_moves_to_clean_seam(self):
-        # 第 4 页断在句子中间，第 5 页从新章节开始：有余量时切在 4|5，不切在 3|4
+        # 第 4 頁斷在句子中間，第 5 頁從新章節開始：有餘量時切在 4|5，不切在 3|4
         write_pages(self.ws, {3: "This is the end of the sentence.", 4: "this continues the sentence and stops in the", 5: "3 Method\nWe do things."})
-        plan = segments.plan(list(range(1, 9)), 2, 2, self.ws.root)  # 4 批 2 段，每段最多 4 页
+        plan = segments.plan(list(range(1, 9)), 2, 2, self.ws.root)  # 4 批 2 段，每段最多 4 頁
         self.assertEqual(plan, [[1, 2, 3, 4], [5, 6, 7, 8]])
         write_pages(self.ws, {4: "We are done with this part here.", 5: "lower case continuation of the paragraph"})
         self.assertEqual(segments.seam_cost(self.ws.root, 4, 5), 3.0)
-        self.assertEqual(segments.seam_cost(self.ws.root, 2, 5), 0.0)  # 中间隔着不译的页
+        self.assertEqual(segments.seam_cost(self.ws.root, 2, 5), 0.0)  # 中間隔著不譯的頁
 
     def test_footnote_and_leading_table_ignored(self):
-        # 脚注末尾的句号不算句子写完；下一页先排的表格和题注不算开头（f8eeac73f437 第 8|9 页就是这样漏了半段）
+        # 腳註末尾的句號不算句子寫完；下一頁先排的表格和題注不算開頭（f8eeac73f437 第 8|9 頁就是這樣漏了半段）
         write_pages(self.ws, {4: "3) SAIL-PIW Wang et al. (2023) preserves historical knowledge\n1https://example.org/data/.\n8",
                               5: "Table 1 Main results on three datasets.\nReplay 0.0616 0.0386\n4) PISA models continual recommendation through updates"})
         self.assertEqual(segments.seam_cost(self.ws.root, 4, 5), 2.0)
@@ -74,17 +74,17 @@ class TermsTest(unittest.TestCase):
         self.assertEqual(data["blocks"][1]["items"][0]["zh"], "画误差线")
         self.assertEqual(data["blocks"][2]["head"], [["误差线", "x"]])
         self.assertEqual(data["blocks"][2]["caption_zh"], "表 1：误差线")
-        self.assertEqual(data["blocks"][3]["zh"], "误差棒")  # 原文没有这个术语的块不动
+        self.assertEqual(data["blocks"][3]["zh"], "误差棒")  # 原文沒有這個術語的塊不動
         self.assertEqual(data["glossary"], [{"en": "eval", "zh": "评测"}])
 
     def test_substring_protected(self):
         data = {"glossary": [{"en": "variance", "zh": "方差"}],
                 "blocks": [{"type": "para", "en": "covariance and variance", "zh": "协方差和方差，$x_{方差}$"}]}
         terms.unify([{"en": "variance", "zh": "变异"}, {"en": "covariance", "zh": "协方差"}], data)
-        self.assertEqual(data["blocks"][0]["zh"], "协方差和变异，$x_{方差}$")  # 别的术语里的、公式里的不换
+        self.assertEqual(data["blocks"][0]["zh"], "协方差和变异，$x_{方差}$")  # 別的術語裡的、公式裡的不換
         data = {"glossary": [{"en": "mean", "zh": "media"}], "blocks": [{"type": "para", "en": "the mean", "zh": "multimedia media"}]}
         terms.unify([{"en": "mean", "zh": "promedio"}], data)
-        self.assertEqual(data["blocks"][0]["zh"], "multimedia promedio")  # 拉丁字母只换整词
+        self.assertEqual(data["blocks"][0]["zh"], "multimedia promedio")  # 拉丁字母只換整詞
         data = {"glossary": [{"en": "standard error", "zh": "标准误"}], "zh": {"p1": "标准误和标准误差", "t#head": [["标准误"]]}}
         terms.unify([{"en": "standard error", "zh": "标准误差"}], data, {"p1": "standard errors", "t#head": "standard error"})
         self.assertEqual(data["zh"], {"p1": "标准误差和标准误差", "t#head": [["标准误差"]]})
@@ -127,25 +127,25 @@ class SkipHeadTest(unittest.TestCase):
         cfg = {"engine": "openai", "batch_pages": 2, "concurrency": 2, "openai": {"vision": False}}
         seen = self.run_job(cfg, list(range(1, 9)))
         self.assertEqual(sorted(seen), [1, 3, 5, 7])
-        self.assertIn("第 4 页由另一批负责", seen[5])  # 第二段开头
+        self.assertIn("第 4 页由另一批负责", seen[5])  # 第二段開頭
         for p in (1, 3, 7):
             self.assertNotIn("由另一批负责", seen[p])
-        self.assertIn("上一批最后一段", seen[7])  # 段内照旧接上一批
-        self.assertNotIn("另外用", seen[1])  # openai 不看图：不提相邻页
+        self.assertIn("上一批最后一段", seen[7])  # 段內照舊接上一批
+        self.assertNotIn("另外用", seen[1])  # openai 不看圖：不提相鄰頁
 
     def test_seam_batches_peek_neighbour_image(self):
         cfg = {"engine": "claude", "batch_pages": 2, "concurrency": 2, "claude": {}}
         with mock.patch.object(translate.pdfwork, "engine_image", lambda root, n: root / f"page-{n}.jpg"), \
                 mock.patch.object(translate.netcheck, "problem", lambda cfg: None):
             seen = self.run_job(cfg, list(range(1, 9)))
-        self.assertIn("extract/page-005.jpg 的开头", seen[3])  # 前一段最后一批看下一页开头
-        self.assertIn("extract/page-004.jpg 的末尾", seen[5])  # 后一段第一批看上一页末尾
+        self.assertIn("extract/page-005.jpg 的开头", seen[3])  # 前一段最後一批看下一頁開頭
+        self.assertIn("extract/page-004.jpg 的末尾", seen[5])  # 後一段第一批看上一頁末尾
         self.assertNotIn("另外用", seen[1])
         self.assertNotIn("另外用", seen[7])
 
     def test_serial_and_range_never_skip(self):
         cfg = {"engine": "openai", "batch_pages": 2, "concurrency": 1, "openai": {"vision": False}}
-        seen = self.run_job(cfg, [5, 6, 7, 8])  # 第 4 页不在这次范围里：页首续文要译
+        seen = self.run_job(cfg, [5, 6, 7, 8])  # 第 4 頁不在這次範圍裡：頁首續文要譯
         self.assertTrue(all("由另一批负责" not in p for p in seen.values()))
 
     def test_conflicting_terms_unified_on_merge(self):
@@ -168,8 +168,8 @@ class SkipHeadTest(unittest.TestCase):
             translate.translate_pages(self.ws, cfg, list(range(1, 9)), threading.Event(), lambda *a: None)
         paper = self.ws.load("paper")
         refs = [b for b in paper["blocks"] if b["type"] == "references"]
-        self.assertEqual([b["page"] for b in refs], [3])  # 两段各起了一个，留页码早的
-        self.assertEqual(refs[0]["id"], "refs")  # 晚并进来的更早那块接过原来的 id，挂在上面的笔记不丢
+        self.assertEqual([b["page"] for b in refs], [3])  # 兩段各起了一個，留頁碼早的
+        self.assertEqual(refs[0]["id"], "refs")  # 晚並進來的更早那塊接過原來的 id，掛在上面的筆記不丟
         self.assertEqual(len(paper["references"]), 4)
 
     def test_prev_paragraph_skips_footnote_and_flags_unfinished(self):
@@ -178,17 +178,17 @@ class SkipHeadTest(unittest.TestCase):
         add({"id": "p4-7", "type": "para", "page": 4, "en": "3) SAIL-PIW preserves knowledge."},
             {"id": "p4-8", "type": "para", "page": 4, "en": "$^1$https://example.org/data/."})
         ctx = prompts._context(self.ws, [5, 6])
-        self.assertIn("p4-7", ctx)  # 脚注排在最后也不拿它当上一段
+        self.assertIn("p4-7", ctx)  # 腳註排在最後也不拿它當上一段
         self.assertIn("不要再输出这段续文", ctx)
         add({"id": "p4-9", "type": "para", "page": 4, "en": "Then the eval will need to contain at least"})
         ctx = prompts._context(self.ws, [5, 6])
-        self.assertIn("停在了半句", ctx)  # 上一批没补完：续文要由这批译
+        self.assertIn("停在了半句", ctx)  # 上一批沒補完：續文要由這批譯
         self.assertNotIn("不要再输出这段续文", ctx)
 
     def test_prev_followed_by_math_or_ending_in_math_is_finished(self):
         add = lambda *bs: self.ws.update("paper", lambda p: p["blocks"].extend(bs))  # noqa: E731
         add({"id": "p4-1", "type": "para", "page": 4, "en": "Combining, we have"}, {"id": "eq3", "type": "math", "page": 4, "tex": "x"})
-        self.assertNotIn("停在了半句", prompts._context(self.ws, [5, 6]))  # 后面跟着公式：那段已经结束
+        self.assertNotIn("停在了半句", prompts._context(self.ws, [5, 6]))  # 後面跟著公式：那段已經結束
         add({"id": "p4-2", "type": "para", "page": 4, "en": "so the value is $x=1.$"})
         self.assertNotIn("停在了半句", prompts._context(self.ws, [5, 6]))
         add({"id": "p4-3", "type": "heading", "page": 4, "en": "3 Method"})
@@ -216,9 +216,9 @@ class ConfigMigrationTest(unittest.TestCase):
             with mock.patch.object(config, "CONFIG_PATH", d / "config.json"):
                 (d / "config.json").write_text(json.dumps({"concurrency": 1}), encoding="utf-8")
                 self.assertEqual(config.load()["concurrency"], 0)
-                config.save({"port": 9000})  # 存别的设置也不会把旧的 1 固化下来
+                config.save({"port": 9000})  # 存別的設定也不會把舊的 1 固化下來
                 self.assertEqual(config.load()["concurrency"], 0)
-                config.save({"concurrency": 1})  # 新设置页里自己选的 1 保留
+                config.save({"concurrency": 1})  # 新設定頁裡自己選的 1 保留
                 self.assertEqual(config.load()["concurrency"], 1)
                 (d / "config.json").write_text(json.dumps({"concurrency": 3}), encoding="utf-8")
                 self.assertEqual(config.load()["concurrency"], 3)
