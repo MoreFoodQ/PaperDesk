@@ -17,7 +17,6 @@ jobs:
         shell: pwsh
     env:
       PYTHONUTF8: '1'
-      EASYREAD_HOME: ${{ runner.temp }}/paperdesk-ci-data
     steps:
       - uses: actions/checkout@v4
         with:
@@ -29,6 +28,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - name: Isolate application data
+        run: '"EASYREAD_HOME=$env:RUNNER_TEMP/paperdesk-ci-data" >> $env:GITHUB_ENV'
       - name: Install hash-locked runtime only
         run: python -m pip install --require-hashes --only-binary=:all: -r requirements-hashed.txt
       - name: Python regressions

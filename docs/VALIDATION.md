@@ -78,3 +78,12 @@ See [behavior, issue/change/result records and release handling](FIGURE-TRANSLAT
 The final source import/authentication/export smoke and release privacy gate passed.
 The existing reader drawer regression passed at all nine supported test widths.
 Remote CI and rebuilt installer validation are pending publication of the branch.
+
+## GitHub Actions workflow correction (2026-10-19)
+
+The first feature-branch push (81de0d2) produced a failed workflow with no jobs.
+Review found runner.temp used in jobs.source.env, where the runner context is not
+available. The isolated EASYREAD_HOME path is now set by a PowerShell step using
+RUNNER_TEMP and GITHUB_ENV before tests. This changes CI setup only; the application
+and its data paths are unchanged. Remote execution must be verified after pushing
+this correction; local regression results do not imply that remote CI passed.
