@@ -1,4 +1,4 @@
-"""每段第一批的前文参考、全文译完后的术语一致性检查、合并时术语统一的误伤、不能看图的引擎在段交界。不调真模型。
+"""每段第一批的前文參考、全文譯完後的術語一致性檢查、合併時術語統一的誤傷、不能看圖的引擎在段交界。不調真模型。
 python -m unittest tests.test_consistency"""
 import json
 import shutil
@@ -39,12 +39,12 @@ class FrontContextTest(unittest.TestCase):
 
     def test_reference_has_opening_outline_and_full_previous_page(self):
         text = front_context.build(self.ws.root, 4)
-        self.assertIn("DPO, short for direct preference optimization", text)  # 前面定义的缩写
+        self.assertIn("DPO, short for direct preference optimization", text)  # 前面定義的縮寫
         self.assertIn("2 Method（第 3 页）", text)
-        self.assertIn("then we keep", text)  # 页首半句话前面的那整句
+        self.assertIn("then we keep", text)  # 頁首半句話前面的那整句
         self.assertIn("不要翻译", text)
         self.assertEqual(front_context.build(self.ws.root, 1), "")
-        self.assertNotIn("【论文开头】", front_context.build(self.ws.root, 2))  # 上一页就是第 1 页，不重复
+        self.assertNotIn("【论文开头】", front_context.build(self.ws.root, 2))  # 上一頁就是第 1 頁，不重複
 
     def test_outline_stops_at_references(self):
         (self.ws.root / "extract" / "page-005.txt").write_text("References\n1. Smith, J. and Doe, K. A paper. 2020.", encoding="utf-8")
@@ -57,7 +57,7 @@ class FrontContextTest(unittest.TestCase):
         seen = {}
 
         def engine(cfg, prompt, cwd, images=None, cancel=None, meter=None):
-            if "这次只处理第" not in prompt:  # 最后的一致性检查
+            if "这次只处理第" not in prompt:  # 最後的一致性檢查
                 return '{"fixes": []}'
             page = page_of(prompt)
             seen[page] = "前文参考" in prompt
@@ -65,7 +65,7 @@ class FrontContextTest(unittest.TestCase):
 
         run_pages(self.ws, cfg, [1, 2, 3, 4, 5, 6], engine)
         firsts = [p for p, has in seen.items() if has]
-        self.assertEqual(len(firsts), 1)  # 两段：只有第二段的第一批
+        self.assertEqual(len(firsts), 1)  # 兩段：只有第二段的第一批
         self.assertGreater(firsts[0], 1)
         self.assertFalse(seen[1])
 
@@ -93,29 +93,29 @@ class ConsistencyTest(unittest.TestCase):
         ]
         items, agree = consistency.suspects(paper(blocks, self.GL), {"f"})
         got = {s["key"]: [t["want"] for t in s["terms"]] for s in items}
-        # f 用户改过，不查；g 只在公式里有，不算用了
+        # f 使用者改過，不查；g 只在公式裡有，不算用了
         self.assertEqual(got, {"a": ["标准误差"], "d#0": ["策略"], "e#caption": ["标准误差"], "g": ["标准误差"]})
         self.assertEqual(agree, {"standard error": 1})
         items2, agree2 = consistency.suspects(paper(blocks, self.GL), set(), {2})
         self.assertEqual([i["key"] for i in items2], ["a"])
-        self.assertEqual(agree2, agree)  # 用了几段按全文算
+        self.assertEqual(agree2, agree)  # 用了幾段按全文算
 
     def test_swap_only_when_counts_match(self):
         en = "The bias is small, but the standard deviation is large."
-        # bias 出现一次，“偏差”出现两次（另一次在“标准偏差”里）：不换
+        # bias 出現一次，“偏差”出現兩次（另一次在“標準偏差”裡）：不換
         self.assertIsNone(consistency.swap("估计量的偏差很小，但标准偏差很大。", en, "bias", "偏差", "偏置", []))
-        # 术语表里有“标准偏差”就先护住，次数对上了：只换 bias 那一处
+        # 術語表裡有“標準偏差”就先護住，次數對上了：只換 bias 那一處
         self.assertEqual(consistency.swap("估计量的偏差很小，但标准偏差很大。", en, "bias", "偏差", "偏置", ["标准偏差"]),
                          "估计量的偏置很小，但标准偏差很大。")
-        # 定下的说法包含旧说法：已经是新说法的地方不算，次数对不上就不换（不会变成“标准误差差”）
+        # 定下的說法包含舊說法：已經是新說法的地方不算，次數對不上就不換（不會變成“標準誤差差”）
         self.assertIsNone(consistency.swap("标准误差和标准误", "standard error and standard error", "standard error", "标准误", "标准误差", []))
         self.assertEqual(consistency.swap("一个标准误", "one standard error", "standard error", "标准误", "标准误差", []), "一个标准误差")
         self.assertIsNone(consistency.swap("$x$ 的标准误", "standard error of $x$", "standard error", "x", "y", []))
-        # 换成缩写后会变成“SFT（SFT）”：不换
+        # 換成縮寫後會變成“SFT（SFT）”：不換
         self.assertIsNone(consistency.swap("先做监督微调（SFT）。", "First, supervised fine-tuning (SFT).", "supervised fine-tuning", "监督微调", "SFT", []))
 
     def test_plain_footnote_is_not_previous_paragraph(self):
-        # DeepSeek 把脚注写成 “3 That is, …”（不带上标），不能拿它当上一批最后一段
+        # DeepSeek 把腳註寫成 “3 That is, …”（不帶上標），不能拿它當上一批最後一段
         self.assertTrue(prompts._is_note({"type": "para", "en": "3 That is, the sum of the per-timestep KL-divergences."}))
         self.assertTrue(prompts._is_note({"type": "para", "en": "7One volunteer was excluded."}))
         self.assertFalse(prompts._is_note({"type": "heading", "en": "3 Method"}))
@@ -157,7 +157,7 @@ class ConsistencyTest(unittest.TestCase):
                                                         {"key": "b", "term": "standard error", "from": "不存在的说法"},
                                                         {"key": "zzz", "term": "standard error", "from": "x"}]}, [1, 2, 3])
         self.assertEqual(n, 1)
-        self.assertEqual({b["id"]: b["zh"] for b in ws.load("paper")["blocks"]}, {"a": "标准误差不小。", "b": "一个标准差。"})  # “不”还在
+        self.assertEqual({b["id"]: b["zh"] for b in ws.load("paper")["blocks"]}, {"a": "标准误差不小。", "b": "一个标准差。"})  # “不”還在
         self.assertTrue(any("标准误 → 标准误差" in s for s in lines))
         self.assertEqual(len(calls), 1)
 
@@ -170,7 +170,7 @@ class ConsistencyTest(unittest.TestCase):
         p = ws.load("paper")
         self.assertEqual({b["id"]: b["zh"] for b in p["blocks"]}, {"a": "标准误和协方差。", "b": "每个标准误。", "c": "一个标准误。"})
         self.assertEqual(next(g["zh"] for g in p["glossary"] if g["en"] == "standard error"), "标准误")
-        # 只重译了第 3 页：不动术语表，也不改别的页
+        # 只重譯了第 3 頁：不動術語表，也不改別的頁
         ws = self.make([dict(b) for b in blocks])
         self.run_check(ws, {"use": {"standard error": "标准误"}, "fixes": []}, [3])
         p = ws.load("paper")
@@ -239,7 +239,7 @@ class SeamTest(unittest.TestCase):
         cfg = {"engine": "openai", "batch_pages": 2, "concurrency": 2, "openai": {"vision": False}}
         seen = {}
         run_pages(ws, cfg, list(range(1, 9)), self.engine(seen), plan=lambda pages, size, k, root: [pages[:4], pages[4:]])
-        self.assertIn("THE-CONTINUATION", seen[3][0])  # 第 3–4 页是前一段最后一批：拿到第 5 页全文
+        self.assertIn("THE-CONTINUATION", seen[3][0])  # 第 3–4 頁是前一段最後一批：拿到第 5 頁全文
         self.assertNotIn("THE-CONTINUATION", seen[1][0])
 
     def test_resume_batches_only_join_consecutive_pages(self):
@@ -248,7 +248,7 @@ class SeamTest(unittest.TestCase):
     def test_resume_seam_owner_still_peeks_next_page(self):
         ws = make_ws(6)
         self.addCleanup(shutil.rmtree, ws.root, True)
-        # 第 5 页上次已经译完（跳过了页首续文），这次只续传第 3–4 页
+        # 第 5 頁上次已經譯完（跳過了頁首續文），這次只續傳第 3–4 頁
         ws.update("paper", lambda p: p["translation"].update(done_pages=[1, 2, 5, 6]))
         cfg = {"engine": "claude", "batch_pages": 2, "concurrency": 1, "claude": {}}
         seen = {}

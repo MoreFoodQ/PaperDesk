@@ -1,4 +1,4 @@
-/* 导出笔记：勾选要哪些（我的笔记、划线、我的问题、AI 的回答和解释、论文笔记、问 AI 的对话），导出 Markdown。 */
+/* 匯出筆記：勾選要哪些（我的筆記、劃線、我的問題、AI 的回答和解釋、論文筆記、問 AI 的對話），匯出 Markdown。 */
 (function (PR) {
   "use strict";
   const S = PR.state;

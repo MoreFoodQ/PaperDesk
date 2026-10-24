@@ -1,6 +1,6 @@
-/* 正文显示方式：原文 / 译文 / 双语，双语旁边的 ▾ 选原文在前还是译文在前。只改排列顺序和显隐，
-   .zh 始终是译文、data-key 不变，笔记、高亮和改过的译文都还对应原来的内容。
-   偏好：mode（zh 单语 / bi 双语），lead 单语看哪种，biOrder 双语哪种在前，两者互不影响。 */
+/* 正文顯示方式：原文 / 譯文 / 雙語，雙語旁邊的 ▾ 選原文在前還是譯文在前。只改排列順序和顯隱，
+   .zh 始終是譯文、data-key 不變，筆記、高亮和改過的譯文都還對應原來的內容。
+   偏好：mode（zh 單語 / bi 雙語），lead 單語看哪種，biOrder 雙語哪種在前，兩者互不影響。 */
 (function (PR) {
   "use strict";
   const S = PR.state;
@@ -14,7 +14,7 @@
       originalFull: PR.t("{lang}原文", { lang: PR.t("英文") }), translationFull: PR.t("{lang}译文", { lang }),
     };
   };
-  /* 切换显示方式：mode 和 lead / biOrder 一起改，再走 setPref 保住阅读位置 */
+  /* 切換顯示方式：mode 和 lead / biOrder 一起改，再走 setPref 保住閱讀位置 */
   PR.setView = function (view) {
     if (view !== "both") PR.prefs.lead = view;
     PR.setPref("mode", view === "both" ? "bi" : "zh");
@@ -29,7 +29,7 @@
     if (k !== "both") return L[k + "Full"];
     return PR.t("双语，{what}在前（B）", { what: PR.prefs.biOrder === "original" ? L.original : L.translation });
   }
-  /* 顶栏和窄屏 Aa 共用一份按钮；窄屏没地方弹菜单，顺序直接排成第二行 */
+  /* 頂欄和窄屏 Aa 共用一份按鈕；窄屏沒地方彈菜單，順序直接排成第二行 */
   PR.viewSegHtml = function (narrow) {
     const L = PR.viewLabels(), v = PR.readingView();
     const b = (k) => '<button data-view="' + k + '" class="' + (v === k ? "on" : "") + '" title="' + PR.esc(viewTitle(k, L)) + '">' + PR.esc(L[k]) + "</button>";
@@ -93,7 +93,7 @@
     document.body.classList.toggle("original-first", first);
     syncBar();
     if (!S.paper) return;
-    // 标题里的英文（.en-title）拆成和译文同级的一行，才能整体换先后
+    // 標題裡的英文（.en-title）拆成和譯文同級的一行，才能整體換先後
     PR.$$("#paper .en-title").forEach((en) => {
       const zh = en.parentElement;
       const original = document.createElement(zh.tagName);

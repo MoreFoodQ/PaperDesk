@@ -1,4 +1,4 @@
-"""流式 API：不把推理文本或中途失败的回答当成最终答案。"""
+"""流式 API：不把推理文本或中途失敗的回答當成最終答案。"""
 import io
 import json
 import threading

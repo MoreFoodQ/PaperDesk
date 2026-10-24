@@ -1,4 +1,4 @@
-"""阅读页文件准备：定位与小图预热，参与文献库迁移的在途操作计数。"""
+"""閱讀頁面預熱：預先載入定位資料與縮圖，並記錄文獻庫移轉期間的進行中操作。"""
 from __future__ import annotations
 
 import sys
@@ -25,7 +25,7 @@ def warm(root: Path, gate=None) -> None:
             len(list((root / "pages" / f"w{pdfwork.PANEL_WIDTH}").glob("*.webp"))) >= len(list((root / "pages").glob("page-*.webp"))):
         return
     if gate:
-        gate.begin()  # 在线程启动前登记，避免请求结束到后台启动之间的迁移空档。
+        gate.begin()  # 在執行緒啟動前登記，避免請求結束到背景啟動之間的移轉空檔。
     _warming.add(str(root))
 
     def run():

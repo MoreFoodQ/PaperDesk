@@ -1,6 +1,6 @@
-"""浏览器版的“选文件夹”：网页拿不到本机路径，由后端弹出系统自带的选择窗口（桌面版用 Electron 自己的）。
+"""瀏覽器版的“選資料夾”：網頁拿不到本機路徑，由後端彈出系統自帶的選擇窗口（桌面版用 Electron 自己的）。
 
-返回选中的绝对路径；用户取消返回 ""；这台机器弹不出窗口（比如 Linux 没装 zenity）返回 None，页面改成让用户填路径。
+回傳選中的絕對路徑；使用者取消回傳 ""；這臺機器彈不出窗口（比如 Linux 沒裝 zenity）回傳 None，頁面改成讓使用者填路徑。
 """
 from __future__ import annotations
 
@@ -11,8 +11,8 @@ import sys
 
 from . import foreground
 
-# Windows 用和“打开文件”同一种资源管理器窗口（IFileOpenDialog + FOS_PICKFOLDERS），不是老式的树状 FolderBrowserDialog。
-# 只用 ASCII：PowerShell 5.1 会按 GBK 读脚本。标题、起始目录从环境变量传进去。
+# Windows 用和“打開檔案”同一種資源管理器窗口（IFileOpenDialog + FOS_PICKFOLDERS），不是老式的樹狀 FolderBrowserDialog。
+# 只用 ASCII：PowerShell 5.1 會按 GBK 讀指令碼。標題、起始目錄從環境變數傳進去。
 _PS = r"""
 $code = @'
 using System;
@@ -84,6 +84,6 @@ def pick(title: str, start: str = "") -> str | None:
                            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     except (OSError, subprocess.TimeoutExpired):
         return None
-    if r.returncode != 0:  # 编译或 COM 出错：当成弹不出来，让页面改成填路径
+    if r.returncode != 0:  # 編譯或 COM 出錯：當成彈不出來，讓頁面改成填路徑
         return "" if sys.platform != "win32" else None
     return r.stdout.decode("utf-8", "replace").strip().rstrip("/\\")

@@ -1,10 +1,10 @@
-/* 右侧“问 AI”面板：边读边和模型实时对话，回答逐字流出来。
-   - 多个对话：顶部点标题展开对话列表，可以新建、切换、改名、删除（存在论文目录的 chat.json）。
-   - 模型：输入框左下角切换，名单在“设置 → 模型”里配（默认 Claude Opus 5.5 / Sonnet 5.5 / GPT）。
-   - 上下文：默认带上你正在读的段落；可以引用多段——选中文字点“问 AI”、段落操作条的“问 AI”，
-     或者把选中的文字直接拖进输入框，每段一个小标签，可以逐个去掉。
-   - 你的划线、笔记、问题不会每次都带；问到“标红的”“划线”“我的笔记”时，后台才把对应颜色的标记找出来。
-   - 页边笔记里的问题也从这里回答，答案同时写成那条笔记的回复。 */
+/* 右側“問 AI”面板：邊讀邊和模型即時對話，回答逐字流出來。
+   - 多個對話：頂部點標題展開對話清單，可以新建、切換、改名、刪除（存在論文目錄的 chat.json）。
+   - 模型：輸入框左下角切換，名單在“設定 → 模型”裡配（預設 Claude Opus 5.5 / Sonnet 5.5 / GPT）。
+   - 上下文：預設帶上你正在讀的段落；可以引用多段——選中文字點“問 AI”、段落操作條的“問 AI”，
+     或者把選中的文字直接拖進輸入框，每段一個小標籤，可以逐個去掉。
+   - 你的劃線、筆記、問題不會每次都帶；問到“標紅的”“劃線”“我的筆記”時，背景才把對應顏色的標記找出來。
+   - 頁邊筆記裡的問題也從這裡回答，答案同時寫成那條筆記的回覆。 */
 (function (PR) {
   "use strict";
   const S = PR.state;
@@ -14,7 +14,7 @@
   Object.assign(st, { chatOptions: {}, effortOpen: false, catalog: null });
 
   PR.canChat = () => PR.store.mode === "server";
-  /* 在线演示 / 离线版：带着对话记录时可以看，不能问 */
+  /* 在線演示 / 離線版：帶著對話記錄時可以看，不能問 */
   PR.chatView = () => PR.canChat() || !!(S.chat && (S.chat.threads || []).length);
   PR.chatOpen = () => PR.side === "chat";
   PR.toggleChat = function (force) {
@@ -32,13 +32,13 @@
     if (!PR.blockById[anchor]) return false;
     quote = (quote || "").trim();
     if (st.refs.some((r) => r.anchor === anchor && r.quote === quote)) return false;
-    st.refs = st.refs.filter((r) => !(r.anchor === anchor && !r.quote && quote)).concat({ anchor, quote });  // 同段先引整段、再选一句：换成那句
+    st.refs = st.refs.filter((r) => !(r.anchor === anchor && !r.quote && quote)).concat({ anchor, quote });  // 同段先引整段、再選一句：換成那句
     return true;
   }
-  /* 这次提问带哪几段：手动引用的；没有就用正在读的那段 */
+  /* 這次提問帶哪幾段：手動引用的；沒有就用正在讀的那段 */
   const sendRefs = () => (st.refs.length ? st.refs.slice() : st.auto && !st.noAuto ? [st.auto] : []);
 
-  /* 外部入口：段落操作条、选中文字（都是“加一段引用”），笔记卡片（直接问这一条） */
+  /* 外部入口：段落操作條、選中文字（都是“加一段引用”），筆記卡片（直接問這一條） */
   PR.chatAsk = function (opts) {
     if (PR.side !== "chat") { PR.openSide("chat"); autoContext(); }
     load().then(() => {
@@ -59,7 +59,7 @@
     }
     try {
       const d = await PR.api("/api/p/" + PR.pid + "/chat");
-      // 设置变更只刷新模型，不能覆盖尚未发送的模式或正在流式回答的对话。
+      // 設定變更只重新整理模型，不能覆蓋尚未發送的模式或正在流式回答的對話。
       if (!modelsOnly) st.threads = d.threads || [];
       st.models = d.models || []; st.def = d.default; st.limits = d.limits || null;
       if (!st.catalog) st.catalog = ((await PR.api("/api/engines").catch(() => ({}))).models || {});
@@ -83,7 +83,7 @@
     if (!c || !PR.blockById[c.anchor]) return "";
     const b = PR.blockById[c.anchor];
     if (b.type === "math" && !c.quote) return (PR.sectionOf ? PR.sectionOf(c.anchor) + " · " : "") + (b.tag ? PR.t("公式 ({tag})", { tag: b.tag }) : PR.t("一个公式"));
-    const text = plainTex(c.quote || PR.textFor(PR.blockKeys(b)[0] || b.id) || b.caption_zh || b.tex || "").replace(/\*\*|`/g, "");  // 先去公式记号再去粗体，不然 $ 已被 PR.plain 去掉、TeX 原样露出来
+    const text = plainTex(c.quote || PR.textFor(PR.blockKeys(b)[0] || b.id) || b.caption_zh || b.tex || "").replace(/\*\*|`/g, "");  // 先去公式記號再去粗體，不然 $ 已被 PR.plain 去掉、TeX 原樣露出來
     const sec = PR.sectionOf ? PR.sectionOf(c.anchor) : "";
     return (sec ? sec + " · " : "") + PR.t("「{q}」", { q: text.slice(0, 18) + (text.length > 18 ? "…" : "") });
   }
@@ -101,7 +101,7 @@
   const colorName = (c) => (PR.HL_COLORS.find(([k]) => k === c) || [c, c])[1];
   const when = (iso) => (iso ? PR.shortTime(iso) : "");
 
-  /* ---------- 画面 ---------- */
+  /* ---------- 畫面 ---------- */
   function headHtml() {
     const t = thread();
     return '<div class="ch-head"><button class="ch-title" data-c="list" title="' + PR.t("全部对话") + '">' + PR.icon("menu", "sm") + "<span>" + PR.md(t ? t.title : PR.t("新对话"), { cite: false, xref: false }) + "</span>" + PR.icon("chevron", "sm") + "</button>" +
@@ -146,7 +146,7 @@
     const menu = st.menuOpen ? '<div class="ch-menu">' + st.models.map((x) => '<button data-c="model" data-m="' + PR.esc(x.id) + '" class="' + (x.id === st.model ? "on" : "") + '"' + (x.ready === false ? ' disabled title="' + PR.esc(x.hint) + '"' : "") + ">" +
       "<b>" + PR.esc(x.label) + (x.id === st.model ? '<span class="ch-model-check">✓</span>' : '') + "</b><small>" + PR.esc(x.ready === false ? x.hint : [x.source, x.id === st.def ? PR.t("默认") : ""].filter(Boolean).join(" · ")) + "</small></button>").join("") +
       PR.chatEffort.section(st, m) + '<hr><button data-c="manage">' + PR.icon("gear", "sm") + PR.t("管理模型…") + "</button></div>" : "";
-    // 简明回答（ASD-STE100 写作规则）：一个小开关放在模型旁边，不单独占一行
+    // 簡明回答（ASD-STE100 寫作規則）：一個小開關放在模型旁邊，不單獨佔一行
     const brief = st.answerStyle === "ste100";
     const style = '<button class="ch-pill' + (brief ? " on" : "") + '" data-c="style"' + (st.streaming ? " disabled" : "") + ' aria-pressed="' + brief + '" title="' +
       PR.esc(PR.t("简明回答：短句、一句只讲一件事、步骤分条列出，数字和前提条件一个不丢。会把全文一起发给模型作依据，用量更多。")) + '">' + PR.t("简明回答") + "</button>";
@@ -179,7 +179,7 @@
   }
   const renderLiveSoon = PR.throttle(renderLive, 60);
 
-  /* ---------- 发送 ---------- */
+  /* ---------- 發送 ---------- */
   async function send(text, noteId, only) {
     text = (text || "").trim();
     if (!text || st.streaming) return;
@@ -232,11 +232,11 @@
       else msg.error = PR.t("没能回答：{msg}", { msg: e.message });
     }
     st.streaming = null;
-    // 首次提问在服务端分配 ID 前失败，也应能切到新对话或重试。
+    // 首次提問在服務端分配 ID 前失敗，也應能切到新對話或重試。
     if (!t.id) { t.id = "local-" + (++st.localSeq); t.local = true; st.cur = t.id; }
     t.updated = PR.nowIso();
     if (noteId) { PR.asking.delete(noteId); setTimeout(() => PR.poll && PR.poll(), 300); }
-    if (!only) { st.refs = []; st.noAuto = false; autoContext(); }  // 问完清掉引用，回到“正在读”
+    if (!only) { st.refs = []; st.noAuto = false; autoContext(); }  // 問完清掉引用，回到“正在讀”
     render();
   }
 
@@ -257,7 +257,7 @@
       if (t) t.answer_style = st.answerStyle;
       return render();
     }
-    if (c === "effort-level") { if (st.streaming) return; const m = modelOf(st.model); st.chatOptions.reasoning_effort = b.dataset.effort === PR.chatEffort.fallback(st, m) && !m.reasoning_effort ? "" : b.dataset.effort; return render(); }  // 菜单不关；点的就是默认档就不传，跟着 CLI
+    if (c === "effort-level") { if (st.streaming) return; const m = modelOf(st.model); st.chatOptions.reasoning_effort = b.dataset.effort === PR.chatEffort.fallback(st, m) && !m.reasoning_effort ? "" : b.dataset.effort; return render(); }  // 菜單不關；點的就是預設檔就不傳，跟著 CLI
     if (c === "menu") { st.menuOpen = !st.menuOpen; st.listOpen = st.usageOpen = false; return render(); }
     if (c === "usage") { st.usageOpen = !st.usageOpen; st.listOpen = st.menuOpen = false; return render(); }
     if (c === "model") { if (st.streaming) return; st.chatOptions = {}; st.model = b.dataset.m; st.menuOpen = false; return render(); }
@@ -295,7 +295,7 @@
       } catch (err) { PR.toast(PR.t("没放成：{msg}", { msg: PR.esc(err.message) })); }
     }
   });
-  document.addEventListener("click", (e) => {  // 点对话列表里的一行：切过去
+  document.addEventListener("click", (e) => {  // 點對話清單裡的一行：切過去
     const row = e.target.closest("#chatpanel .ch-thread[data-t]");
     if (!row || e.target.closest("[data-c]") || st.streaming) return;
     st.cur = row.dataset.t; st.listOpen = false;
@@ -312,7 +312,7 @@
     if (e.key === "Escape") e.target.blur();
   });
   document.addEventListener("input", (e) => { if (e.target.id === "chatInput") PR.autosize(e.target); });
-  /* 把正文里选中的文字拖进问 AI 面板：变成一段引用，而不是一堆粘进来的字 */
+  /* 把正文裡選中的文字拖進問 AI 面板：變成一段引用，而不是一堆粘進來的字 */
   let dragRef = null;
   document.addEventListener("dragstart", (e) => {
     const sel = window.getSelection();
@@ -333,7 +333,7 @@
     addRef(anchor, quote);
     render(); focusInput();
   });
-  /* 读到别处时，上下文跟着换成当前段（手动指定的不动） */
+  /* 讀到別處時，上下文跟著換成當前段（手動指定的不動） */
   window.addEventListener("scroll", PR.debounce(() => {
     if (!PR.chatOpen() || st.streaming) return;
     const before = st.auto && st.auto.anchor;

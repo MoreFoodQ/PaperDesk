@@ -16,7 +16,7 @@ Unit and smoke tests use synthetic fixtures. Commands are listed in the [English
 
 ## Coverage limits
 
-External model APIs are exercised with simulated HTTP responses. Live third-party accounts, local model inference, cross-device cloud synchronization, other operating systems, and executable installers are outside the current validation scope.
+External model APIs are exercised with simulated HTTP responses. Live third-party accounts, local model inference, cross-device cloud synchronization and other operating systems are outside the current validation scope. Windows installer evidence and its remaining limits are documented below.
 
 GitHub Actions results must be checked after pushing. Local results do not establish remote CI status.
 
@@ -62,3 +62,102 @@ EPUB model tests simulate responses while exercising actual image preparation, p
 Full Python suite: 361 passed. JavaScript suite: 116 passed. Packaged browser checks included PDF/EPUB import, source images, note save/reload, source download authentication, local PDF windows, offline HTML and backend shutdown. Those checks used an isolated synthetic library and no model calls.
 
 One separate installed-app smoke used gpt-5.6-luna, low reasoning and standard service tier, returning a short JSON object through the bundled CLI. Local usage accounting recorded one call and 8,184 reported tokens, including CLI context. No live translation of user literature was performed. Fresh-account interactive OAuth, cross-version upgrades, a fresh-OS VM, other operating systems and code signing are not established by these tests. The installer is unsigned.
+
+## Optional figure text translation (2026-10-19)
+
+Feature branch: `feat/optional-figure-translation`. Full Python regression baseline:
+385 passed; JavaScript: 118 passed. Feature checks cover default/legacy behavior,
+boolean API validation, task snapshots, confirmation, resume, original-mode fills,
+explicit image fills, missing replies, retries, cancellation, mixed task batches,
+explicit full-page retranslation versus image-only retry semantics, and preservation
+of source images, body blocks, notes, captions and review entries.
+The isolated browser check passed setting save/reload, PDF/EPUB skip/fill workflows,
+exports and reader widths 390, 900 and 1440. No live model calls were made.
+See [behavior, issue/change/result records and release handling](FIGURE-TRANSLATION.md).
+
+The final source import/authentication/export smoke and release privacy gate passed.
+The existing reader drawer regression passed at all nine supported test widths.
+Remote CI and rebuilt installer validation are pending publication of the branch.
+
+## GitHub Actions workflow correction (2026-10-19)
+
+The first feature-branch push (81de0d2) produced a failed workflow with no jobs.
+Review found runner.temp used in jobs.source.env, where the runner context is not
+available. The isolated EASYREAD_HOME path is now set by a PowerShell step using
+RUNNER_TEMP and GITHUB_ENV before tests. This changes CI setup only; the application
+and its data paths are unchanged. Remote execution must be verified after pushing
+this correction; local regression results do not imply that remote CI passed.
+
+## Traditional Chinese developer documentation (2026-10-19)
+
+Developer-facing Python docstrings and comments, JavaScript/CSS comments and issue
+templates now use Traditional Chinese and Taiwan terminology. Existing reviewed
+README prose, code examples, URLs, third-party notices and license text are retained.
+Outdated explanations of data locations, service grouping, version checks and
+browser lifetime handling were rewritten to match current behavior.
+
+| Problem | Change | Result |
+|---|---|---|
+| Simplified Chinese in developer explanations | Convert only parsed comments/docstrings; review technical terms and ambiguous characters | Documentation-token scan found no remaining Simplified-only candidates |
+| Bulk wording changes could affect execution | Compare Python and JavaScript syntax trees and strip-comment CSS/HTML representations | 129 Python and 87 JavaScript files parsed; application execution trees unchanged; 14 CSS and 2 HTML files retain executable content |
+| Palette tests used a translated comment as a source delimiter | Locate the existing code declarations and validate the boundaries | All 118 JavaScript tests passed |
+| Several explanations described older defaults | Correct data paths, optional updates and provider/network descriptions | Documentation matches current implementation without changing settings |
+
+All 385 Python tests passed, along with the source startup/import/authentication/
+export smoke and release privacy gate. The UI string check reported no missing
+English entries or unwrapped interface strings. No live model calls were made.
+
+Legacy localization keys, model prompts, regular expressions, stored-data labels
+and test fixtures retain their original strings for compatibility. Their presence
+does not mean they are newly added developer prose. Translating those values would
+require separate compatibility and behavior changes. Runtime dependencies, package
+versions, personal libraries and existing installer binaries were not changed.
+The JavaScript tree comparison has one reviewed test-only exception: the palette
+test's source delimiter was replaced with code declarations rather than comment text.
+
+## Skipped figure-label visibility (2026-10-24)
+
+| Problem | Change | Result |
+|---|---|---|
+| Disabled figure translation still showed a duplicate OCR block | Omit the extra label block when the application skip marker is true and no model/reader translation exists | Original image and caption remain; stored source labels and the fill action are retained |
+| A visibility change could hide existing content | Preserve model translations, reader edits and original-only figures without a skip marker | Four added rendering regressions passed |
+| Offline exports could disagree with the live reader | Use the shared renderer and verify both skipped and filled states in exported HTML | PDF/EPUB live and offline browser checks passed |
+
+All 122 JavaScript tests and 35 targeted figure-translation/EPUB Python tests passed.
+Browser checks also covered fill completion, note/body preservation, reload and
+responsive widths. Model replies were simulated; no live model calls were made.
+This is a presentation change; translation policy, source data and saved notes are
+unchanged. Existing 0.2.0 installers are not rebuilt by this change.
+
+## Structured figure-fill reply correction (2026-10-24)
+
+| Problem | Change | Result |
+|---|---|---|
+| Live manual QA returned an object containing image_zh under an image fill key; str(object) appeared in the reader | Request plain strings explicitly; extract only a valid image_zh string from structured replies | Plain strings, nested replies and serialized JSON normalize to label text |
+| Invalid objects could be marked translated | Reject missing/non-string translations before validation and again at the storage boundary | Malformed replies remain pending and follow the existing failure/retry path |
+| Extra model fields could alter source content | Discard source labels, paths and crop boxes returned in a fill value | Body, captions, source labels, images, crop geometry and reader data preserved |
+| Already saved manual-QA output contained a Python object representation | Back up the isolated test data and recover its existing translated string locally | One synthetic figure recovered without another model call; saved notes unchanged |
+
+Full regressions: 390 Python tests and 122 JavaScript tests passed. Browser tests
+used structured model substitutes for PDF/EPUB and checked live/offline rendering,
+original-label and crop preservation, note persistence and responsive layouts.
+Source privacy checks also passed. No new live model request was made for this fix.
+
+## CI YAML parsing correction (2026-10-24)
+
+The dependency installation command contained `: ` in an unquoted YAML scalar
+(`--only-binary=:all: -r`). The local YAML parser reproduced an error at line 34,
+before GitHub could create test jobs. The command now uses a block scalar so its
+contents are passed unchanged to PowerShell. Both workflow files parse locally.
+This is independent of the earlier runner-context fix and does not change the
+application or dependency versions. The PR checks provide remote execution results.
+
+## Windows runner path normalization (2026-10-24)
+
+The first executable PR checks reached all 390 Python tests. Both Python versions
+reported the packaged-CLI path assertion because the runner's temporary path used
+an 8.3 account directory while the application returned its resolved long path.
+The expected fixture path now uses resolve() before comparison. The assertion
+still verifies the exact bundled executable and rejects a global CLI fallback;
+application code and packaging behavior are unchanged. The three local packaged
+runtime regressions passed before the correction was pushed for remote validation.

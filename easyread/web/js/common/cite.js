@@ -1,4 +1,4 @@
-/* 引用只使用已有元数据，格式化与批量排序都不访问网络。 */
+/* 引用只使用已有元資料，格式化與批量排序都不訪問網路。 */
 (function (PR) {
   "use strict";
   const text = (v) => v == null ? "" : String(v).trim();
@@ -32,7 +32,7 @@
     return (apa ? last : last.toUpperCase()) + (initials ? (apa ? ", " : " ") + initials : "");
   }
 
-  // 同时转义字段中的花括号与反斜线，避免元数据破坏 BibTeX 结构。
+  // 同時轉義欄位中的花括號與反斜線，避免元資料破壞 BibTeX 結構。
   function bibEscape(value) {
     const escapes = { "\\": "\\textbackslash{}", "^": "\\textasciicircum{}", "~": "\\textasciitilde{}" };
     return text(value).replace(/[\\&%$#_{}^~]/g, (c) => escapes[c] || "\\" + c);
@@ -49,7 +49,7 @@
       if (arxiv(i)) fields.push("eprint = {" + bibEscape(arxiv(i)) + "}", "archivePrefix = {arXiv}", "eprinttype = {arxiv}");
       else if (text(i.venue)) fields.push("howpublished = {" + bibEscape(i.venue) + "}");
     }
-    // DOI 和 URL 是标识符，不是 TeX 正文；转义会改变导入后的真实值。只去掉会破坏条目结构的花括号和换行。
+    // DOI 和 URL 是標識符，不是 TeX 正文；轉義會改變匯入後的真實值。只去掉會破壞條目結構的花括號和換行。
     const ident = (s) => text(s).replace(/[{}\r\n]/g, "");
     if (ident(i.doi)) fields.push("doi = {" + ident(PR.normalizeDoi(i.doi)) + "}");
     if (ident(i.url)) fields.push("url = {" + ident(i.url) + "}");
@@ -66,7 +66,7 @@
       return [who, "(" + (text(i.year) || "n.d.") + ").", sentence(title(i)), source(i) + (text(i.url) ? (source(i) ? ". " : "") + text(i.url) : "")].filter(Boolean).join(" ");
     }
     const who = names.slice(0, 3).map((n) => authorName(n, false)).join(", ") +
-      (names.length > 3 ? (names.some(chinese) ? ", 等" : ", et al.") : ""); // i18n-ok：引用按作者语言生成，不跟随界面语言
+      (names.length > 3 ? (names.some(chinese) ? ", 等" : ", et al.") : ""); // i18n-ok：引用按作者語言生成，不跟隨介面語言
     const marker = { journal: "J", conference: "C", preprint: "EB/OL" }[PR.citeType(i)];
     return [sentence(who), title(i) + "[" + marker + "].", sentence([source(i), text(i.year)].filter(Boolean).join(", ")), sentence(text(i.url))].filter(Boolean).join(" ");
   };
@@ -93,7 +93,7 @@
     return out;
   }
 
-  /* 按第一作者排序（著者-出版年制的顺序）；导出框里选了别的顺序时传 order = "keep" 原样输出 */
+  /* 按第一作者排序（著者-出版年制的順序）；匯出框裡選了別的順序時傳 order = "keep" 原樣輸出 */
   PR.citeSort = (items, style) => items.slice().sort((a, b) => compareAuthor(a, b, style));
   PR.citeBatch = function (items, style, order) {
     if (style === "zotero") return PR.citeZotero(items);

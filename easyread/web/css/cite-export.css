@@ -1,4 +1,4 @@
-/* 引用导出：列表、格式选择、可复制预览沿用现有对话框样式。 */
+/* 引用匯出：清單、格式選擇、可複製預覽沿用現有對話框樣式。 */
 .cite-items { max-height: 28vh; overflow-y: auto; margin: 16px 0; border-block: 1px solid var(--rule); }
 .cite-row { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; padding: 9px 0; border-bottom: 1px solid var(--rule); }
 .cite-row:last-child { border-bottom: 0; }

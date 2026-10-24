@@ -1,11 +1,11 @@
-"""图块截图。两条路：
+"""圖塊截圖。兩條路：
 
-- 翻译 / 只读原文整理时，模型给了图本身的裁剪框 box：等块 id 在合并锁里最终去重之后，
-  prepare_figures 按 box 截图（normalize_figure 只整理字段，不截图）。
-- 模型没给框、或是旧论文：打开阅读页时 fill_later 按原页定位（layout.json）补截或更新自动截图。
+- 翻譯 / 閱讀原文整理時，模型給了圖本身的裁剪框 box：等塊 id 在合併鎖裡最終去重之後，
+  prepare_figures 按 box 截圖（normalize_figure 只整理欄位，不截圖）。
+- 模型沒給框、或是舊論文：打開閱讀頁時 fill_later 按原頁定位（layout.json）補截或更新自動截圖。
 
-截图文件名带上页码、框和 PDF 文件身份的哈希（figures/crop-<页>-<哈希>.webp）：
-重译改了框就换新文件，不会沿用旧图或浏览器缓存，同 id 的块在别的页上也不会撞到同一张。
+截圖檔案名帶上頁碼、框和 PDF 檔案身份的哈希（figures/crop-<頁>-<哈希>.webp）：
+重譯改了框就換新檔案，不會沿用舊圖或瀏覽器快取，同 id 的塊在別的頁上也不會撞到同一張。
 """
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ _running: set[str] = set()
 
 
 def figure_box(value) -> list[float] | None:
-    """归一化 [x0, y0, x1, y1]；不是有限数、反了或太小都算无效。"""
+    """正規化 [x0, y0, x1, y1]；不是有限數、反了或太小都算無效。"""
     if not isinstance(value, (list, tuple)) or len(value) != 4:
         return None
     try:
@@ -44,7 +44,7 @@ def _crop_path(root, page: int, box: list[float]) -> str:
 
 
 def crop(root, page: int, box: list[float]) -> str:
-    """按页码、框和 PDF 身份命名截图，已有同名文件就直接用。返回相对路径。"""
+    """按頁碼、框和 PDF 身份命名截圖，已有同名檔案就直接用。回傳相對路徑。"""
     rel = _crop_path(root, page, box)
     if not (root / rel).is_file():
         pdfwork.crop(root, page, box, rel.rsplit("/", 1)[1][:-5])
@@ -52,7 +52,7 @@ def crop(root, page: int, box: list[float]) -> str:
 
 
 def normalize_figure(block: dict) -> None:
-    """整理模型给的图块字段：框无效就去掉，image_text_* 旧写法改成 image_*。不截图。"""
+    """整理模型給的圖塊欄位：框無效就去掉，image_text_* 舊寫法改成 image_*。不截圖。"""
     box = figure_box(block.get("box"))
     if box:
         block["box"] = box
@@ -66,8 +66,8 @@ def normalize_figure(block: dict) -> None:
 
 
 def prepare_figures(root, blocks: list[dict], total_pages: int) -> None:
-    """在合并锁里、最后一次 id 去重之后调用：有 box 的图块重新截图。
-    截不了（页码不对、框无效、截图失败）就清掉 src 和 box，留给原页入口和 fill_later。没 box 的块不动。"""
+    """在合併鎖裡、最後一次 id 去重之後呼叫：有 box 的圖塊重新截圖。
+    截不了（頁碼不對、框無效、截圖失敗）就清掉 src 和 box，留給原頁入口和 fill_later。沒 box 的塊不動。"""
     for block in blocks:
         if block.get("type") != "figure" or not block.get("box"):
             continue
@@ -84,7 +84,7 @@ def prepare_figures(root, blocks: list[dict], total_pages: int) -> None:
 
 
 def _pending(ws):
-    """没有截图或自动裁剪范围已变化的图块；保留显式 box 和自定义 src。"""
+    """沒有截圖或自動裁剪範圍已變化的圖塊；保留顯式 box 和自訂 src。"""
     layout = ws.load("layout") or {}
     out = []
     for b in (ws.load("paper") or {}).get("blocks", []):
@@ -97,25 +97,25 @@ def _pending(ws):
         if not box or not isinstance(page, int) or page < 1:
             continue
         x0, y0, x1, y1 = box
-        if x1 - x0 < 0.05 or y1 - y0 < 0.03:  # 只匹配到一行题注、没撑开的框截出来没用
+        if x1 - x0 < 0.05 or y1 - y0 < 0.03:  # 只匹配到一行題注、沒撐開的框截出來沒用
             continue
         if src:
             try:
                 if src == _crop_path(ws.root, page, box) and (ws.root / src).is_file():
                     continue
             except OSError:
-                continue  # PDF 不在时保留已经存在的截图。
+                continue  # PDF 不在時保留已經存在的截圖。
         out.append((b, page, box))
     return out
 
 
 def missing(ws) -> list[tuple[str, int, list[float]]]:
-    """需要补截或更新自动截图的图块：[(块 id, 页码, 框)]。"""
+    """需要補截或更新自動截圖的圖塊：[(塊 id, 頁碼, 框)]。"""
     return [(b["id"], page, box) for b, page, box in _pending(ws)]
 
 
 def fill(ws) -> int:
-    """补截或更新自动截图；写回时保留截图期间发生的编辑和重译。"""
+    """補截或更新自動截圖；寫回時保留截圖期間發生的編輯和重譯。"""
     done = {}
     for block, page, box in _pending(ws):
         try:
@@ -136,7 +136,7 @@ def fill(ws) -> int:
 
 
 def fill_later(ws, gate=None) -> None:
-    """打开阅读页时在后台补；补完 paper.json 变了，页面轮询到就会重画。"""
+    """打開閱讀頁時在背景補；補完 paper.json 變了，頁面輪詢到就會重畫。"""
     key = str(ws.root)
     if key in _running or not missing(ws):
         return

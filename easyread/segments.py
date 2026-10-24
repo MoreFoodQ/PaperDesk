@@ -1,8 +1,8 @@
-"""分段并行：把要译的页切成几段连续的页，各段同时开译，段内一批接一批按顺序译。
+"""分段並行：把要譯的頁切成幾段連續的頁，各段同時開譯，段內一批接一批按順序譯。
 
-段内和逐批串行一样：后一批能看到前一批并进去的术语表、章节和上一段结尾。
-段与段的交界只有 段数-1 处，切口尽量挑在“上一页句子写完了、下一页从新段落或标题开始”的地方；
-交界处跨页的那一段由前一段的最后一批补完整（它本来就看下一页开头），后一段第一批跳过页首那半段。
+段內和逐批串行一樣：後一批能看到前一批並進去的術語表、章節和上一段結尾。
+段與段的交界只有 段數-1 處，切口儘量挑在“上一頁句子寫完了、下一頁從新段落或標題開始”的地方；
+交界處跨頁的那一段由前一段的最後一批補完整（它本來就看下一頁開頭），後一段第一批跳過頁首那半段。
 """
 from __future__ import annotations
 
@@ -10,15 +10,15 @@ import math
 import re
 from pathlib import Path
 
-AUTO_MAX = 4      # “自动”最多同时几段（手动最多 8 段）
-LANE_BATCHES = 2  # “自动”时每段大约几批：段数 = 总批数 / 2 向上取整（每批 2 页时每段 4 页），最多 AUTO_MAX
+AUTO_MAX = 4      # “自動”最多同時幾段（手動最多 8 段）
+LANE_BATCHES = 2  # “自動”時每段大約幾批：段數 = 總批數 / 2 向上取整（每批 2 頁時每段 4 頁），最多 AUTO_MAX
 
-_NOISE = re.compile(r"^\s*(\d{1,4}|[ivxl]{1,5}|(?i:page \d+.*|arxiv:.*))\s*$")  # i18n-ok 页码、arXiv 水印这类
-_HEADING = re.compile(r"^\s*((\d+(\.\d+)*\.?|[A-Z]\.?)\s+[A-Z][a-z]|\[\d+\]\s|(?i:appendix|references|abstract|acknowledg)\b)")  # i18n-ok 章节标题、新的参考文献条目
+_NOISE = re.compile(r"^\s*(\d{1,4}|[ivxl]{1,5}|(?i:page \d+.*|arxiv:.*))\s*$")  # i18n-ok 頁碼、arXiv 水印這類
+_HEADING = re.compile(r"^\s*((\d+(\.\d+)*\.?|[A-Z]\.?)\s+[A-Z][a-z]|\[\d+\]\s|(?i:appendix|references|abstract|acknowledg)\b)")  # i18n-ok 章節標題、新的參考文獻條目
 
 
 def workers(setting, n_batches: int) -> int:
-    """最多同时几段。setting 是设置里的“同时几段”：0 或空是自动，按篇幅每段大约 2 批，最多 4 段；手动最多 8 段。"""
+    """最多同時幾段。setting 是設定裡的“同時幾段”：0 或空是自動，按篇幅每段大約 2 批，最多 4 段；手動最多 8 段。"""
     try:
         cap = int(setting or 0)
     except (TypeError, ValueError):
@@ -47,10 +47,10 @@ def _lines(root: Path, n: int) -> list[str]:
 
 
 def seam_cost(root: Path, prev: int, nxt: int) -> float:
-    """在 prev 页和 nxt 页之间切开的代价：0 干净（新章节开头），1 句子写完了，2 看不出来，3 明显断在句子中间。"""
+    """在 prev 頁和 nxt 頁之間切開的代價：0 乾淨（新章節開頭），1 句子寫完了，2 看不出來，3 明顯斷在句子中間。"""
     if nxt != prev + 1:
-        return 0.0  # 中间隔着没要译的页，本来就接不上
-    # 只看正文行：脚注、网址、表格里的数字、图表题注都不算（脚注末尾的句号骗不了人，页首先排的表格也不算开头）
+        return 0.0  # 中間隔著沒要譯的頁，本來就接不上
+    # 只看正文行：腳註、網址、表格裡的數字、圖表題注都不算（腳註末尾的句號騙不了人，頁首先排的表格也不算開頭）
     tail = [s for s in _lines(root, prev) if _body(s)]
     head = [s for s in _lines(root, nxt) if (_HEADING.match(s) and len(s) < 80) or (_body(s) and not _CAPTION.match(s))]
     if not tail or not head:
@@ -64,16 +64,16 @@ def seam_cost(root: Path, prev: int, nxt: int) -> float:
 
 
 def plan(pages: list[int], size: int, k: int, root: Path) -> list[list[int]]:
-    """把 pages 切成至多 k 段。先定最慢一段要译几批（总批数 / k 向上取整），每段不超过这么多批；
-    在这个限制下挑交界代价最小的切法：每多一个交界加 0.5，再加交界本身的代价，再按批数加一点（奇数页的段多一次调用）。
-    这样 7 批开 4 段（2,2,2,1），5 批开 3 段（2,2,1）就够，交界越少越好；有余量时切口挪到干净的地方。"""
+    """把 pages 切成至多 k 段。先定最慢一段要譯幾批（總批數 / k 向上取整），每段不超過這麼多批；
+    在這個限制下挑交界代價最小的切法：每多一個交界加 0.5，再加交界本身的代價，再按批數加一點（奇數頁的段多一次呼叫）。
+    這樣 7 批開 4 段（2,2,2,1），5 批開 3 段（2,2,1）就夠，交界越少越好；有餘量時切口挪到乾淨的地方。"""
     n = len(pages)
     if k <= 1 or n <= 1:
         return [list(pages)] if pages else []
     k = min(k, n)
     cap = math.ceil(math.ceil(n / size) / k) * size
     inf = float("inf")
-    # best[j][i]：前 i 页切成 j 段的最小代价
+    # best[j][i]：前 i 頁切成 j 段的最小代價
     best = [[inf] * (n + 1) for _ in range(k + 1)]
     back = [[0] * (n + 1) for _ in range(k + 1)]
     best[0][0] = 0.0

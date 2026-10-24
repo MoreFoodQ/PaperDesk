@@ -1,4 +1,4 @@
-/* 右侧笔记面板：全部批注按原文顺序排好（可筛选、可就地编辑），以及整篇的“论文笔记”。 */
+/* 右側筆記面板：全部批註按原文順序排好（可篩選、可就地編輯），以及整篇的“論文筆記”。 */
 (function (PR) {
   "use strict";
   const S = PR.state;
@@ -42,7 +42,7 @@
   PR.renderNotesPanel = function (editId) {
     if (editId !== undefined) { editing = editId; tab = "notes"; }
     const el = panel();
-    if (el.contains(document.activeElement) && document.activeElement.matches("textarea") && editId === undefined) return; // 正在打字，不打断
+    if (el.contains(document.activeElement) && document.activeElement.matches("textarea") && editId === undefined) return; // 正在打字，不打斷
     const list = items();
     const count = PR.myNotes().length + (S.discussion.entries || []).length;
     let h = '<div class="np-head"><div class="seg"><button data-np="notes" class="' + (tab === "notes" ? "on" : "") + '">' + PR.t("批注 {n}", { n: count }) + '</button><button data-np="paper" class="' + (tab === "paper" ? "on" : "") + '">' + PR.t("论文笔记") + "</button></div>" +
@@ -92,7 +92,7 @@
     PR.autosize(e.target);
     if (e.target.id === "paperNote") {
       savePaperNote();
-      const btns = PR.$("#notespanel .nh-btns");  // 笔记从空变成有内容（或反过来）：“起草稿”换成“点评 / 帮我改”
+      const btns = PR.$("#notespanel .nh-btns");  // 筆記從空變成有內容（或反過來）：“起草稿”換成“點評 / 幫我改”
       if (btns && (btns.querySelector('[data-nh="draft"]') ? 1 : 0) !== (e.target.value.trim() ? 0 : 1)) btns.outerHTML = PR.noteHelpButtons();
     }
     else if (e.target.matches(".card textarea")) saveEditing();
@@ -128,8 +128,8 @@
     if (card.dataset.anchor) { PR.jumpTo("b-" + card.dataset.anchor); if (card.dataset.note) setTimeout(() => PR.$$('mark[data-note="' + card.dataset.note + '"]').forEach((m) => m.classList.add("active")), 400); }
   });
 
-  /* 导出的 Markdown：论文笔记 + 按原文顺序的批注 */
-  /* pick：{paper, note, highlight, question, ai, chat, quote}，不传就全要 */
+  /* 匯出的 Markdown：論文筆記 + 按原文順序的批註 */
+  /* pick：{paper, note, highlight, question, ai, chat, quote}，不傳就全要 */
   PR.notesMarkdown = function (pick, chat) {
     pick = pick || { paper: true, note: true, highlight: true, question: true, ai: true, quote: true };
     const m = S.paper.meta || {};

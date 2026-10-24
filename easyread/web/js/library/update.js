@@ -1,13 +1,13 @@
-/* 新版本提示：打开文献库时问一次服务（服务一天最多问一次 GitHub），有新版本就在顶栏放一个“新版本 x.y.z”，
-   第一次看到这个版本时再弹一条提示。点开看这次更新了什么，Windows 安装版直接点“更新”。
-   帮助里有“检查更新”和“自动检查新版本”开关。 */
+/* 新版本提示：打開文獻庫時問一次服務（服務一天最多問一次 GitHub），有新版本就在頂欄放一個“新版本 x.y.z”，
+   第一次看到這個版本時再彈一條提示。點開看這次更新了什麼，Windows 安裝版直接點“更新”。
+   幫助裡有“檢查更新”和“自動檢查新版本”開關。 */
 (function (PR) {
   "use strict";
   const SEEN = "paperdesk-seen-update";
   const desktop = /Electron/i.test(navigator.userAgent);
   const bridge = window.easyreadDesktop;
   let nativeUpdate = { supported: false, phase: "idle" };
-  /* 弹窗下半部分。Windows 安装版：只有“稍后”和“更新”，按钮自己显示进度；其他平台没有应用内更新，给下载链接 */
+  /* 彈窗下半部分。Windows 安裝版：只有“稍後”和“更新”，按鈕自己顯示進度；其他平臺沒有應用內更新，給下載連結 */
   function renderNativeUpdate() {
     const status = document.querySelector("#upStatus"), foot = document.querySelector("#upFoot");
     if (!status || !foot) return;
@@ -25,8 +25,8 @@
       '<button class="btn" data-close>' + PR.t("稍后") + '</button><button class="btn accent" data-native-update' + (off ? " disabled" : "") + ">" + (labels[phase] || PR.t("更新")) + "</button>";
   }
   function acceptNativeUpdate(state) { nativeUpdate = state; renderNativeUpdate(); }
-  /* 点一次“更新”：下载完直接重启安装（等下载那次调用返回再装，主进程那时才空出来）；
-     后台正在翻译等原因装不了，会带着原因停在“重启并更新” */
+  /* 點一次“更新”：下載完直接重新啟動安裝（等下載那次呼叫回傳再裝，主行程那時才空出來）；
+     背景正在翻譯等原因裝不了，會帶著原因停在“重新啟動並更新” */
   async function runUpdate() {
     try {
       if (nativeUpdate.phase !== "downloaded") acceptNativeUpdate(await bridge.downloadUpdate());
@@ -47,7 +47,7 @@
   PR.$("#engineChip").before(chip);
   chip.onclick = () => PR.openUpdate();
 
-  /* Release 说明是 Markdown：只认段落、“- ”列表、**粗体**、[链接](地址)、`代码`，够用了 */
+  /* Release 說明是 Markdown：只認段落、“- ”清單、**粗體**、[連結](位址)、`程式碼`，夠用了 */
   function inline(s) {
     return PR.esc(s)
       .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
@@ -81,7 +81,7 @@
     if (!on) return;
     chip.innerHTML = '<span class="dot"></span><span>' + PR.t("新版本 {v}", { v: PR.esc(u.latest) }) + "</span>";
     chip.title = PR.t("EasyRead {v} 已发布，点开看更新了什么", { v: u.latest });
-    if (PR.ls.get(SEEN, "") !== u.latest) {  // 每个新版本只弹一次
+    if (PR.ls.get(SEEN, "") !== u.latest) {  // 每個新版本只彈一次
       PR.ls.set(SEEN, u.latest);
       PR.toast(PR.t("EasyRead {v} 发布了", { v: PR.esc(u.latest) }), { label: PR.t("看看更新了什么"), fn: PR.openUpdate }, 9000);
     }
@@ -101,7 +101,7 @@
     renderNativeUpdate();
   };
 
-  /* 帮助里用：force 为真时马上问 GitHub */
+  /* 幫助裡用：force 為真時馬上問 GitHub */
   PR.checkUpdate = async function (force) {
     const u = await PR.api("/api/update" + (force ? "?force=1" : ""));
     show(u);
@@ -111,7 +111,7 @@
     show(await PR.api("/api/update", { method: "POST", body: { enabled: on } }));
   };
 
-  /* 设置 → 阅读最下面：版本、检查更新、自动检查开关 */
+  /* 設定 → 閱讀最下面：版本、檢查更新、自動檢查開關 */
   function updateLine() {
     const u = PR.update;
     if (!u) return "";
@@ -138,5 +138,5 @@
     if (e.target.dataset.help === "auto") PR.setAutoUpdate(e.target.checked).catch((err) => PR.toast(PR.t("保存失败：") + PR.esc(err.message)));
   });
 
-  setTimeout(() => PR.checkUpdate(false).catch(() => {}), 1500);  // 等文献库先显示出来
+  setTimeout(() => PR.checkUpdate(false).catch(() => {}), 1500);  // 等文獻庫先顯示出來
 })(window.PR);

@@ -1,5 +1,5 @@
-// 用页面同一份 KaTeX 检查 paper.json / discussion.json 里的全部 TeX。
-// 输入（stdin）：[[位置, tex, 是否行间], ...]；每个出错的公式输出一行。
+// 用頁面同一份 KaTeX 檢查 paper.json / discussion.json 裡的全部 TeX。
+// 輸入（stdin）：[[位置, tex, 是否行間], ...]；每個出錯的公式輸出一行。
 const katex = require(process.argv[2]);
 let input = "";
 process.stdin.setEncoding("utf8");

@@ -1,4 +1,4 @@
-/* 文献库右侧详情：元数据编辑、分类、状态、翻译任务、引用、删除。 */
+/* 文獻庫右側詳情：元資料編輯、分類、狀態、翻譯任務、引用、刪除。 */
 (function (PR) {
   "use strict";
   const L = PR.lib;
@@ -9,7 +9,7 @@
   }
 
 
-  /* 标题可以直接改；哪个在上面看 PR.titles（英文界面看中文译文时英文原标题在上） */
+  /* 標題可以直接改；哪個在上面看 PR.titles（英文介面看中文譯文時英文原標題在上） */
   function titleFields(i) {
     const tr = '<div class="%c" contenteditable="plaintext-only" data-meta="title_zh" lang="' + (i.target || "zh") + '" spellcheck="false">' + PR.esc(i.title_zh || "") + "</div>";
     const en = '<div class="%c" contenteditable="plaintext-only" data-meta="title_en" lang="en" spellcheck="false">' + PR.esc(i.title_en || "") + "</div>";
@@ -29,7 +29,7 @@
         '<button class="btn sm" data-d="read">' + PR.t("边译边读") + "</button></div>";
     } else {
       const full = i.pages && i.done_pages >= i.pages;
-      const en = i.en_pages || 0, read = en > 0 || j.read;  // 只读原文：整理成英文块，没翻译
+      const en = i.en_pages || 0, read = en > 0 || j.read;  // 閱讀原文：整理成英文塊，沒翻譯
       h += read ? "<div>" + (i.format === "epub" ? PR.t("原文：{done} / {total} 頁", { done: i.done_pages, total: i.pages }) : PR.t("英文原文：{done} / {total} 页", { done: i.done_pages, total: i.pages })) + (full ? PR.t(" · 全文") : "") + (i.done_pages - en ? PR.t(" · 其中 {n} 页已译", { n: i.done_pages - en }) : "") + "</div>"
         : "<div>" + PR.t("译文：{s}", { s: i.pages ? PR.t("{done} / {total} 页", { done: i.done_pages, total: i.pages }) : PR.t("尚未处理") }) + (full ? PR.t(" · 全文") : "") + "</div>";
       const failed = Object.keys(j.failed || {}).map(Number).sort((a, b) => a - b);
@@ -67,12 +67,12 @@
       box.querySelector("#workspaceImport").onclick = () => PR.openImport();
       return;
     }
-    if (box.contains(document.activeElement) && document.activeElement.matches("[contenteditable], input")) return; // 正在编辑，不打断
+    if (box.contains(document.activeElement) && document.activeElement.matches("[contenteditable], input")) return; // 正在編輯，不打斷
     const thumb = i.thumb ? '<div class="thumb" style="background-image:url(' + i.thumb + ')"></div>' : '<div class="thumb blank">' + PR.icon("pdf") + "</div>";
     const readLabel = i.progress > 0.02 ? PR.t("继续阅读 · {pct}%", { pct: Math.round(i.progress * 100) }) : PR.t("开始阅读");
     const status = [["unread", PR.t("未读")], ["reading", PR.t("在读")], ["done", PR.t("已读")]].map(([k, l]) =>
       '<button data-status="' + k + '" class="' + ((i.status || "unread") === k ? "on" : "") + '">' + l + "</button>").join("");
-    // 分类：全部分类都列出来，点一下放进 / 拿出
+    // 分類：全部分類都列出來，點一下放進 / 拿出
     const cats = L.cats().map((c) => '<button class="catchip' + ((i.tags || []).includes(c) ? " on" : "") + '" data-cattoggle="' + PR.esc(c) + '">' + PR.icon((i.tags || []).includes(c) ? "check" : "folder", "sm") + PR.esc(c) + "</button>").join("");
     box.innerHTML = '<div class="detail-head"><span>' + PR.t("论文详情") + '</span><button class="detail-close" data-d="close" title="' + PR.t("收起（Esc）") + '">' + PR.icon("x", "sm") + "</button></div>" +
       '<div class="detail-inner">' +
@@ -120,7 +120,7 @@
     if (e.target.id === "catInput" && e.key === "Enter" && e.target.value.trim()) { L.addCat(e.target.value, L.selected); e.target.value = ""; }
     if (e.target.id === "catInput" && e.key === "Escape") { e.stopPropagation(); e.target.value = ""; e.target.blur(); }
   });
-  /* 新分类：平时是个按钮，点了才变成输入框；没输入就离开，变回按钮 */
+  /* 新分類：平時是個按鈕，點了才變成輸入框；沒輸入就離開，變回按鈕 */
   box.addEventListener("focusout", (e) => {
     if (e.target.id !== "catInput" || e.target.value.trim()) return;
     e.target.hidden = true;

@@ -1,4 +1,4 @@
-"""译文语言：中文提示词不变、其他语言换掉中文专属的规则、第一次翻译时记下语言、旧论文按中文。  python -m unittest tests.test_langs"""
+"""譯文語言：中文提示詞不變、其他語言換掉中文專屬的規則、第一次翻譯時記下語言、舊論文按中文。  python -m unittest tests.test_langs"""
 import json
 import shutil
 import threading
@@ -67,20 +67,20 @@ class LangsTest(unittest.TestCase):
                 mock.patch.object(translate.pdfwork, "locate", lambda root: None), mock.patch.object(translate, "tex_problems", lambda tex: []):
             translate.translate_pages(self.ws, cfg, [1], threading.Event(), lambda *a: None)
             self.assertEqual(self.ws.load("paper")["meta"]["target"], "ko")
-            cfg["target"] = "ja"  # 之后改设置，这篇不跟着变
+            cfg["target"] = "ja"  # 之後改設定，這篇不跟著變
             translate.translate_pages(self.ws, cfg, [1], threading.Event(), lambda *a: None)
         self.assertEqual(self.ws.load("paper")["meta"]["target"], "ko")
 
     def test_import_remembers_target(self):
         langs.remember(self.ws, "fr")
         self.assertEqual(self.ws.load("paper")["meta"]["target"], "fr")
-        langs.remember(self.ws, "de")  # 已经记过的不改
+        langs.remember(self.ws, "de")  # 已經記過的不改
         self.assertEqual(self.ws.load("paper")["meta"]["target"], "fr")
         other = make_ws(1)
         paper = other.load("paper")
         paper["blocks"] = [{"id": "p1-1", "type": "para", "page": 1, "en": "x", "zh": "旧译文"}]
         write_json_atomic(other.root / "paper.json", paper)
-        langs.remember(other, "ja")  # 已经有中文译文的旧论文不改
+        langs.remember(other, "ja")  # 已經有中文譯文的舊論文不改
         langs.remember(self.ws, "xx")
         self.assertNotIn("target", other.load("paper")["meta"])
         shutil.rmtree(other.root, ignore_errors=True)

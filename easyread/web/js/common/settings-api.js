@@ -1,17 +1,17 @@
-/* API 接口的表单，设置 → 模型页里添加、修改模型时用：
-   服务商（按 国内直连 / 海外 / 本机 分组，有免费模型的带“免费”）→ 说明和获取 Key → API Key → 模型 → 高级（接口地址、接口格式）。
-   自定义地址时，接口地址和格式直接放在最上面。
-   表单的值放在调用方给的对象 a 里：{preset, base_url, api, model, vision, [keyProp]}；
-   翻译设置用 keyProp api_key（存过的显示成 ••••），模型卡片的表单用 key。 */
+/* API 介面的表單，設定 → 模型頁裡新增、修改模型時用：
+   選擇雲端 API 或本機模型服務後，填寫金鑰、模型與介面位址；也可使用自訂服務。
+   自訂位址時，介面位址和格式直接放在最上面。
+   表單的值放在呼叫方給的物件 a 裡：{preset, base_url, api, model, vision, [keyProp]}；
+   翻譯設定用 keyProp api_key（存過的顯示成 ••••），模型卡片的表單用 key。 */
 (function (PR) {
   "use strict";
   const API_KINDS = [["chat", PR.t("Chat Completions（通用）")], ["responses", PR.t("Responses（OpenAI 新接口）")]];
-  const found = {};  // 接口地址 → 点“获取模型列表”拉到的模型名
+  const found = {};  // 介面位址 → 點“取得模型清單”拉到的模型名
   const masked = (v) => String(v || "").startsWith("••••");
   const preset = (s, id) => s.presets.find((p) => p.id === id);
   const hasKey = (s, id) => (s.cfg.openai.saved_keys || []).includes(id) || !!(s.chatKeys || {})[id];
   PR.apiHasKey = hasKey;
-  /* 模型的显示名：推荐名单里有就用“DeepSeek V4.1 Flash”，没有就是模型名本身 */
+  /* 模型的顯示名：推薦名單裡有就用“DeepSeek V4.1 Flash”，沒有就是模型名本身 */
   PR.apiModelName = (s, presetId, model) => ((((preset(s, presetId) || {}).models) || []).find((m) => m.id === model) || {}).name || model;
 
   function tiles(s, a) {
@@ -24,7 +24,7 @@
       '<em class="hint">' + PR.t("任意 OpenAI 兼容接口、中转站") + "</em></div></div>";
   }
 
-  /* 模型：推荐的 + 接口里拉到的，做成下拉框，最后一项“手填”；都没有（自定义、LM Studio）或选了手填时是输入框 */
+  /* 模型：推薦的 + 介面里拉到的，做成下拉框，最後一項“手填”；都沒有（自訂、LM Studio）或選了手填時是輸入框 */
   function modelField(s, a, p) {
     const rec = (p && p.models) || [];
     let got = found[(a.base_url || "").trim()] || [];
@@ -73,7 +73,7 @@
     PR.settingsState.advOpen = !!(adv && adv.open);
   }
 
-  /* 换服务商：地址、格式、默认模型跟着换；换到自定义时清空让用户填 */
+  /* 換服務商：位址、格式、預設模型跟著換；換到自訂時清空讓使用者填 */
   function pick(s, a, id, kp) {
     const p = preset(s, id), prev = a.preset;
     a.preset = id;
@@ -90,7 +90,7 @@
   PR.apiForm = {
     html, read,
     pick(s, a, id, kp) { pick(s, a, id, kp); },
-    /* 点击：服务商、获取模型列表。处理了返回 true（要重画），没处理返回 false */
+    /* 點選：服務商、取得模型清單。處理了回傳 true（要重畫），沒處理回傳 false */
     async click(e, s, a, kp, root) {
       const b = e.target.closest("[data-af-preset]");
       if (b) { read(root, a, kp); pick(s, a, b.dataset.afPreset, kp); return true; }
@@ -109,7 +109,7 @@
       }
       return false;
     },
-    /* 改动：下拉框选“手填”换成输入框；换了推荐模型，“能看图”跟着它勾上或去掉 */
+    /* 改動：下拉框選“手填”換成輸入框；換了推薦模型，“能看圖”跟著它勾上或去掉 */
     change(e, s, a, kp, root) {
       if (e.target.dataset.af !== "model") return false;
       if (e.target.value === "__type") { e.target.value = a.model; read(root, a, kp); s.apiTyping = true; return true; }

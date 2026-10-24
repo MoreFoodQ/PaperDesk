@@ -1,8 +1,8 @@
-"""“问 AI”用哪些模型：设置里一张短名单（默认 Claude Opus 5.5、Claude Sonnet 5.5、GPT），可以增删改。
+"""“問 AI”用哪些模型：設定裡一張短名單（預設 Claude Opus 5.5、Claude Sonnet 5.5、GPT），可以增刪改。
 
-每一项：{"id", "name", "engine": "claude" | "codex" | "openai", "model", "preset"（API 服务商）, "base_url"（自定义地址时）,
-         "api"（chat | responses，不填跟服务商默认）}
-API 的 Key 用翻译引擎那边按服务商存的同一份（openai.keys），不用填两次。
+每一項：{"id", "name", "engine": "claude" | "codex" | "openai", "model", "preset"（API 服務商）, "base_url"（自訂位址時）,
+         "api"（chat | responses，不填跟服務商預設）}
+API 的 Key 用翻譯引擎那邊按服務商存的同一份（openai.keys），不用填兩次。
 """
 from __future__ import annotations
 
@@ -13,12 +13,12 @@ from pathlib import Path
 from .presets import PRESETS
 from .i18n import tr
 
-# opus / sonnet 是 Claude Code 的别名：它会用自己支持的最新版（升级 Claude Code 后自动变成 Opus 5.5 等），
-# 实际用的是哪个版本，第一次回答时记下来显示在名单上。
+# opus / sonnet 是 Claude Code 的別名：它會用自己支援的最新版（升級 Claude Code 後自動變成 Opus 5.5 等），
+# 實際用的是哪個版本，第一次回答時記下來顯示在名單上。
 DEFAULT_MODELS = [
     {"id": "gpt", "name": "GPT", "engine": "codex", "model": ""},
 ]
-_SEEN_PATH = None  # config.HOME / ".models-seen.json"，懒加载避免循环导入
+_SEEN_PATH = None  # config.HOME / ".models-seen.json"，懶載入避免循環匯入
 
 
 def _seen_path():
@@ -35,7 +35,7 @@ def pretty(model_id: str) -> str:
 
 
 def remember(alias: str, actual: str) -> None:
-    """记下别名实际对应的模型（Claude Code 在每次回答开头会报）。"""
+    """記下別名實際對應的模型（Claude Code 在每次回答開頭會報）。"""
     if not alias or not actual or alias == actual:
         return
     from .store import read_json, write_json_atomic
@@ -52,7 +52,7 @@ DEFAULT_CHAT = {"models": DEFAULT_MODELS, "default": "gpt"}
 
 
 def codex_default_model() -> str:
-    """Codex CLI 没指定模型时用它自己配置里的（~/.codex/config.toml 的 model）。"""
+    """Codex CLI 沒指定模型時用它自己設定裡的（~/.codex/config.toml 的 model）。"""
     return codex_config_value("model")
 
 
@@ -87,7 +87,7 @@ def _key(cfg: dict, preset: str) -> str:
 
 
 def engine_cfg(cfg: dict, mid: str | None) -> tuple[dict, dict]:
-    """名单里的一项 → (engines 认的配置, 这一项)。"""
+    """名單裡的一項 → (engines 認的設定, 這一項)。"""
     from . import engines
     m = find(cfg, mid)
     out = copy.deepcopy(cfg)
@@ -111,7 +111,7 @@ def engine_cfg(cfg: dict, mid: str | None) -> tuple[dict, dict]:
 
 
 def translation_id(cfg: dict) -> str:
-    """名单里哪一张就是翻译用的那个模型（设置里标着“翻译”的卡片）；对不上返回空。"""
+    """名單裡哪一張就是翻譯用的那個模型（設定裡標著“翻譯”的卡片）；對不上回傳空。"""
     e = cfg.get("engine")
     for m in models(cfg):
         if m.get("engine") != e:
@@ -128,18 +128,18 @@ def translation_id(cfg: dict) -> str:
 
 
 def label(m: dict) -> str:
-    """面板上显示的名字：Claude 别名显示实际版本（Claude Opus 5），Codex 没填模型时带上它实际用的模型。"""
+    """面板上顯示的名字：Claude 別名顯示實際版本（Claude Opus 5），Codex 沒填模型時帶上它實際用的模型。"""
     if m.get("engine") == "claude" and m.get("model") in ("opus", "sonnet", "haiku") and actual_of(m["model"]):
         return pretty(actual_of(m["model"]))
     if m.get("engine") == "codex" and (not m.get("name") or m.get("name") in ("GPT", m.get("model"))):
-        from . import cli_models  # 用 Codex 里 /model 显示的名字，比如 GPT-6-Astra
+        from . import cli_models  # 用 Codex 裡 /model 顯示的名字，比如 GPT-6-Astra
         slug = m.get("model") or codex_default_model()
         return next((x["name"] for x in cli_models.codex()["models"] if x["id"] == slug), slug or "GPT")
     return m.get("name") or m.get("model") or tr("模型")
 
 
 def listing(cfg: dict) -> dict:
-    """给页面：名单 + 每项能不能用、来源说明。"""
+    """給頁面：名單 + 每項能不能用、來源說明。"""
     from .detect import detect, needs_key
     from .presets import presets
     found = detect(cfg)
@@ -167,7 +167,7 @@ def listing(cfg: dict) -> dict:
 
 
 def sanitize(items: list[dict]) -> list[dict]:
-    """设置页提交的名单：去掉空项、补 id。"""
+    """設定頁提交的名單：去掉空項、補 id。"""
     out, seen = [], set()
     for k, m in enumerate(items or []):
         e = m.get("engine")
@@ -186,7 +186,7 @@ def sanitize(items: list[dict]) -> list[dict]:
 
 
 def _claude_default() -> str:
-    """“跟随 Claude Code 默认”的卡片下面写出实际是哪个：跟随默认（Claude Opus 5.5）"""
-    from .cli_models import claude_default  # cli_models 引用了本文件，放这里免得循环导入
+    """“跟隨 Claude Code 預設”的卡片下面寫出實際是哪個：跟隨預設（Claude Opus 5.5）"""
+    from .cli_models import claude_default  # cli_models 引用了本檔案，放這裡免得循環匯入
     d = claude_default()
     return tr("跟随默认（{model}）", model=d) if d else tr("跟随默认")

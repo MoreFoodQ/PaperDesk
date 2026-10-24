@@ -1,4 +1,4 @@
-"""云文献库接口与迁移写入闸门；切换后保持旧库只读，直到后端重启。"""
+"""雲文獻庫介面與移轉寫入閘門；切換後保持舊庫唯讀，直到後端重新啟動。"""
 from __future__ import annotations
 
 import threading
@@ -42,7 +42,7 @@ class LibraryLocation:
         entered = False
         if protected:
             with self.lock:
-                # 重启前阅读接口继续提供只读数据；_get 不再做 state/图片的惰性写入。
+                # 重新啟動前閱讀介面繼續提供唯讀資料；_get 不再做 state/圖片的惰性寫入。
                 if self.status == "restart_required" and method in ("GET", "HEAD"):
                     protected = False
                 else:
@@ -62,7 +62,7 @@ class LibraryLocation:
                 self.app.presence.enter()
 
     def _busy(self):
-        # Jobs.bulk.get() 与登记 cancels 之间有短暂空档；持久 job 状态也必须核对。
+        # Jobs.bulk.get() 與登記 cancels 之間有短暫空檔；持久 job 狀態也必須核對。
         return self.app.jobs.busy() or any((ws.load("job") or {}).get("state") in ("queued", "running")
                                            for ws in self.app.lib.all())
 
@@ -120,7 +120,7 @@ class LibraryLocation:
 
 
 def incomplete(e: "cloudlib.Incomplete") -> dict:
-    """没搬完的目标：不报错，交给页面显示“清理”按钮。"""
+    """沒搬完的目標：不回報錯誤，交給頁面顯示“清理”按鈕。"""
     return {"path": e.path, "exists": True, "writable": False, "papers": 0, "bytes": 0, "incomplete": str(e)}
 
 
@@ -140,7 +140,7 @@ def get(app, path: str):
 def post(app, path: str, body: dict):
     if path == "/api/library/inspect":
         return inspect(body)
-    if path == "/api/library/pick-folder":  # 浏览器版：后端弹系统的选文件夹窗口
+    if path == "/api/library/pick-folder":  # 瀏覽器版：後端彈系統的選資料夾窗口
         from .folder_pick import pick
         chosen = pick(tr("选择放文献库的文件夹"))
         return {"supported": chosen is not None, "path": chosen or ""}

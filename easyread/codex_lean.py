@@ -34,7 +34,7 @@ def args(path: Path | None = None) -> list[str]:
     try:
         text = (path or config_path()).read_text(encoding="utf-8-sig")
     except FileNotFoundError:
-        return features()  # 没有配置文件：没有 MCP 要关
+        return features()  # 沒有設定檔：沒有 MCP 要關
     except (OSError, UnicodeDecodeError) as exc:
         raise ValueError('Cannot safely read Codex configuration') from exc
     names = server_names(text)
@@ -45,10 +45,10 @@ def args(path: Path | None = None) -> list[str]:
     return out + features()
 
 
-# 翻译用不到的功能：插件、应用、浏览器、电脑操作、生图、多代理、记忆……每个都会往每次调用里加工具定义，
-# 有的还会拉起 node_repl 之类的进程。实测（codex-cli 0.159）空调用固定上下文从约 2.5 万 token 降到约 1.7 万，
-# 进程从 19 个降到 3 个，内存从约 840 MB 降到约 200 MB。只关这一次调用，不改用户的配置。
-# 版本不认某个名字时 Codex 照常忽略；真报错时 run_codex 会去掉这些参数再调一次。
+# 翻譯用不到的功能：插件、應用、瀏覽器、電腦操作、生圖、多代理、記憶……每個都會往每次呼叫里加工具定義，
+# 有的還會拉起 node_repl 之類的行程。實測（codex-cli 0.159）空呼叫固定上下文從約 2.5 萬 token 降到約 1.7 萬，
+# 行程從 19 個降到 3 個，記憶體從約 840 MB 降到約 200 MB。只關這一次呼叫，不改使用者的設定。
+# 版本不認某個名字時 Codex 照常忽略；真回報錯誤時 run_codex 會去掉這些參數再調一次。
 FEATURES_OFF = ("apps", "plugins", "browser_use", "browser_use_external", "computer_use", "image_generation", "multi_agent",
                 "memories", "goals", "skill_search", "in_app_browser", "tool_suggest", "realtime_conversation", "code_mode_host",
                 "sleep_tool")

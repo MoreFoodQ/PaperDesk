@@ -1,13 +1,13 @@
-"""译文语言：论文翻成哪种语言。默认中文；设置里可以改，每篇论文第一次翻译时记下当时的语言。
+"""譯文語言：論文翻成哪種語言。預設中文；設定裡可以改，每篇論文第一次翻譯時記下當時的語言。
 
-数据格式不变：译文仍然存在 zh / caption_zh / title_zh 这些字段里，字段名只是历史叫法。
+資料格式不變：譯文仍然存在 zh / caption_zh / title_zh 這些欄位裡，欄位名只是歷史叫法。
 """
 from __future__ import annotations
 
-# 代码 → (界面上显示的名字, 提示词里怎么称呼, 英文名)
+# 程式碼 → (介面上顯示的名字, 提示詞裡怎麼稱呼, 英文名)
 TARGETS = {
     "zh-TW": ("繁體中文", "繁體中文（台灣用語；使用資訊、資料、程式、網路、預設、儲存等用詞；專業術語依學科語境，保留原文縮寫與公式；不得使用簡體字）", "Traditional Chinese"),  # i18n-ok
-    "zh": ("中文", "中文", "Chinese"),  # i18n-ok 语言名
+    "zh": ("中文", "中文", "Chinese"),  # i18n-ok 語言名
     "ja": ("日本語", "日语（日本語）", "Japanese"),  # i18n-ok
     "ko": ("한국어", "韩语（한국어）", "Korean"),  # i18n-ok
     "es": ("Español", "西班牙语（Español）", "Spanish"),  # i18n-ok
@@ -22,11 +22,11 @@ def valid(code: str | None) -> str:
 
 
 def of_paper(meta: dict | None, cfg: dict | None = None) -> str:
-    """这篇论文的译文语言：翻过的用当时记下的，没翻过的用设置里的。"""
+    """這篇論文的譯文語言：翻過的用當時記下的，沒翻過的用設定裡的。"""
     meta = meta or {}
     if meta.get("target") in TARGETS:
         return meta["target"]
-    if meta.get("title_zh"):  # 1.3 以前译的论文没记语言，都是中文
+    if meta.get("title_zh"):  # 1.3 以前譯的論文沒記語言，都是中文
         return DEFAULT
     if cfg is None:
         from . import config
@@ -35,7 +35,7 @@ def of_paper(meta: dict | None, cfg: dict | None = None) -> str:
 
 
 def remember(ws, code: str | None) -> None:
-    """导入时选了译文语言：记到这篇论文上。已经有译文的论文不改，免得一篇里混两种语言。"""
+    """匯入時選了譯文語言：記到這篇論文上。已經有譯文的論文不改，免得一篇裡混兩種語言。"""
     if code not in TARGETS:
         return
 
@@ -55,11 +55,11 @@ def listing() -> list[dict]:
 
 
 def reply_lang(meta: dict | None) -> str:
-    """问 AI、整理笔记用什么语言回答：论文翻过就用译文语言，没翻过跟界面语言。提示词里的称呼。"""
+    """問 AI、整理筆記用什麼語言回答：論文翻過就用譯文語言，沒翻過跟介面語言。提示詞裡的稱呼。"""
     meta = meta or {}
     if meta.get("target") in TARGETS:
         return prompt_name(meta["target"])
-    if meta.get("title_zh"):  # 1.3 以前译的论文没记语言，都是中文
-        return "中文"  # i18n-ok 提示词
+    if meta.get("title_zh"):  # 1.3 以前譯的論文沒記語言，都是中文
+        return "中文"  # i18n-ok 提示詞
     from . import i18n
     return prompt_name("zh-TW") if i18n.lang() == "zh-TW" else "中文" if i18n.lang() == "zh" else "英文（English）"  # i18n-ok

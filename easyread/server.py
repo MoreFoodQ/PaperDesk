@@ -1,4 +1,4 @@
-"""本地服务：只监听 127.0.0.1。文献库页、阅读页、数据接口、导入、后台任务。"""
+"""本機服務：只監聽 127.0.0.1。文獻庫頁、閱讀頁、資料介面、匯入、背景任務。"""
 from __future__ import annotations
 
 import json
@@ -40,7 +40,7 @@ class App:
         self.token = os.environ.get('PAPERDESK_SESSION') or secrets.token_hex(32)
         self.chat_slots = threading.BoundedSemaphore(2)
         self.location = library_api.LibraryLocation(self)
-        self.presence = None  # presence.Presence，serve() 里设
+        self.presence = None  # presence.Presence，serve() 裡設
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -88,7 +88,7 @@ class Handler(BaseHTTPRequestHandler):
         if args and str(args[1]).startswith(("4", "5")):
             sys.stderr.write('%s %s %s %s\n' % (self.address_string(), self.command, urlparse(self.path).path, args[1]))
 
-    # ---------- 输出 ----------
+    # ---------- 輸出 ----------
     def _send(self, code: int, body: bytes, ctype: str, cache: bool = False):
         self.send_response(code)
         self.send_header("Content-Type", ctype)
@@ -140,7 +140,7 @@ class Handler(BaseHTTPRequestHandler):
             self.app.chat_slots.release()
 
     def _chat_stream(self, ws, body: dict):
-        """流式回答：一行一个 JSON，{"t": 片段} … 最后 {"done": true, "id": …} 或 {"error": …}。"""
+        """流式回答：一行一個 JSON，{"t": 片段} … 最後 {"done": true, "id": …} 或 {"error": …}。"""
         text = (body.get("text") or "").strip()
         if not text:
             raise ValueError(tr("问题是空的"))
@@ -185,7 +185,7 @@ class Handler(BaseHTTPRequestHandler):
             msg = chat_store.append(ws, tid, user, "".join(pieces), m["id"], model, meter.snapshot())
             send({"done": True, "id": msg["id"], "usage": msg.get("usage")})
         except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
-            cancel.set()  # 读者点了停止或关了页面
+            cancel.set()  # 讀者點了停止或關了頁面
             if pieces:
                 chat_store.append(ws, tid, {**user, "note": None}, "".join(pieces) + "\n\n" + tr("（已停止）"), m["id"], model, meter.snapshot())
         except engines.Cancelled:
@@ -215,7 +215,7 @@ class Handler(BaseHTTPRequestHandler):
         queued = fresh or (not paper.get("meta", {}).get("pages") and not active)
         if queued:
             if translate_after and not read:
-                langs.remember(ws, target)  # 导入框里选的译文语言
+                langs.remember(ws, target)  # 匯入框裡選的譯文語言
             self.app.jobs.enqueue(ws, translate_after=translate_after, scope=scope, read=read, model=model)
         return self._json(200, {"id": ws.id, "new": fresh, "queued": queued})
 
@@ -243,7 +243,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._page(WEB / "library.html")
         if path.startswith("/read/"):
             return self._page(WEB / "reader.html")
-        if path == "/open":  # 外部工具打开指定论文/段落；桌面版的 easyread://open 也转到这里
+        if path == "/open":  # 外部工具打開指定論文/段落；桌面版的 easyread://open 也轉到這裡
             return self._redirect(open_link.target(lib, parse_qs(url.query)))
         if path == "/api/version":
             return self._json(200, open_link.version())
@@ -260,7 +260,7 @@ class Handler(BaseHTTPRequestHandler):
                                     "library_status": app.location.status, "other_device": app.location.marker.other_device(),
                                     "engine": cfg.get("engine"), "engine_label": cli_models.engine_label(cfg),
                                     "first_run": config.is_first_run(), "version": __version__, "trash": len(trash.items(lib.root))})
-        if path == "/api/update":  # 有没有新版本（一天最多问一次 GitHub）
+        if path == "/api/update":  # 有沒有新版本（一天最多問一次 GitHub）
             return self._json(200, updates.check(force=parse_qs(url.query).get("force") == ["1"]))
         if path == "/api/trash":
             return self._json(200, {"items": trash.items(lib.root)})
@@ -290,7 +290,7 @@ class Handler(BaseHTTPRequestHandler):
             action = parts[4]
             if action == "state":
                 opened = {"last_opened": now_iso()}
-                if (ws.load("item") or {}).get("status", "unread") == "unread":  # 打开过就算在读
+                if (ws.load("item") or {}).get("status", "unread") == "unread":  # 打開過就算在讀
                     opened["status"] = "reading"
                 if app.location.status == "idle":
                     ws.patch_item(opened)
@@ -299,7 +299,7 @@ class Handler(BaseHTTPRequestHandler):
                 state = {**{n: ws.load(n) for n in ("paper", "discussion", "reader", "layout", "item", "job")},
                          "versions": ws.versions(), "token": app.token, "id": ws.id, "library_status": app.location.status,
                          "engine": config.load().get("engine")}
-                # 旧论文的图按定位框补截图；等内容和版本号都取完再开始，页面轮询到 paper 变了就会重画
+                # 舊論文的圖按定位框補截圖；等內容和版本號都取完再開始，頁面輪詢到 paper 變了就會重畫
                 if app.location.status == "idle" and (state["job"] or {}).get("state") not in ("queued", "running"):
                     figures.fill_later(ws, app.location)
                 return self._json(200, state)
@@ -320,7 +320,7 @@ class Handler(BaseHTTPRequestHandler):
         if path.startswith("/p/"):
             _, _, pid, rel = path.split("/", 3)
             ws = lib.ws(pid)
-            if ws and app.location.status == "idle" and rel.startswith("pages/") and "w=" in url.query:  # 原页面板用的小一号图，第一次请求时生成
+            if ws and app.location.status == "idle" and rel.startswith("pages/") and "w=" in url.query:  # 原頁面板用的小一號圖，第一次請求時生成
                 try:
                     w = int(parse_qs(url.query)["w"][0])
                 except (KeyError, IndexError, ValueError):
@@ -339,7 +339,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if not self._trusted_request():
             return
-        if self.headers.get("X-Token") != self.app.token:  # 挡住别的网页跨站写
+        if self.headers.get("X-Token") != self.app.token:  # 擋住別的網頁跨站寫
             return self._json(403, {"error": "bad token"})
         try:
             with self.app.location.request("POST", self.path):
@@ -351,9 +351,9 @@ class Handler(BaseHTTPRequestHandler):
             self._json(500, {"error": f"{type(e).__name__}: {e}"})
 
     def _presence(self):
-        """页面开着就一直连着这条 WebSocket；断开就是页面关了（见 presence.py）。"""
+        """頁面開著就一直連著這條 WebSocket；斷開就是頁面關了（見 presence.py）。"""
         host = self.headers.get("Host") or ""
-        if self.headers.get("Origin") not in (None, f"http://{host}"):  # 别的网站不能来占着
+        if self.headers.get("Origin") not in (None, f"http://{host}"):  # 別的網站不能來佔著
             self.close_connection = True
             return self._json(403, {"error": "bad origin"})
         p = self.app.presence
@@ -374,14 +374,14 @@ class Handler(BaseHTTPRequestHandler):
 
         if path in library_api.POST:
             return self._json(200, library_api.post(app, path, json.loads(self._body() or b"{}")))
-        if path == "/api/update":  # 开关“自动检查新版本”
+        if path == "/api/update":  # 開關“自動檢查新版本”
             config.save({"check_updates": bool(json.loads(self._body() or b"{}").get("enabled"))})
             return self._json(200, updates.check())
-        if path == "/api/presence/keep":  # easyread serve 复用了关页会退出的服务：改成常驻
+        if path == "/api/presence/keep":  # easyread serve 複用了關頁會退出的服務：改成常駐
             if app.presence:
                 app.presence.keep()
             return self._json(200, {"ok": True})
-        if path == "/api/import":  # 请求体就是 PDF 文件
+        if path == "/api/import":  # 請求體就是 PDF 檔案
             data = self._body()
             ws, fresh = lib.create_from_document(data, q.get("name", "paper.pdf"))
             return self._import_result(ws, fresh, q.get("translate", "1") == "1", q.get("scope"),
@@ -392,11 +392,11 @@ class Handler(BaseHTTPRequestHandler):
             ws, fresh = lib.create_from_pdf(data, name, meta)
             return self._import_result(ws, fresh, bool(body.get("translate", True)), body.get("scope"),
                                        read=bool(body.get("read")), model=str(body.get("model") or ""), target=str(body.get("target") or ""))
-        if path in settings_api.POST:  # 设置页：保存配置、模型名单、试一下、取模型列表
+        if path in settings_api.POST:  # 設定頁：儲存設定、模型名單、試一下、取模型清單
             return self._json(200, settings_api.POST[path](json.loads(self._body() or b"{}")))
         if path == "/api/prefs":
             return self._json(200, prefs.save(json.loads(self._body() or b"{}")))
-        if path == "/api/trash":  # 回收站：restore 恢复一篇 / purge 彻底删一篇 / empty 清空
+        if path == "/api/trash":  # 回收站：restore 恢復一篇 / purge 徹底刪一篇 / empty 清空
             body = json.loads(self._body() or b"{}")
             act, name = body.get("action"), body.get("name", "")
             if act not in ("restore", "purge", "empty"):
@@ -438,7 +438,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, ws.patch_item(body))
             if action == "translate":
                 return self._json(200, translate_api.enqueue(app.jobs, ws, body))
-            if action == "reveal":  # 在资源管理器 / 访达里打开这篇的文件夹
+            if action == "reveal":  # 在資源管理器 / 訪達裡打開這篇的資料夾
                 _reveal(ws.root)
                 return self._json(200, {"ok": True})
             if action == "cancel":

@@ -1,8 +1,8 @@
-/* 行内标记：$TeX$ / \(TeX\)、**粗体**、*斜体*、`代码`、[n] 引用，以及“公式 (1) / 表 2 / 第 2.2 节 / 附录 A”这类交叉引用。
-   译文、讨论、笔记都用同一套，用户编辑时看到的就是这套原始标记。 */
+/* 行內標記：$TeX$ / \(TeX\)、**粗體**、*斜體*、`程式碼`、[n] 引用，以及“公式 (1) / 表 2 / 第 2.2 節 / 附錄 A”這類交叉引用。
+   譯文、討論、筆記都用同一套，使用者編輯時看到的就是這套原始標記。 */
 (function (PR) {
   "use strict";
-  // 先识别代码和完整公式，避免分段、Markdown 和表格的 | 拆坏 TeX。
+  // 先識別程式碼和完整公式，避免分段、Markdown 和表格的 | 拆壞 TeX。
   const TOKENS = /(?<!\\)(`+)([\s\S]*?)\1|(?<!\\)\$\$([\s\S]+?)(?<!\\)\$\$|(?<![\\$])\$(?!\$)((?:\\\$|[^$])+?)(?<!\\)\$(?!\$)|(?<!\\)\\\[([\s\S]+?)(?<!\\)\\\]|(?<!\\)\\\(([\s\S]+?)(?<!\\)\\\)/g;  // i18n-ok regex, not UI text
   const mathCache = new Map();
 
@@ -58,7 +58,7 @@
   }
 
   function xrefLinks(s) {
-    // 公式 (9) 和 (10)：把这一串里每个编号都链上
+    // 公式 (9) 和 (10)：把這一串裡每個編號都鏈上
     s = s.replace(/公式\s*[（(]\d+[）)](?:\s*(?:和|与|及|、|或|,|，)\s*[（(]\d+[）)])*/g,
       (m) => m.replace(/[（(](\d+)[）)]/g, (mm, n) => xref("eq", n, mm)));
     s = s.replace(/公式\s*(\d+)(?![\d.）)])/g, (m, n) => xref("eq", n, m));
@@ -66,7 +66,7 @@
     s = s.replace(/图\s*(\d+)/g, (m, n) => xref("fig", n, m));
     s = s.replace(/第\s*(\d+(?:\.\d+)*)\s*节/g, (m, n) => xref("sec", n, m));
     s = s.replace(/附录\s*([A-Z])(?![a-zA-Z])/g, (m, n) => xref("sec", n, m));
-    // 英文原文里的
+    // 英文原文裡的
     s = s.replace(/\b(Equations?)\s+(\d+)(?:\s+(and)\s+(\d+))?/g, (m, w, a, and, b) =>
       w + " " + xref("eq", a, a) + (b ? " " + and + " " + xref("eq", b, b) : ""));
     s = s.replace(/\bTable\s+(\d+)/g, (m, n) => xref("tab", n, m));
@@ -76,7 +76,7 @@
     return s;
   }
 
-  /* AI 回答里偶尔会带出段落编号 [p4-5]、[eq7]，换成读者看得懂的“式 7”“第 4 页” */
+  /* AI 回答裡偶爾會帶出段落編號 [p4-5]、[eq7]，換成讀者看得懂的“式 7”“第 4 頁” */
   function blockLabel(s) {
     return s.replace(/\[([a-z]+\d*(?:-[\w-]+)?)\]/g, (m, id) => {
       const b = PR.blockById && PR.blockById[id];
@@ -102,7 +102,7 @@
     return restore(inline(saved.text, opts), saved);
   };
 
-  /* 行间公式先拆出来，再按空行分段；已有回答的 \[...\] 也能显示，不需要改记录。 */
+  /* 行間公式先拆出來，再按空行分段；已有回答的 \[...\] 也能顯示，不需要改記錄。 */
   PR.mdBlocks = function (text, opts) {
     const saved = tokens(String(text || "").trim(), true);
     const html = saved.text.split(saved.blocks).map((part, i) => i % 2 ? tokenHtml(saved.values[part], true) :
@@ -164,7 +164,7 @@
     p = p.trim();
     if (!p) return "";
 
-    // 1. 表格（Markdown GFM 表格：表头 + 分隔行 + 数据行）
+    // 1. 表格（Markdown GFM 表格：表頭 + 分隔行 + 資料行）
     const lines = p.split("\n");
     const dIdx = lines.findIndex((l, idx) => idx >= 1 && isTableDelimiter(l) && lines[idx - 1].includes("|"));
     if (dIdx >= 1) {
@@ -182,7 +182,7 @@
         (after.length ? para(after.join("\n"), opts) : "");
     }
 
-    // 2. 引用块（> 开头）
+    // 2. 引用塊（> 開頭）
     const qIdx = lines.findIndex((l) => /^\s*>/.test(l));
     if (qIdx >= 0) {
       let qEnd = qIdx;
@@ -195,7 +195,7 @@
         (after.length ? para(after.join("\n"), opts) : "");
     }
 
-    // 3. 标题
+    // 3. 標題
     const hIdx = lines.findIndex((l) => /^#{1,6}\s+.+$/.test(l));
     if (hIdx >= 0) {
       const h = lines[hIdx].replace(/^#{1,6}\s+/, "");
@@ -204,7 +204,7 @@
         (hIdx + 1 < lines.length ? para(lines.slice(hIdx + 1).join("\n"), opts) : "");
     }
 
-    // 4. 列表：从某行起每行都以 “- ”“* ”或“1. ”开头（AI 的回答常用“引子：\n- …\n- …”）
+    // 4. 清單：從某行起每行都以 “- ”“* ”或“1. ”開頭（AI 的回答常用“引子：\n- …\n- …”）
     const isItem = (l) => /^\s*([-*•]|\d+[.、)])\s+/.test(l);
     const k = lines.findIndex(isItem);
     if (k >= 0 && lines.slice(k).every(isItem)) {
@@ -217,7 +217,7 @@
     return "<p>" + PR.md(p, opts) + "</p>";
   }
 
-  /* 去掉标记的纯文字，给目录、列表摘要用 */
+  /* 去掉標記的純文字，給目錄、清單摘要用 */
   PR.plain = (text) => {
     const saved = tokens(String(text || ""), false);
     return saved.text.replace(saved.inline, (m, i) => saved.values[i].text).replace(/\*\*|`/g, "");

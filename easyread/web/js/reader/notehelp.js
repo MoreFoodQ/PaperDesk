@@ -1,5 +1,5 @@
-/* 论文笔记的 AI 帮手：点评、帮我改、起草稿。结果流到笔记下方的小框里，读者决定替换、追加还是丢掉。
-   和“问 AI”分开（不占右侧面板、不进对话记录）；服务端见 notehelp.py。 */
+/* 論文筆記的 AI 幫手：點評、幫我改、起草稿。結果流到筆記下方的小框裡，讀者決定替換、追加還是丟掉。
+   和“問 AI”分開（不佔右側面板、不進對話記錄）；服務端見 notehelp.py。 */
 (function (PR) {
   "use strict";
   const S = PR.state;
@@ -9,7 +9,7 @@
 
   PR.noteHelpOn = () => PR.store.mode === "server" && PR.feature("chat") && PR.canChat && PR.canChat();
 
-  /* 工具栏上的按钮：笔记空着时只有“起草稿” */
+  /* 工具欄上的按鈕：筆記空著時只有“起草稿” */
   PR.noteHelpButtons = function () {
     if (!PR.noteHelpOn()) return "";
     const empty = !noteNow().trim();
@@ -35,7 +35,7 @@
 
   async function run(mode) {
     ai.ctrl && ai.ctrl.abort();
-    const note = noteNow();  // 先取再重画：输入框里可能有还没存下的字（自动保存有 0.6 秒延迟）
+    const note = noteNow();  // 先取再重畫：輸入框裡可能有還沒存下的字（自動儲存有 0.6 秒延遲）
     if (note !== ((S.reader.paper_note || {}).body || "")) PR.commit({ op: "paper_note", body: note });
     Object.assign(ai, { mode, text: "", model: "", streaming: true, error: "", ctrl: new AbortController() });
     PR.renderNotesPanel();

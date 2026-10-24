@@ -80,7 +80,7 @@ def main():
                     if width < 1468:  # the 612 pt source was rendered at 2.4x
                         assert (ws / "pages" / f"w{width}" / "page-001.webp").is_file(), "resizing did not run"
             finally:
-                if os.name == "nt":  # onefile 在 Windows 上是两层进程，只杀外层的话里层还占着 easyread.log，临时目录删不掉
+                if os.name == "nt":  # onefile 在 Windows 上是兩層行程，只殺外層的話裡層還佔著 easyread.log，暫存目錄刪不掉
                     subprocess.run(["taskkill", "/pid", str(proc.pid), "/t", "/f"], capture_output=True)
                 proc.terminate()
                 try:

@@ -1,4 +1,4 @@
-"""只检测有官方依据且确实存在的同步目录，不扫描磁盘猜测网盘位置。"""
+"""只檢測有官方依據且確實存在的同步目錄，不掃描磁碟猜測雲端空間位置。"""
 from __future__ import annotations
 
 import json
@@ -23,7 +23,7 @@ def detect() -> list[dict]:
         seen.add(str(p).casefold())
         found.append({"id": kind, "label": label, "root_path": str(p), "path": str(p / "EasyRead")})
 
-    # OneDrive 给出的环境变量可以覆盖用户自选的位置；未设置时不猜用户目录。
+    # OneDrive 給出的環境變數可以覆蓋使用者自選的位置；未設定時不猜使用者目錄。
     for name in ("OneDrive", "OneDriveConsumer", "OneDriveCommercial"):
         add("onedrive", "OneDrive", os.environ.get(name))
     home = Path.home()
@@ -38,7 +38,7 @@ def detect() -> list[dict]:
         for name in ("iCloudDrive", "iCloud Drive"):
             add("icloud", "iCloud Drive", home / name)
 
-    # Dropbox 官方支持 info.json，包含 personal/business 两种账户。
+    # Dropbox 官方支援 info.json，包含 personal/business 兩種賬戶。
     # help.dropbox.com/installs/locate-dropbox-folder
     infos = [home / ".dropbox" / "info.json"]
     if sys.platform == "win32":
@@ -57,7 +57,7 @@ def detect() -> list[dict]:
 
 
 def target_path(value: str | Path) -> Path:
-    """已有库按原路径使用，普通同步文件夹只在 EasyRead 子目录里放论文。"""
+    """已有庫按原路徑使用，普通同步資料夾只在 EasyRead 子目錄裡放論文。"""
     from .i18n import tr
     if not isinstance(value, (str, Path)) or not str(value).strip():
         raise ValueError(tr("请选择文献库文件夹"))
@@ -68,7 +68,7 @@ def target_path(value: str | Path) -> Path:
     if path.name.casefold() == "easyread" or (path.exists() and not path.is_dir()):
         return path
     if path.is_dir():
-        # 未完成迁移也必须交给 inspect 原地检查，不能套一层目录后绕过事务标记。
+        # 未完成移轉也必須交給 inspect 原地檢查，不能套一層目錄後繞過事務標記。
         marker = path / ".easyread-migration.json"
         if marker.exists() or marker.is_symlink():
             return path

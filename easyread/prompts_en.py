@@ -1,6 +1,6 @@
-"""“只读原文”的两段提示词：
-- structure：不翻译，只把原页整理成和译文一样的块（段落、标题、公式、表格），文字都放 en；
-- fill：之后想看中文了，给已经整理好的块就地补上 zh，块 id 不变，笔记、划线都还挂得住。"""
+"""“閱讀原文”的兩段提示詞：
+- structure：不翻譯，只把原頁整理成和譯文一樣的塊（段落、標題、公式、表格），文字都放 en；
+- fill：之後想看中文了，給已經整理好的塊就地補上 zh，塊 id 不變，筆記、劃線都還維持關聯。"""
 from __future__ import annotations
 
 import json
@@ -49,8 +49,8 @@ def structure(ws: Workspace, pages: list[int], engine: str, next_head: str, skip
             f"{_context(ws, pages, skip_head=skip_head)}\n\n{RULES_EN}\n\n{SCHEMA_EN}\n\n" + _page_texts(ws, pages) + look)
 
 
-def todo(blocks: list[dict]) -> dict[str, object]:
-    """这些块里还没有中文的地方：{键: 英文}。键同页面：块 id、id#caption、id#image（图内文字）、id#序号、id#head（表头）。"""
+def todo(blocks: list[dict], translate_images: bool = True) -> dict[str, object]:
+    """這些塊裡還沒有中文的地方：{鍵: 英文}。鍵同頁面：塊 id、id#caption、id#image（圖內文字）、id#序號、id#head（表頭）。"""
     out: dict[str, object] = {}
     for b in blocks:
         t = b.get("type")
@@ -64,20 +64,28 @@ def todo(blocks: list[dict]) -> dict[str, object]:
             out[f"{b['id']}#caption"] = b["caption_en"]
             if t == "table" and b.get("head"):
                 out[f"{b['id']}#head"] = b["head"]
-        if t == "figure" and b.get("image_en") and not b.get("image_zh"):
+        if translate_images and t == "figure" and b.get("image_en") and not b.get("image_zh"):
             out[f"{b['id']}#image"] = b["image_en"]
     return out
 
 
 def fill(ws: Workspace, pages: list[int], items: dict[str, object]) -> str:
-    """给已经整理好的原文块补译文。"""
+    """給已經整理好的原文塊補譯文。"""
+    image_keys = [key for key in items if key.endswith("#image")]
+    image_rule = ""
+    if image_keys:
+        example = json.dumps({"zh": {image_keys[0]: "圖片文字的純譯文"}}, ensure_ascii=False)
+        image_rule = (
+            "- 本次只補翻既有欄位，不建立或回傳圖塊。\n"
+            "- #image 鍵的值必須是純譯文字串，可用換行分隔標籤；禁止物件、陣列或序列化的物件文字。\n"
+            "- 不要在值中回傳 image_zh、image_en、src 或 box 欄位。正確格式例如：" + example + "\n")
     first = 1 in pages
     target = langs.of_paper(ws.load("paper").get("meta"))
     name = langs.prompt_name(target)
     meta = ('  "meta": {"title_zh": "", "short_zh": "' + ("不超过 12 字的短标题" if target == "zh" else "不超过 6 个词的短标题") + '"},   // 论文英文标题：'
             + json.dumps(ws.load("paper").get("meta", {}).get("title_en", ""), ensure_ascii=False) + "\n") if first else ""
     return (f"你在把一篇学术论文译成{name}。原文已经整理成块，这次只翻译第 {', '.join(map(str, pages))} 页上下面这些键对应的文字。\n\n"
-            f"{_context(ws, pages, new_blocks=False)}\n\n{rules(target)}\n"
+            f"{_context(ws, pages, new_blocks=False)}\n\n{rules(target)}\n" + image_rule +
             f"- 表头（键以 #head 结尾）是二维数组：保持行列数不变，把文字译成{name}，数字和符号原样。\n"
             + (f"- 英文里的 ‖ 是句子分界：译文在对应的句子交界处也插 ‖，个数和这条英文的一样。两句英文在{name}里要合成一句时，也在合并后最接近的位置插上。\n"
                if any(isinstance(v, str) and "‖" in v for v in items.values()) else "") + "\n"

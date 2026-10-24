@@ -1,9 +1,9 @@
-"""翻译 / 对话引擎的 API 预设：服务商、地址、推荐模型。"""
+"""翻譯 / 對話引擎的 API 預設：服務商、位址、推薦模型。"""
 
-# 常见的 OpenAI 兼容服务。region：cn 国内直连 / intl 海外（国内要开梯子）/ local 本机。free：有免费模型或免费额度。
-# models：推荐的模型 {id, name 显示名, tag 一句说明, vision 能看图}；也能手填，或点“获取模型列表”从接口拉全部。
-# api：默认 chat（/chat/completions）；OpenAI 官方用 responses。
-# 模型名和免费政策会变，以服务商页面为准（2026-10 核对过）。
+# OpenAI 相容服務資料；region 保留舊設定識別碼。可見服務與分組由 presets() 決定。
+# models：推薦的模型 {id, name 顯示名, tag 一句說明, vision 能看圖}；也能手填，或點“取得模型清單”從介面拉全部。
+# api：預設 chat（/chat/completions）；OpenAI 官方用 responses。
+# 模型名和免費政策會變，以服務商頁面為準（2026-10 核對過）。
 
 
 def _m(mid: str, name: str, tag: str = "", vision: bool = False) -> dict:
@@ -11,9 +11,9 @@ def _m(mid: str, name: str, tag: str = "", vision: bool = False) -> dict:
 
 
 def _build(tr) -> list[dict]:
-    # tr 作参数传进来：PRESETS 用原样中文（按 id / 地址查找用），presets() 用当前界面语言（显示用）
+    # tr 作參數傳進來：PRESETS 用原樣中文（按 id / 位址查找用），presets() 用當前介面語言（顯示用）
     return [
-        # ---- 国内直连 ----
+        # ---- 舊版相容服務資料 ----
         {"id": "deepseek", "region": "cn", "name": "DeepSeek", "base_url": "https://api.deepseek.com", "model": "deepseek-flash", "key": True, "free": False,
          "models": [_m("deepseek-flash", "DeepSeek V4.1 Flash", tr("便宜、能看图"), True), _m("deepseek-v4-pro", "DeepSeek V4 Pro", tr("更强，不能看图"))],
          "key_url": "https://platform.deepseek.com/api_keys", "note": tr("开源模型的官方接口，一篇 20 页论文几毛钱。")},
@@ -36,7 +36,7 @@ def _build(tr) -> list[dict]:
          "models": [_m("Qwen/Qwen3.8-27B", "Qwen3.8 27B"), _m("Qwen/Qwen3.5-122B-A10B", "Qwen3.5 122B"),
                     _m("deepseek-ai/DeepSeek-V4.1-Flash", "DeepSeek V4.1 Flash"), _m("ZhipuAI/GLM-5.2", "GLM-5.2")],
          "key_url": "https://modelscope.cn/my/myaccesstoken", "note": tr("阿里的开源模型社区，每天有免费调用次数（要绑定阿里云账号）。")},
-        # ---- 海外（国内要开梯子） ----
+        # ---- 雲端 API 服務 ----
         {"id": "openai", "region": "intl", "name": "OpenAI", "base_url": "https://api.openai.com/v1", "model": "gpt-6-luna", "key": True, "free": False, "api": "responses",
          "models": [_m("gpt-6-luna", "GPT-6 Luna", tr("最便宜"), True), _m("gpt-6.1-sol", "GPT-6.1 Sol", tr("均衡"), True), _m("gpt-6-astra", "GPT-6 Astra", tr("最强"), True)],
          "key_url": "https://platform.openai.com/api-keys", "note": tr("用 Responses 接口。")},
@@ -59,7 +59,7 @@ def _build(tr) -> list[dict]:
         {"id": "cerebras", "region": "intl", "name": "Cerebras", "base_url": "https://api.cerebras.ai/v1", "model": "gpt-oss-120b", "key": True, "free": True,
          "models": [_m("gpt-oss-120b", "GPT-OSS 120B", tr("免费额度")), _m("qwen-3.8-27b", "Qwen3.8 27B", tr("免费额度"))],
          "key_url": "https://cloud.cerebras.ai", "note": tr("开源模型、速度很快。")},
-        # ---- 本机 ----
+        # ---- 本機 ----
         {"id": "ollama", "region": "local", "name": "Ollama", "base_url": "http://127.0.0.1:11434/v1", "model": "qwen3.5:9b", "key": False, "free": True,
          "models": [_m("qwen3.5:9b", "Qwen3.5 9B", tr("下载 6.6 GB，推荐")), _m("qwen3.5:4b", "Qwen3.5 4B", tr("下载 3.4 GB，显卡小用")),
                     _m("qwen3.5:27b", "Qwen3.5 27B", tr("下载 17 GB，译得更好")), _m("gemma4:12b", "Gemma 4 12B")],
@@ -78,7 +78,7 @@ PRESETS = _build(_same)
 
 
 def presets() -> list[dict]:
-    """给界面显示用：名称、说明按当前语言（语言运行时才知道、还能切换，所以每次现算）。"""
+    """給介面顯示用：名稱、說明按當前語言（語言執行時才知道、還能切換，所以每次現算）。"""
     from .i18n import tr
     visible = [p for p in _build(tr) if p['region'] != 'cn']
     for p in visible:
@@ -92,7 +92,7 @@ def localized(preset_id: str | None) -> dict | None:
     return next((p for p in presets() if p["id"] == preset_id), None)
 
 
-# 这些服务在国内要开梯子才连得上（连不上时提示用户）
+# 保留舊介面欄位；目前不依服務商預設任何代理連線需求。
 NEEDS_VPN = set()
 PRESET_GROUPS = [("intl", "雲端 API 服務"), ("local", "本機模型服務")]  # i18n-ok
 

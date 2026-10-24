@@ -1,7 +1,7 @@
-/* 句子对齐：paper.json 的段落和列表项可以带 sents（[[英文句尾, 译文句尾], …]，按 JS 字符串位置，最后一项是两边总长）。
-   有就把原文和译文都切成一句一个 <span class="snt" data-s="i">，两边同号的句子互相对应；
-   没有（旧论文、模型没对上）、或者译文被我改过（“我的修改”），就按整段对应。
-   标注同步：一边有划线或笔记，另一边对应的句子（没有句子对应时是整段）标一道虚线或段边色条，点它和点划线一样。 */
+/* 句子對齊：paper.json 的段落和清單項可以帶 sents（[[英文句尾, 譯文句尾], …]，按 JS 字串位置，最後一項是兩邊總長）。
+   有就把原文和譯文都切成一句一個 <span class="snt" data-s="i">，兩邊同號的句子互相對應；
+   沒有（舊論文、模型沒對上）、或者譯文被我改過（“我的修改”），就按整段對應。
+   標註同步：一邊有劃線或筆記，另一邊對應的句子（沒有句子對應時是整段）標一道虛線或段邊色條，點它和點劃線一樣。 */
 (function (PR) {
   "use strict";
   const S = PR.state;
@@ -15,7 +15,7 @@
     return null;
   }
 
-  /* 这处的句子对齐还对得上文字就返回 sents，否则 null */
+  /* 這處的句子對齊還對得上文字就回傳 sents，否則 null */
   PR.alignOf = function (key) {
     const o = objOf(key);
     const s = o && o.sents;
@@ -31,7 +31,7 @@
 
   const balanced = (t) => (t.split("**").length % 2 === 1) && ((t.match(/(?<!\\)\$/g) || []).length % 2 === 0);
 
-  /* 正文 HTML：对得上就一句一个 span，否则和原来一样整段 PR.md。side：en 原文 / zh 译文 */
+  /* 正文 HTML：對得上就一句一個 span，否則和原來一樣整段 PR.md。side：en 原文 / zh 譯文 */
   PR.sentMd = function (key, side, text) {
     const s = PR.alignOf(key), o = objOf(key);
     if (!s || !o || (side === "zh" && PR.editOf(key)) || text !== (side === "en" ? o.en : o.zh)) return PR.md(text);
@@ -39,17 +39,17 @@
     const parts = [];
     let prev = 0;
     for (const row of s) { parts.push(text.slice(prev, row[col])); prev = row[col]; }
-    if (!parts.every(balanced)) return PR.md(text);  // 句界切在 **粗体** 或公式中间：不切，整段显示
+    if (!parts.every(balanced)) return PR.md(text);  // 句界切在 **粗體** 或公式中間：不切，整段顯示
     return parts.map((p, i) => {
       const lead = p.match(/^\s*/)[0];
       return lead + '<span class="snt" data-s="' + i + '">' + PR.md(p.slice(lead.length)) + "</span>";
     }).join("");
   };
 
-  /* ---------- 原文 / 译文两个元素互相找 ---------- */
+  /* ---------- 原文 / 譯文兩個元素互相找 ---------- */
   const isEnEl = (el) => el.classList.contains("en") || el.classList.contains("en-main");
   PR.isEnEl = isEnEl;
-  /* 原文元素对应的 .zh[data-key]（同一层的兄弟；只读原文没译的块，.zh 自己就是原文） */
+  /* 原文元素對應的 .zh[data-key]（同一層的兄弟；閱讀原文沒譯的塊，.zh 自己就是原文） */
   PR.zhOfEl = function (el) {
     if (el.classList.contains("zh")) return el;
     return Array.from(el.parentElement ? el.parentElement.children : []).find((n) => n.classList.contains("zh") && n.dataset.key) || null;
@@ -58,7 +58,7 @@
     if (!zh || zh.classList.contains("en-main")) return null;
     return Array.from(zh.parentElement ? zh.parentElement.children : []).find((n) => n.classList.contains("en")) || null;
   };
-  /* 一条标注挂在哪个元素上：side 为 en 找原文，其余（旧标注没有 side）找译文 */
+  /* 一條標註掛在哪個元素上：side 為 en 找原文，其餘（舊標註沒有 side）找譯文 */
   PR.noteEl = function (zh, side) {
     if (!zh) return null;
     if (side !== "en" || zh.classList.contains("en-main")) return zh;
@@ -66,13 +66,13 @@
   };
   const partner = (el) => (isEnEl(el) && !el.classList.contains("en-main") ? PR.zhOfEl(el) : el.classList.contains("zh") && !el.classList.contains("en-main") ? PR.enOfZh(el) : null);
 
-  /* ---------- 标注同步到另一边 ---------- */
+  /* ---------- 標註同步到另一邊 ---------- */
   const MIR = ["mir", "mir-para", "c-yellow", "c-green", "c-blue", "c-pink", "mir-q"];
   PR.applyMirrors = function (scope) {
     scope = scope || PR.$("#paper");
     if (!scope) return;
     PR.$$("[data-mirror]", scope).forEach((el) => { el.classList.remove(...MIR); el.removeAttribute("data-mirror"); el.removeAttribute("title"); });
-    const byNote = {};  // 一次取出所有划线按笔记分组，不必每条笔记查一遍全文
+    const byNote = {};  // 一次取出所有劃線按筆記分組，不必每條筆記查一遍全文
     PR.$$("mark.hl[data-note]", scope).forEach((m) => (byNote[m.dataset.note] = byNote[m.dataset.note] || []).push(m));
     for (const n of PR.myNotes()) {
       const marks = n.quote && byNote[n.id];
@@ -85,13 +85,13 @@
       const targets = spans.length ? spans : [other];
       const cls = [spans.length ? "mir" : "mir-para", "c-" + (n.color || "yellow")].concat(n.kind === "question" ? ["mir-q"] : []);
       const tip = isEnEl(src) ? PR.t("对应原文里的标注") : PR.t("对应译文里的标注");
-      // 同一处有几条标注时留第一条（按时间排在前面的），颜色不会叠在一起
+      // 同一處有幾條標註時留第一條（按時間排在前面的），顏色不會疊在一起
       targets.filter((t) => !t.dataset.mirror).forEach((t) => { t.classList.add(...cls); t.dataset.mirror = n.id; t.title = tip; });
     }
   };
 
-  /* 点同步标记：和点划线一样（划线弹改色菜单，笔记和问题打开编辑）。
-     整段的同步标记只有段边那道色条能点，点段落其余地方照常（出操作条、双击改译文）；正在改这段时不拦 */
+  /* 點同步標記：和點劃線一樣（劃線彈改色菜單，筆記和問題打開編輯）。
+     整段的同步標記只有段邊那道色條能點，點段落其餘地方照常（出操作條、按兩下改譯文）；正在改這段時不攔 */
   document.addEventListener("click", (e) => {
     const el = e.target.closest && e.target.closest("[data-mirror]");
     if (!el || e.target.closest("mark.hl, a, button, textarea") || el.querySelector("textarea") || getSelection().toString()) return;
@@ -105,7 +105,7 @@
     PR.noteMarkClick(el, n);
   }, true);
 
-  /* 双语对照时指着一句，另一边对应的那句也淡淡标出来 */
+  /* 雙語對照時指著一句，另一邊對應的那句也淡淡標出來 */
   let lit = [];
   document.addEventListener("mouseover", (e) => {
     const sp = e.target.closest && e.target.closest("#paper .snt");

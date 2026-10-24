@@ -1,6 +1,6 @@
-/* 正文显示方式（顶栏 原文 / 译文 / 双语）。.zh 始终是译文，原文在前时只调换顺序和显隐，笔记和改译文都还挂在原处。 */
+/* 正文顯示方式（頂欄 原文 / 譯文 / 雙語）。.zh 始終是譯文，原文在前時只調換順序和顯隱，筆記和改譯文都還掛在原處。 */
 .view-seg { flex: none; }
-/* 双语右边常驻的 ▾：和“双语”贴在一起，双语选中时一起高亮 */
+/* 雙語右邊常駐的 ▾：和“雙語”貼在一起，雙語選中時一起高亮 */
 .view-seg [data-view="both"] { border-top-right-radius: 0; border-bottom-right-radius: 0; padding-right: 7px; }
 .view-seg .order-caret { width: 20px; padding: 0; border-top-left-radius: 0; border-bottom-left-radius: 0; display: inline-flex; align-items: center; justify-content: center; position: relative; }
 .view-seg .order-caret::before { content: ""; position: absolute; left: 0; top: 7px; bottom: 7px; border-left: 1px solid var(--rule); }
@@ -11,14 +11,14 @@
 #orderMenu .tick .i { width: 15px; height: 15px; }
 body.en-only .view-seg { display: none; }
 
-/* 译文在前：标题里的原文一行放在译文下面，小一号 */
+/* 譯文在前：標題裡的原文一行放在譯文下面，小一號 */
 body:not(.original-first) #paper .heading-original {
   display: block; margin: .25em 0 0; padding: 0; border: 0;
   font: italic .74em/1.4 var(--serif-en); color: var(--ink-3); font-weight: 400;
 }
 body:not(.original-first) #paper .heading-original .num { display: none; }
 
-/* 原文在前：原文是正文，译文是附注（和译文在前时的原文一个样式） */
+/* 原文在前：原文是正文，譯文是附註（和譯文在前時的原文一個樣式） */
 body.original-first #paper .en {
   display: block; margin: 0; padding: 0; border: 0;
   font-size: 1em; line-height: var(--lh); color: var(--ink);
@@ -40,7 +40,7 @@ body.original-first #paper .blk-heading .paired-translation .num { display: none
 body.original-first .paper-head h1 { font-family: var(--serif-en); }
 body.original-first .paper-head .title-en { font-family: inherit; font-style: normal; }
 
-/* Aa 只管排版：标签列按最长的标签自适应，中英文界面都不挤 */
+/* Aa 只管排版：標籤列按最長的標籤自適應，中英文介面都不擠 */
 #settings.menu { width: 300px; max-width: calc(100vw - 24px); box-sizing: border-box; }
 html[lang="en"] #settings.menu { width: 330px; }
 #settings.menu .row:not(.hintrow) { display: grid; grid-template-columns: 5.2em minmax(0, 1fr); align-items: center; gap: 12px; }
@@ -54,7 +54,7 @@ html[lang="en"] #settings.menu .slider { grid-template-columns: 6.6em minmax(0, 
 #settings .view-row-narrow { display: none !important; }
 
 @media (max-width: 760px) {
-  #bar > .view-seg { display: none; }  /* 窄屏顶栏放不下，挪到 Aa 最上面 */
+  #bar > .view-seg { display: none; }  /* 窄屏頂欄放不下，挪到 Aa 最上面 */
   #settings .view-row-narrow { display: block !important; padding-bottom: 12px; border-bottom: 1px solid var(--rule); }
   #settings .view-row-narrow .view-seg { display: flex; width: 100%; box-sizing: border-box; }
   #settings .view-row-narrow .view-seg > [data-view] { flex: 1; min-width: 0; padding: 0 6px; }

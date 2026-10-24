@@ -8,7 +8,7 @@ from easyread import folder_pick
 class FolderPickTest(unittest.TestCase):
     def run_with(self, returncode, stdout):
         done = subprocess.CompletedProcess([], returncode, stdout=stdout.encode("utf-8"), stderr=b"")
-        # 按 Windows 的 PowerShell 选择框测；CI 跑在 Linux 上，不固定平台会走 zenity 分支
+        # 按 Windows 的 PowerShell 選擇框測；CI 跑在 Linux 上，不固定平臺會走 zenity 分支
         with patch("easyread.folder_pick.sys.platform", "win32"), patch("easyread.folder_pick.subprocess.run", return_value=done) as run:
             return folder_pick.pick("选文件夹"), run
 
@@ -30,7 +30,7 @@ class FolderPickTest(unittest.TestCase):
         with patch("easyread.folder_pick.sys.platform", "linux"), patch("easyread.folder_pick.shutil.which", return_value=None):
             self.assertIsNone(folder_pick.pick("x"))
 
-    def test_powershell_script_is_ascii_and_uses_the_explorer_style_dialog(self):  # PowerShell 5.1 按 GBK 读脚本
+    def test_powershell_script_is_ascii_and_uses_the_explorer_style_dialog(self):  # PowerShell 5.1 按 GBK 讀指令碼
         folder_pick._PS.encode("ascii")
         self.assertIn("FOS_PICKFOLDERS", folder_pick._PS)
         self.assertNotIn("FolderBrowserDialog", folder_pick._PS)

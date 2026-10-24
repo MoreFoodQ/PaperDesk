@@ -1,4 +1,4 @@
-/* 顶栏、阅读设置（字号/版心/行距用滑杆，= - 键也能调）、左侧抽屉（目录/术语/说明）、悬浮卡。 */
+/* 頂欄、閱讀設定（字號/版心/行距用滑桿，= - 鍵也能調）、左側抽屜（目錄/術語/說明）、懸浮卡。 */
 (function (PR) {
   "use strict";
   const S = PR.state;
@@ -6,7 +6,7 @@
 
   /* ---------- 偏好 ---------- */
   const DEF = Object.assign({ theme: "auto", mode: "zh", lead: "translation", biOrder: "translation" }, PR.TYPE_DEFAULTS);
-  /* 1.3.1 测试版存过 readingLanguage（zh / en），换成 lead；传进来的是存下的原样，还没合默认值 */
+  /* 1.3.1 測試版存過 readingLanguage（zh / en），換成 lead；傳進來的是存下的原樣，還沒合預設值 */
   PR.migratePrefs = function (p) {
     if (p.lead == null && p.readingLanguage != null) p.lead = p.readingLanguage === "en" ? "original" : "translation";
     if (p.biOrder == null && p.readingLanguage != null) p.biOrder = p.lead;
@@ -35,7 +35,7 @@
     const before = node ? node.getBoundingClientRect().top : 0;
     PR.prefs[k] = v;
     PR.applyPrefs();
-    if (node) window.scrollBy(0, node.getBoundingClientRect().top - before);  // 调字号时阅读位置不跳
+    if (node) window.scrollBy(0, node.getBoundingClientRect().top - before);  // 調字號時閱讀位置不跳
     if (!quiet) PR.renderSettings();
     else syncSettings();
     relayout();
@@ -79,7 +79,7 @@
     if (b.dataset.p === "margin") v = v === "true";
     PR.setPref(b.dataset.p, v);
   });
-  /* 排版全部回到默认（主题不动）；opts 传进来就用它（设置里改过的默认值） */
+  /* 排版全部回到預設（主題不動）；opts 傳進來就用它（設定裡改過的預設值） */
   PR.resetAllType = function (vals) {
     Object.assign(PR.prefs, vals || PR.TYPE_DEFAULTS);
     PR.setPref("fs", PR.prefs.fs);
@@ -87,9 +87,9 @@
   };
   PR.resetType = () => { ["fs", "measure", "lh"].forEach((k) => (PR.prefs[k] = DEF[k])); PR.setPref("fs", DEF.fs, true); PR.toast(PR.t("已恢复默认字号和版心"), null, 1200); };
 
-  /* ---------- 顶栏 ---------- */
+  /* ---------- 頂欄 ---------- */
   PR.$("#backBtn").innerHTML = PR.icon("back", "sm") + PR.logo();
-  /* 在线演示：左上角回演示主页，顶栏多一个“在线演示”标记 */
+  /* 在線演示：左上角回演示主頁，頂欄多一個“在線演示”標記 */
   PR.setupDemo = function () {
     if (!S.demo) return;
     const back = PR.$("#backBtn");
@@ -99,10 +99,10 @@
   };
   PR.$('[data-act="drawer"]').innerHTML = PR.icon("menu");
   PR.$('[data-act="pages"]').innerHTML = PR.icon("page", "sm") + "<span>PDF</span>";
-  PR.$('[data-act="pages"]').addEventListener("mouseenter", () => PR.preloadPage && PR.preloadPage());  // 鼠标移过去就开始加载
+  PR.$('[data-act="pages"]').addEventListener("mouseenter", () => PR.preloadPage && PR.preloadPage());  // 滑鼠移過去就開始載入
   PR.$('[data-act="notes"]').innerHTML = PR.icon("note", "sm") + "<span>" + PR.t("笔记") + "</span>";
   PR.$('[data-act="chat"]').innerHTML = PR.icon("sparkle", "sm") + "<span>" + PR.t("问 AI") + "</span>";
-  /* 设置里关掉的功能：顶栏按钮也藏起来 */
+  /* 設定裡關掉的功能：頂欄按鈕也藏起來 */
   PR.applyFeatures = function () {
     const set = (sel, on) => { const el = PR.$(sel); if (el) el.style.display = on ? "" : "none"; };
     set('[data-act="pages"]', PR.feature("pages"));
@@ -145,7 +145,7 @@
     else el.innerHTML = "";
   };
 
-  /* ---------- 抽屉 ---------- */
+  /* ---------- 抽屜 ---------- */
   let tab = "toc";
   PR.toggleDrawer = function (force, which) {
     if (which) tab = which;
@@ -158,7 +158,7 @@
     if (open) PR.renderDrawer();
   };
   PR.$("#scrim").onclick = () => PR.toggleDrawer(false);
-  if (PR.store.mode !== "server") PR.$('[data-tab="recent"]').hidden = true;  // 离线单文件版没有文献库
+  if (PR.store.mode !== "server") PR.$('[data-tab="recent"]').hidden = true;  // 離線單檔案版沒有文獻庫
   PR.$(".drawer-tabs").addEventListener("click", (e) => { const b = e.target.closest("[data-tab]"); if (b) { tab = b.dataset.tab; PR.renderDrawer(); } });
 
   PR.renderDrawer = function () {
@@ -167,7 +167,7 @@
     box.innerHTML = ({ toc: tocHtml, terms: termsHtml, about: aboutHtml, recent: recentHtml })[tab]();
     box.className = "drawer-body " + tab;
   };
-  /* 最近读过的论文：不用回文献库就能换一篇 */
+  /* 最近讀過的論文：不用迴文獻庫就能換一篇 */
   let recent = null;
   function recentHtml() {
     if (!recent) {
@@ -256,7 +256,7 @@
     document.body.appendChild(a); a.click(); a.remove();
   };
 
-  /* ---------- 悬浮卡 ---------- */
+  /* ---------- 懸浮卡 ---------- */
   let popHideT = null, popSticky = false;
   PR.popover = function (anchor, html, opts) {
     if (!html) return;

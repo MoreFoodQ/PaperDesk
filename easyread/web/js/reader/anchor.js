@@ -1,4 +1,4 @@
-/* 划线锚定（参考 Hypothesis 的 TextQuote：原话 + 前后文）和选中文字后的浮动条。 */
+/* 劃線錨定（參考 Hypothesis 的 TextQuote：原話 + 前後文）和選中文字後的浮動條。 */
 (function (PR) {
   "use strict";
   const S = PR.state;
@@ -65,8 +65,8 @@
     if (item.key) return host.querySelector('.zh[data-key="' + CSS.escape(item.key) + '"]');
     return PR.$$(".zh", host).find((z) => fullText(z).includes(item.quote)) || host.querySelector(".zh");
   }
-  /* 标注挂在原文（side: "en"）还是译文上；找不到原话再到另一边找一次：
-     只读原文时划在英文上的旧划线没有 side，翻译后英文挪到了 .en 里 */
+  /* 標註掛在原文（side: "en"）還是譯文上；找不到原話再到另一邊找一次：
+     閱讀原文時劃在英文上的舊劃線沒有 side，翻譯後英文挪到了 .en 裡 */
   function locate(n) {
     const zh = zhFor(n);
     const first = PR.noteEl(zh, n.side), second = PR.noteEl(zh, n.side === "en" ? "zh" : "en");
@@ -96,7 +96,7 @@
     PR.applyMirrors && PR.applyMirrors(scope);
   };
 
-  /* ---------- 选中文字 -> 浮动条 ---------- */
+  /* ---------- 選中文字 -> 浮動條 ---------- */
   const selbar = () => PR.$("#selbar");
   let pendingSel = null;
 
@@ -105,7 +105,7 @@
     if (!sel || sel.isCollapsed || !sel.rangeCount) return null;
     const range = sel.getRangeAt(0);
     const startEl = range.startContainer.nodeType === 1 ? range.startContainer : range.startContainer.parentElement;
-    // 译文 .zh 和原文 .en 都能划：原文的记 side: "en"（只读原文没译的块，.zh 里排的就是英文）
+    // 譯文 .zh 和原文 .en 都能劃：原文的記 side: "en"（閱讀原文沒譯的塊，.zh 裡排的就是英文）
     const el = startEl && startEl.closest("#paper .zh, #paper .en");
     if (!el || !el.contains(range.endContainer) || el.querySelector("textarea")) return null;
     const zh = PR.zhOfEl(el);
@@ -166,10 +166,10 @@
       PR.toast(PR.t("已划线　点划线可以写笔记或改颜色"), { label: PR.t("撤销"), fn: () => { PR.commit({ op: "note_del", id: note.id }); PR.applyMarks(anchor); } }, 2600);
     } else PR.startNote(note);
   };
-  selbar().addEventListener("mousedown", (e) => e.preventDefault()); // 点按钮时别丢掉选区
+  selbar().addEventListener("mousedown", (e) => e.preventDefault()); // 點按鈕時別丟掉選區
   selbar().addEventListener("click", (e) => {
     const p = e.target.closest("[data-pen]");
-    if (p) {  // 换笔：荧光笔 / 下划线，记住上次用的
+    if (p) {  // 換筆：熒光筆 / 下劃線，記住上次用的
       PR.prefs.pen = p.dataset.pen; PR.applyPrefs();
       PR.$$("[data-pen]", selbar()).forEach((x) => x.classList.toggle("on", x === p));
       PR.$(".dots", selbar()).className = "dots pen-" + p.dataset.pen;
@@ -178,7 +178,7 @@
     const b = e.target.closest("button[data-s]"); if (b) PR.selectionAction(b.dataset.s, b.dataset.color);
   });
 
-  /* 点划线：写笔记 / 换颜色 / 删掉 */
+  /* 點劃線：寫筆記 / 換顏色 / 刪掉 */
   document.addEventListener("click", (e) => {
     const m = e.target.closest("mark.hl[data-note]");
     if (!m || getSelection().toString()) return;
@@ -187,7 +187,7 @@
     e.stopPropagation();
     PR.noteMarkClick(m, n);
   }, true);
-  /* 点划线（或另一边的同步标记 m）：划线弹出改色菜单，笔记和问题打开编辑 */
+  /* 點劃線（或另一邊的同步標記 m）：劃線彈出改色菜單，筆記和問題打開編輯 */
   PR.noteMarkClick = function (m, n) {
     if (n.kind !== "highlight") { PR.openNoteEditor(n.id); return; }
     const ul = n.style === "underline";

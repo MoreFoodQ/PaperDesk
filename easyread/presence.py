@@ -1,10 +1,10 @@
-"""关掉页面后自动退出（只在 start.cmd / start.sh 启动时开）。
+"""瀏覽器頁面全部離線後，依啟動選項自動結束本機服務。
 
-每个文献库页、阅读页都连着一条 WebSocket（见 wsock.py）。最后一个页面关掉后，
-等一会儿（刷新、在文献库和阅读页之间跳转时，新页面几秒内就会连上来）还是没有页面，
-并且没有翻译、回答问题之类的后台任务在跑，就退出服务。后台任务没做完时先不退，做完再退。
+文獻庫與閱讀頁透過 WebSocket 回報連線狀態。最後一個頁面離線後，
+先保留緩衝時間，避免重新整理或頁面切換造成誤判。
+仍有翻譯或問答任務時繼續執行，待工作完成且無頁面連線後再結束。
 
-命令行 `easyread serve`（agent 用的）和桌面版不开这个，服务一直跑。
+此機制由 --exit-on-close 啟用；一般常駐服務與 Electron 桌面版不使用它。
 """
 from __future__ import annotations
 
@@ -14,8 +14,8 @@ from collections.abc import Callable
 
 from .log import log
 
-GRACE = 15        # 最后一个页面断开后再等多久
-FIRST_WAIT = 120  # 启动后一直没有页面连上来（浏览器没打开之类），等多久
+GRACE = 15        # 最後一個頁面斷開後再等多久
+FIRST_WAIT = 120  # 啟動後一直沒有頁面連上來（瀏覽器沒打開之類），等多久
 
 
 class Presence:
@@ -24,7 +24,7 @@ class Presence:
         self.busy, self.stop, self.enabled = busy, stop, enabled
         self.grace, self.first_wait, self.tick = grace, first_wait, tick
         self.pages = 0
-        self.seen = False  # 有没有页面连上来过
+        self.seen = False  # 有沒有頁面連上來過
         self.lock = threading.Lock()
         self.idle_since: float | None = time.monotonic()
         if enabled:
@@ -40,7 +40,7 @@ class Presence:
             self.pages = max(0, self.pages - 1)
 
     def keep(self) -> None:
-        """有人用 `easyread serve` 要一个常驻的服务、却复用了这个会自动退出的：从此不再自动退出。"""
+        """有人用 `easyread serve` 要一個常駐的服務、卻複用了這個會自動退出的：從此不再自動退出。"""
         if self.enabled:
             log.info("改为常驻，不再在页面关掉后自动退出")
         self.enabled = False

@@ -12,9 +12,9 @@ class CloudLibraryDetectionTest(unittest.TestCase):
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
-        self.root = Path(temporary.name).resolve()  # 同 test_cloudlib：代码比较的是解析后的路径
+        self.root = Path(temporary.name).resolve()  # 同 test_cloudlib：程式碼比較的是解析後的路徑
         for context in (patch.object(config, "CONFIG_PATH", self.root / "config.json"),
-                        patch.dict(os.environ, {"EASYREAD_LANG": "zh"}, clear=True),  # 断言中文报错；CI 系统语言是英文
+                        patch.dict(os.environ, {"EASYREAD_LANG": "zh"}, clear=True),  # 斷言中文回報錯誤；CI 系統語言是英文
                         patch("easyread.cloudlib_detect.Path.home", return_value=self.root)):
             context.start()
             self.addCleanup(context.stop)

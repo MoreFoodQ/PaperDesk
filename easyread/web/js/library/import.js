@@ -1,20 +1,20 @@
-/* 导入：对话框（选文件 / 链接）+ 把 PDF 拖进窗口任何地方 + 在页面上直接粘贴链接。 */
+/* 匯入：對話框（選檔案 / 連結）+ 把 PDF 拖進窗口任何地方 + 在頁面上直接貼上連結。 */
 (function (PR) {
   "use strict";
   const L = PR.lib;
   const dlg = PR.$("#importDlg");
   const SCOPES = [["all", PR.t("全文")], ["body", PR.t("正文（到参考文献为止）")], ["range", PR.t("指定页")]];
-  // 导入后做什么：翻译成中文 / 只閱讀原文（模型把版面排好，不翻译）/ 只放原页图
+  // 匯入後做什麼：翻譯成中文 / 只閱讀原文（模型把版面排好，不翻譯）/ 只放原頁圖
   const AFTER = [["translate", PR.t("翻译成"), PR.t("后台逐页翻译，随时对照原文；译成哪种语言在右边选")],
     ["read", PR.t("閱讀原文"), PR.t("不翻譯：模型整理原文段落、公式與表格；需要譯文時可選「翻譯成{lang}」。", { lang: PR.targetName(PR.target) })],
     ["none", PR.t("先不处理"), PR.t("不用模型，阅读页先放原页图片")]];
 
   const pref = () => {
     const saved = PR.ls.get("paperdesk-import", null);
-    // 英文界面第一次导入默认读原文：母语是英文的人多半不需要译文，要翻译时再选
+    // 英文介面第一次匯入預設讀原文：母語是英文的人多半不需要譯文，要翻譯時再選
     const p = Object.assign({ auto: true, scope: "all", from: 1, to: 10 }, saved || (PR.lang === "en" ? { after: "read" } : {}));
-    if (p.scope === "first") Object.assign(p, { scope: "range", from: 1, to: p.first || 10 });  // 旧的“前几页”
-    if (!p.after) p.after = p.auto ? "translate" : "none";  // 旧的“导入后翻译”勾选框
+    if (p.scope === "first") Object.assign(p, { scope: "range", from: 1, to: p.first || 10 });  // 舊的“前幾頁”
+    if (!p.after) p.after = p.auto ? "translate" : "none";  // 舊的“匯入後翻譯”勾選框
     return p;
   };
   const savePref = (p) => PR.ls.set("paperdesk-import", Object.assign(pref(), p));
@@ -43,13 +43,13 @@
     fillModels(p.model);
   };
 
-  /* 模型：默认是设置里的翻译引擎，也可以直接选“问 AI”名单里配好的模型 */
+  /* 模型：預設是設定裡的翻譯引擎，也可以直接選“問 AI”名單裡配好的模型 */
   async function fillModels(want) {
     let r;
     try { r = await PR.api("/api/chat/models"); } catch (e) { return; }
     const sel = PR.$("#impModel");
     if (!sel) return;
-    // 标着“翻译”的那张卡片就是空值（用设置里的翻译配置，包括“能看图”）；对不上时才留第一项翻译引擎
+    // 標著“翻譯”的那張卡片就是空值（用設定裡的翻譯設定，包括“能看圖”）；對不上時才留第一項翻譯引擎
     if (r.translate) sel.innerHTML = "";
     sel.insertAdjacentHTML("beforeend", (r.models || []).map((m) =>
       '<option value="' + (m.id === r.translate ? "" : PR.esc(m.id)) + '"' + (m.ready ? "" : " disabled") + ">" + PR.esc(m.label + " · " + m.source) + "</option>").join(""));
@@ -62,7 +62,7 @@
     const after = L.engine === "none" ? "none" : p.after;
     const from = Math.max(1, +p.from || 1), to = Math.max(1, +p.to || from);
     const scope = p.scope === "range" ? "range:" + Math.min(from, to) + "-" + Math.max(from, to) : p.scope;
-    const sel = PR.$("#impModel"), tgt = PR.$("#impTarget");  // 拖进来导入时对话框没开，用设置里的译文语言
+    const sel = PR.$("#impModel"), tgt = PR.$("#impTarget");  // 拖進來匯入時對話框沒開，用設定裡的譯文語言
     return { translate: after !== "none", read: after === "read", scope, model: after === "none" ? "" : sel ? sel.value : "",
       target: after === "translate" ? (tgt ? tgt.value : PR.target) : "" };
   }
@@ -89,7 +89,7 @@
     }
   });
   dlg.addEventListener("change", (e) => { if (e.target.id === "impModel") savePref({ model: e.target.value }); });
-  dlg.addEventListener("input", (e) => {  // 边输边存：输完直接点“导入”也用新的页码
+  dlg.addEventListener("input", (e) => {  // 邊輸邊存：輸完直接點“匯入”也用新的頁碼
     if (e.target.id === "pgFrom") savePref({ from: +e.target.value || 1 });
     if (e.target.id === "pgTo") savePref({ to: +e.target.value || 1 });
   });
@@ -135,7 +135,7 @@
   }
   PR.importRef = importRef;
 
-  /* 在文献库页面直接 Ctrl+V 一个链接或 arXiv 编号 */
+  /* 在文獻庫頁面直接 Ctrl+V 一個連結或 arXiv 編號 */
   document.addEventListener("paste", (e) => {
     if (e.target.closest("input, textarea, [contenteditable]") || PR.$(".dialog-backdrop.open")) return;
     const files = Array.from(e.clipboardData.files || []);
@@ -144,7 +144,7 @@
     if (/^(https?:\/\/\S+|(arxiv:)?\d{4}\.\d{4,5}(v\d+)?|(doi:\s*)?10\.\d{4,9}\/\S+)$/i.test(t)) { e.preventDefault(); PR.openImport(t); }
   });
 
-  /* 拖进窗口任何地方都能导入 */
+  /* 拖進窗口任何地方都能匯入 */
   let depth = 0;
   const overlay = PR.$("#dropOverlay");
   const hasFiles = (e) => Array.from(e.dataTransfer && e.dataTransfer.types || []).includes("Files");

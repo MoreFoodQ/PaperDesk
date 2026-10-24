@@ -1,6 +1,6 @@
-// 端到端测试：在临时文献库上跑一遍文献库页和阅读页的主要操作，确认都写进了文件。
-// 用法：node tests/e2e.cjs [论文目录（默认 library 里第一篇）]
-// 需要：项目 .venv、Node、playwright（找不到时读 PLAYWRIGHT 环境变量）、本机 Chrome 或 Edge。
+// 端到端測試：在臨時文獻庫上跑一遍文獻庫頁和閱讀頁的主要操作，確認都寫進了檔案。
+// 用法：node tests/e2e.cjs [論文目錄（預設 library 裡第一篇）]
+// 需要：項目 .venv、Node、playwright（找不到時讀 PLAYWRIGHT 環境變數）、本機 Chrome 或 Edge。
 const path = require('path');
 const fs = require('fs');
 const os = require('os');

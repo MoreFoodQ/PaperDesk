@@ -1,4 +1,4 @@
-"""图块截图：按框重截、id 去重后才截、旧论文按定位补截，以及图内文字补译。"""
+"""圖塊截圖：按框重截、id 去重後才截、舊論文按定位補截，以及圖內文字補譯。"""
 import json
 import tempfile
 import threading

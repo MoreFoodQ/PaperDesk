@@ -1,4 +1,4 @@
-"""真实 PDF 图像对象和矢量路径的定位回归，不依赖翻译模型。"""
+"""真實 PDF 圖像物件和矢量路徑的定位迴歸，不相依性翻譯模型。"""
 import tempfile
 import unittest
 from pathlib import Path
@@ -12,8 +12,8 @@ from easyread.store import write_json_atomic
 
 
 def make_pdf(path, images=(), paths=(), words=(), rotation=0, fills=(), framed=(), white_words=(), clipped=()):
-    """fills：只填充不描边的矩形 (框, 灰度)；framed：四周带白边的图片（内容占中间）；
-    white_words：白色（看不见）的字；clipped：被裁剪路径整个挡住的描边矩形。"""
+    """fills：只填充不描邊的矩形 (框, 灰度)；framed：四周帶白邊的圖片（內容佔中間）；
+    white_words：白色（看不見）的字；clipped：被裁剪路徑整個擋住的描邊矩形。"""
     writer = PdfWriter()
     page = writer.add_blank_page(width=500, height=700)
     xobjects = DictionaryObject()
@@ -24,7 +24,7 @@ def make_pdf(path, images=(), paths=(), words=(), rotation=0, fills=(), framed=(
         NameObject("/XObject"): xobjects,
         NameObject("/Font"): DictionaryObject({NameObject("/F1"): writer._add_object(font)})})
     commands = []
-    for (x0, y0, x1, y1), gray in fills:  # 背景先画
+    for (x0, y0, x1, y1), gray in fills:  # 背景先畫
         commands.append(f"q {gray} g {x0 * 500} {(1-y1) * 700} {(x1-x0) * 500} {(y1-y0) * 700} re f Q")
     for i, (x0, y0, x1, y1) in enumerate(images):
         image = DecodedStreamObject()
@@ -36,7 +36,7 @@ def make_pdf(path, images=(), paths=(), words=(), rotation=0, fills=(), framed=(
         xobjects[NameObject(name)] = writer._add_object(image)
         commands.append(f"q {(x1 - x0) * 500} 0 0 {(y1 - y0) * 700} {x0 * 500} {(1 - y1) * 700} cm {name} Do Q")
     for i, (x0, y0, x1, y1) in enumerate(framed):
-        # 10x10 像素：上 3 行、下 1 行、左右各 1 列是白边，中间是深色内容。
+        # 10x10 像素：上 3 行、下 1 行、左右各 1 列是白邊，中間是深色內容。
         pixels = bytes(v for r in range(10) for c in range(10)
                        for v in ((255, 255, 255) if r < 3 or r > 8 or c < 1 or c > 8 else (30, 90, 150)))
         image = DecodedStreamObject()
@@ -158,7 +158,7 @@ class FigureGeometryTest(unittest.TestCase):
         self.assertLess(layout["fig"]["box"][2], .5)
 
     def test_white_background_rect_does_not_pull_body_text_below_caption(self):
-        # 白色背景矩形一直铺到题注下面的正文：页面上看不见，不能把图框撑下去。
+        # 白色背景矩形一直鋪到題注下面的正文：頁面上看不見，不能把圖框撐下去。
         layout = {"fig": loc([.1, .32, .9, .36]), "body": loc([.1, .42, .9, .85])}
         self.extend([{"id": "fig", "type": "figure"}], layout, images=[[.3, .12, .7, .3]],
                     fills=[([.2, .1, .8, .9], 1)], words=[("body", .1, .45)])
@@ -182,7 +182,7 @@ class FigureGeometryTest(unittest.TestCase):
         self.assertGreater(box[0], .09)
 
     def test_image_white_margin_does_not_reach_header(self):
-        # 位图上方 30% 是白边，一直顶到页眉；按看得见的内容收边，页眉文字不进框。
+        # 位圖上方 30% 是白邊，一直頂到頁眉；按看得見的內容收邊，頁眉文字不進框。
         layout = {"fig": loc([.1, .42, .9, .46])}
         self.extend([{"id": "fig", "type": "figure"}], layout, framed=[[.1, .03, .9, .4]],
                     words=[("Journal of Tests", .1, .05)])
@@ -212,7 +212,7 @@ class FigureGeometryTest(unittest.TestCase):
         self.assertGreater(layout["fig"]["box"][0], .28)
 
     def test_labels_below_caption_do_not_extend_box(self):
-        # 题注在图正下方：连到题注下面的文字（正文没定位上时）不能把框往下撑。
+        # 題注在圖正下方：連到題注下面的文字（正文沒定位上時）不能把框往下撐。
         layout = {"fig": loc([.1, .62, .9, .66])}
         self.extend([{"id": "fig", "type": "figure"}], layout, images=[[.1, .3, .9, .6]],
                     words=[("axis", .02, .625), ("more", .02, .655), ("text", .02, .685)])
@@ -269,7 +269,7 @@ class PageMarginsTest(unittest.TestCase):
                     chars += [[ch, .1 + i * .01, .07, .11 + i * .01, .085] for i, ch in enumerate("Title")]
                 (extract / f"page-{pn:03d}.chars.json").write_text(json.dumps(chars))
             running = page_margins.running_lines(extract, 4)
-            self.assertEqual(len(running[1]), 2)  # 只出现一次的标题不算页眉
+            self.assertEqual(len(running[1]), 2)  # 只出現一次的標題不算頁眉
             self.assertEqual(page_margins.margins([], running[1]), (.06, .94))
             self.assertEqual(page_margins.margins([[.05, .1, .95, .1]], running[1]), (.1, .94))
             self.assertEqual(page_margins.margins([], [[.1, .03, .2, .07], [.5, .92, .6, .93]]), (.07, .92))

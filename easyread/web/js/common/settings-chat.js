@@ -1,9 +1,9 @@
-/* 设置 → 模型：翻译和“问 AI”合在一页。
-   上面一排卡片是你能用的模型（Claude Code / Codex / 各家 API），每张卡片可以标“翻译”和“问 AI 默认”；
-   点卡片弹出菜单：设为翻译、设为问 AI、改 Key 和地址（只有 API 卡片）、删除；拖动卡片排序。添加时下面出现来源卡片和模型选择，API 的表单见 settings-api.js。
-   下面是翻译自己的设置（每批几页、同时译几段、导入后自动翻译、试译一句）。
-   存的时候：翻译用的那张卡片写进 config 的 engine / claude / codex / openai（后台翻译读这些），整份名单写进 chat.models。
-   API 的 Key 每家只存一份，翻译和问 AI 共用。 */
+/* 設定 → 模型：翻譯和“問 AI”合在一頁。
+   上面一排卡片是你能用的模型（Claude Code / Codex / 各家 API），每張卡片可以標“翻譯”和“問 AI 預設”；
+   點卡片彈出菜單：設為翻譯、設為問 AI、改 Key 和位址（只有 API 卡片）、刪除；拖動卡片排序。新增時下面出現來源卡片和模型選擇，API 的表單見 settings-api.js。
+   下面是翻譯自己的設定（每批幾頁、同時譯幾段、匯入後自動翻譯、試譯一句）。
+   存的時候：翻譯用的那張卡片寫進 config 的 engine / claude / codex / openai（背景翻譯讀這些），整份名單寫進 chat.models。
+   API 的 Key 每家只存一份，翻譯和問 AI 共用。 */
 (function (PR) {
   "use strict";
   const T = PR.settingsTabs;
@@ -12,7 +12,7 @@
   const root = () => PR.$("#settingsDlg");
   const preset = (s, id) => s.presets.find((x) => x.id === id);
 
-  /* ---------- 翻译用的是哪张卡片 ---------- */
+  /* ---------- 翻譯用的是哪張卡片 ---------- */
   function sameAsTranslation(s, m) {
     const c = s.cfg, e = c.engine;
     if (m.engine !== e) return false;
@@ -24,7 +24,7 @@
   }
   const transIndex = (s) => s.chat.models.findIndex((m) => sameAsTranslation(s, m));
 
-  /* 以前的“跟随默认”卡片（模型空着）钉到具体模型；钉完和别的卡片一样的就合成一张 */
+  /* 以前的“跟隨預設”卡片（模型空著）釘到具體模型；釘完和別的卡片一樣的就合成一張 */
   function pinDefaults(s) {
     if (s.pinned || !s.models || !s.chat) return;
     s.pinned = true;
@@ -46,11 +46,11 @@
     }
   }
 
-  /* 翻译现在用的模型不在名单里（以前分两页设的）：给它补一张卡片 */
+  /* 翻譯現在用的模型不在名單裡（以前分兩頁設的）：給它補一張卡片 */
   function ensureTranslationCard(s) {
     if (s.transChecked || !s.chat) return;
     s.transChecked = true;
-    if (s.cfg.engine === "none") { s.cfg.engine = "claude"; s.cfg.auto_translate = false; }  // 旧的“不翻译”= 关掉自动翻译
+    if (s.cfg.engine === "none") { s.cfg.engine = "claude"; s.cfg.auto_translate = false; }  // 舊的“不翻譯”= 關掉自動翻譯
     if (transIndex(s) >= 0) return;
     const c = s.cfg, e = c.engine, o = c.openai, p = preset(s, o.preset);
     const f = e === "openai" ? { kind: "api", preset: o.preset || "", model: o.model || "", base_url: o.base_url || "", api: o.api || "chat" }
@@ -59,7 +59,7 @@
     s.chat.models.unshift(Object.assign(toModel(s, f, p), { id: "m" + Date.now().toString(36) }));
   }
 
-  /* 把一张卡片设成翻译用：写进 cfg 的 engine 和对应那一节 */
+  /* 把一張卡片設成翻譯用：寫進 cfg 的 engine 和對應那一節 */
   function useForTranslation(s, m) {
     const c = s.cfg;
     if (m.engine === "openai") {
@@ -91,7 +91,7 @@
       '<div class="mc add' + (s.editing === "new" ? " editing" : "") + '" data-cm="add" role="button" tabindex="0">' + PR.icon("plus") + "<b>" + PR.t("添加模型") + "</b></div></div>";
   }
 
-  /* ---------- 添加 / 修改的表单 ---------- */
+  /* ---------- 新增 / 修改的表單 ---------- */
   function formHtml(s) {
     const f = s.form;
     const card = (k, title) => '<button data-cmk="' + k + '" class="' + (f.kind === k ? "on" : "") + '"><b>' + title + "</b></button>";
@@ -114,7 +114,7 @@
       return o ? o[1] : f.model || (f.kind === "claude" ? "Claude" : "GPT");
     }
     const p = preset(s, f.preset);
-    return f.model ? PR.apiModelName(s, f.preset, f.model) : p ? p.name : "模型";  // i18n-ok 存进模型名单的名字
+    return f.model ? PR.apiModelName(s, f.preset, f.model) : p ? p.name : "模型";  // i18n-ok 存進模型名單的名字
   }
   function toModel(s, f, p) {
     const api = isApi(f.kind), name = autoName(s, f);
@@ -146,7 +146,7 @@
     s.form.service_tier = m && m.service_tier || "";
   }
 
-  /* ---------- 翻译自己的设置 ---------- */
+  /* ---------- 翻譯自己的設定 ---------- */
   function translationHtml(s) {
     const c = s.cfg, ti = transIndex(s), m = s.chat.models[ti];
     const e = c.engine;
@@ -154,6 +154,8 @@
     if (m) h += '<p class="hint">' + PR.t("推理强度") + ': ' + PR.esc(m.reasoning_effort || PR.modelDefaultLabel(s, { kind: kindOf(m), model: m.model }, "reasoning_effort")) +
       (e === "claude" ? "" : ' · Fast: ' + PR.esc(m.service_tier || PR.modelDefaultLabel(s, { kind: kindOf(m), model: m.model }, "service_tier"))) + '</p>';
     if (e === "openai") h += '<label class="check" style="margin:0 0 10px"><input type="checkbox" data-k="openai.vision"' + (c.openai.vision ? " checked" : "") + ">" + PR.t("模型能看图") + "</label>";
+    h += '<label class="check"><input type="checkbox" data-k="translate_images" aria-describedby="translateImagesHint"' + (c.translate_images !== false ? ' checked' : '') + '>' + PR.t('翻譯圖片內文字') + '</label>' +
+      '<p class="hint" id="translateImagesHint">' + PR.t('關閉後保留圖片內原文，正文、表格與圖說仍會翻譯。既有譯文保留；重新開啟後可補翻。整頁影像仍可能送交模型。') + '</p>';
     h += '<div class="grid2 translation-limits">' +
       '<label class="field"><span>' + PR.t("每批页数") + '</span><select class="input" data-k="batch_pages">' + PR.opt([[1, PR.t("1 页")], [2, PR.t("2 页")], [3, PR.t("3 页")], [4, PR.t("4 页")]], c.batch_pages) + "</select></label>" +
       '<label class="field" title="' + PR.t("把全文切成几段同时译，段内按顺序译；自动按篇幅每段约 2 批、最多 4 段；手动最多 8 段") + '"><span>' + PR.t("同时译几段") + '</span><select class="input" data-k="concurrency">' + PR.opt([[0, PR.t("自动")], [1, "1"], [2, "2"], [3, "3"], [4, "4"], [5, "5"], [6, "6"], [7, "7"], [8, "8"]], c.concurrency || 0) + "</select></label>" +
@@ -161,7 +163,7 @@
       '<div class="test-line"><button class="btn sm line" id="testBtn">' + PR.icon("sparkle", "sm") + PR.t("试译一句") + '</button><span class="test-result" id="testRes"></span></div>';
     return h;
   }
-  /* 页面上翻译那几项的值读回 cfg（存的时候 settings.js 从 cfg 取） */
+  /* 頁面上翻譯那幾項的值讀回 cfg（存的時候 settings.js 從 cfg 取） */
   function readTranslation(s) {
     PR.$$("[data-k]", root()).forEach((el) => {
       const [a, b] = el.dataset.k.split(".");
@@ -183,7 +185,7 @@
     else {
       const old = list.find((x) => x.id === s.editing), wasTr = sameAsTranslation(s, old);
       Object.assign(old, m);
-      if (wasTr) useForTranslation(s, old);  // 改的是翻译用的那张：翻译跟着改
+      if (wasTr) useForTranslation(s, old);  // 改的是翻譯用的那張：翻譯跟著改
     }
     return true;
   }
@@ -253,7 +255,7 @@
         if (kind === f.kind) return false;
         Object.assign(f, { kind, model: kind === "claude" ? "opus" : PR.cliPin(s, kind, ""), name: "", key: "", base_url: "", api: "", reasoning_effort: "", service_tier: "" });
         s.fetchMsg = null; s.apiTyping = false;
-        if (isApi(kind)) {  // 先给一家：翻译那边用的 API，没有就 DeepSeek
+        if (isApi(kind)) {  // 先給一家：翻譯那邊用的 API，沒有就 DeepSeek
           const o = s.cfg.openai;
           PR.apiForm.pick(s, f, s.cfg.engine === "openai" && s.presets.some(p => p.id === o.preset) ? o.preset : "openai", "key");
         }
@@ -302,7 +304,7 @@
     },
   };
 
-  /* 拖动卡片排序 */
+  /* 拖動卡片排序 */
   let from = -1;
   const cardAt = (e) => e.target.closest && e.target.closest(".mc-cards .mc[data-i]");
   const clear = () => PR.$$(".mc-cards .mc", root()).forEach((c) => c.classList.remove("dragging", "drop-before", "drop-after"));

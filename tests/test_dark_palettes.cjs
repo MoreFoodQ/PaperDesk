@@ -5,7 +5,10 @@ const vm = require('node:vm');
 
 function setup(cached = {}, systemDark = true) {
   const source = fs.readFileSync('easyread/web/js/common/util.js', 'utf8');
-  const theme = source.slice(source.indexOf('  PR.DARK_PALETTES'), source.indexOf('  /* 简单事件总线 */'));
+  const start = source.indexOf('  PR.DARK_PALETTES');
+  const end = source.indexOf('  const subs = {};', start);
+  assert.ok(start >= 0 && end > start, 'Theme source boundaries must exist');
+  const theme = source.slice(start, end);
   const dataset = {}, PR = {t: s => s, ls: {get: () => cached}};
   vm.runInNewContext(theme, {PR, document: {documentElement: {dataset}}, matchMedia: () => ({matches: systemDark})});
   return {PR, dataset};

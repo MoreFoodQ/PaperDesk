@@ -1,19 +1,19 @@
-"""命令行。给人用，也给对话里的 agent 用（它在对话里翻译、追加讨论时走这些命令）。
+"""命令列。給人用，也給對話裡的 agent 用（它在對話裡翻譯、追加討論時走這些命令）。
 
-  easyread serve [--open] [--port N] [--exit-on-close]   启动（或复用已在跑的）服务
-  easyread list                           列出文献库
-  easyread import 论文.pdf|arXiv编号 [--no-translate]
-  easyread translate ID [--pages 3-5]     排队翻译（需要服务在跑；否则直接前台译）
-  easyread status ID                      译文进度、用户改过的译文、笔记、待回答的问题
+  easyread serve [--open] [--port N] [--exit-on-close]   啟動（或複用已在跑的）服務
+  easyread list                           列出文獻庫
+  easyread import 論文.pdf|arXiv編號 [--no-translate]
+  easyread translate ID [--pages 3-5]     排隊翻譯（需要服務在跑；否則直接前景譯）
+  easyread status ID                      譯文進度、使用者改過的譯文、筆記、待回答的問題
   easyread blocks ID --from 批次.json [--done 4-6] [--replace]
-  easyread discuss ID --from 讨论.json | --delete 讨论ID
-  easyread check ID                       检查块、引用、TeX
-  easyread locate ID                      重新计算原页高亮位置
-  easyread export ID                      导出单文件离线 HTML
-  easyread demo ID --out docs/demo        做成网站上的在线演示（图片另存、带问 AI 记录）
-  easyread merge ID --from 导出.json       把离线版页面导出的修改并回文献库
-  easyread migrate 旧的“xxx-共读”目录      把旧版技能生成的目录搬进文献库
-ID 可以写开头几位，能唯一确定就行。
+  easyread discuss ID --from 討論.json | --delete 討論ID
+  easyread check ID                       檢查塊、引用、TeX
+  easyread locate ID                      重新計算原頁高亮位置
+  easyread export ID                      匯出單檔案離線 HTML
+  easyread demo ID --out docs/demo        做成網站上的在線演示（圖片另存、帶問 AI 記錄）
+  easyread merge ID --from 匯出.json       把離線版頁面匯出的修改並回文獻庫
+  easyread migrate 舊的“xxx-共讀”目錄      把舊版技能生成的目錄搬進文獻庫
+ID 可以寫開頭幾位，能唯一確定就行。
 """
 from __future__ import annotations
 
@@ -61,7 +61,7 @@ def cmd_serve(a):
     url = None if (a.port is not None or config.temp_library()) else running_server()
     if url:
         out(f"服务已在运行：{url}")
-        if not a.exit_on_close:  # 要常驻的服务：那个服务若是 start.cmd 起的、关页会退出，让它改成常驻
+        if not a.exit_on_close:  # 要常駐的服務：那個服務若是 start.cmd 起的、關頁會退出，讓它改成常駐
             try:
                 token = config.server_token()
                 urllib.request.urlopen(urllib.request.Request(url + "/api/presence/keep", data=b"{}", headers={"X-Token": token}))
@@ -111,7 +111,7 @@ def cmd_translate(a):
             urllib.request.urlopen(req)
             out("已交给服务排队翻译，进度在文献库页面上看。")
             return
-        except OSError:  # 服务刚好在退出：就在这里译
+        except OSError:  # 服務剛好在退出：就在這裡譯
             pass
     from .translate import translate_pages
     cfg = config.load()
@@ -210,7 +210,7 @@ def cmd_migrate(a):
 
 
 def main(argv=None):
-    if sys.stdout is None:  # pythonw 启动时没有控制台
+    if sys.stdout is None:  # pythonw 啟動時沒有控制檯
         import os
         sys.stdout = sys.stderr = open(os.devnull, "w", encoding="utf-8")
     else:
@@ -234,7 +234,7 @@ def main(argv=None):
     p.set_defaults(fn=cmd_demo)
     p = sub.add_parser("migrate"); p.add_argument("folder"); p.set_defaults(fn=cmd_migrate)
     a = ap.parse_args(argv)
-    if not a.cmd:  # 直接运行 easyread：启动并打开浏览器
+    if not a.cmd:  # 直接執行 easyread：啟動並打開瀏覽器
         a = ap.parse_args(["serve", "--open"])
     if a.cmd == "discuss" and not (a.from_file or a.delete):
         ap.error("discuss 需要 --from 或 --delete")

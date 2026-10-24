@@ -19,7 +19,7 @@ async function reader(threads = [], options = {}) {
       const ta = { value: (html.match(/<textarea[^>]*>(.*?)<\/textarea>/s) || [])[1] || "", focus() {} };
       nodes.set("#chatInput", ta);
       nodes.set("#chatList", { scrollHeight: 100, scrollTop: 0, clientHeight: 100 });
-      // “简明回答”开关：亮着就是 ste100
+      // “簡明回答”開關：亮著就是 ste100
       nodes.set("#chatAnswerStyle", {
         value: /class="ch-pill on"/.test(html) ? "ste100" : "standard",
         disabled: /data-c="style" disabled/.test(html),

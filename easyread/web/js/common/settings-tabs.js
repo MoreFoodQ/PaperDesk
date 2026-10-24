@@ -1,4 +1,4 @@
-/* 设置的另外两页：阅读（功能开关、主题）、快捷键（总开关、改键）。 */
+/* 設定的另外兩頁：閱讀（功能開關、主題）、快捷鍵（總開關、改鍵）。 */
 (function (PR) {
   "use strict";
   const T = PR.settingsTabs;
@@ -45,8 +45,8 @@
     },
   };
 
-  /* ---------- 阅读 ---------- */
-  /* 排版：和阅读页 Aa 面板是同一份设置，这里多一个“恢复默认” */
+  /* ---------- 閱讀 ---------- */
+  /* 排版：和閱讀頁 Aa 面板是同一份設定，這裡多一個“恢復預設” */
   function typeHtml(s) {
     if (!s.type) s.type = Object.assign({}, PR.TYPE_DEFAULTS, PR.ls.get("paperdesk-prefs", {}));
     const t = Object.assign({ view: s.type.mode === "bi" ? "both" : s.type.lead === "original" ? "original" : "translation" }, s.type), range = (a, b, step) => { const out = []; for (let v = a; v <= b + 1e-9; v += step) out.push([+v.toFixed(2), +v.toFixed(2)]); return out; };
@@ -70,16 +70,16 @@
         (location.protocol === "file:" ? "" : '<label class="field"><span>' + PR.t("论文译成") + '</span><select class="input" id="targetSel">' +
           PR.opt(PR.TARGETS, s.target || PR.target) + "</select></label>") + "</div>" +
         (location.protocol === "file:" ? "" : '<p class="set-lead">' + PR.t("新翻译的论文用这个语言；已经译过的论文保持原来的语言。不需要译文的话，导入时选“读英文原文”。") + "</p>") +
-        (PR.updateSection ? PR.updateSection() : "");  // 版本和检查更新，只有文献库页有（update.js）
+        (PR.updateSection ? PR.updateSection() : "");  // 版本和檢查更新，只有文獻庫頁有（update.js）
     },
     click(e, s) {
       if (!e.target.closest("[data-type-reset]")) return false;
-      s.type = Object.assign({}, s.type, PR.TYPE_DEFAULTS);  // 只重置排版，显示方式保留
+      s.type = Object.assign({}, s.type, PR.TYPE_DEFAULTS);  // 只重設排版，顯示方式保留
       return true;
     },
     change(e, s) {
       const t = e.target.dataset.type;
-      if (t === "view") { s.type.mode = e.target.value === "both" ? "bi" : "zh"; if (e.target.value !== "both") s.type.lead = e.target.value; }  // 和阅读页顶栏一样：mode + lead
+      if (t === "view") { s.type.mode = e.target.value === "both" ? "bi" : "zh"; if (e.target.value !== "both") s.type.lead = e.target.value; }  // 和閱讀頁頂欄一樣：mode + lead
       else if (t) s.type[t] = t === "margin" ? e.target.value === "true" : ["fs", "measure", "lh"].includes(t) ? +e.target.value : e.target.value;
       if (e.target.dataset.feat) s.ui.features[e.target.dataset.feat] = e.target.checked;
       if (e.target.id === "themeSel") { s.theme = e.target.value; PR.applyTheme(s.theme, s.darkPalette); }
@@ -91,7 +91,7 @@
     },
   };
 
-  /* ---------- 快捷键 ---------- */
+  /* ---------- 快捷鍵 ---------- */
   T.keys = {
     render(s) {
       let h = '<label class="switch-row big"><span><b>' + PR.t("启用快捷键") + "</b><small>" + PR.t("关掉后只剩 Esc。单个字母的快捷键打字时不会触发，但点着页面时按到会触发。") + '</small></span><input type="checkbox" class="switch" id="keysOn"' + (s.ui.keys_on ? " checked" : "") + "></label>";

@@ -1,4 +1,4 @@
-/* 共用小工具。所有脚本共用全局 PR 命名空间（不打包、不用构建，也能内联成单文件离线版）。 */
+/* 共用小工具。所有指令碼共用全局 PR 命名空間（不打包、不用構建，也能內聯成單檔案離線版）。 */
 window.PR = window.PR || {};
 (function (PR) {
   "use strict";
@@ -19,12 +19,12 @@ window.PR = window.PR || {};
     return e;
   };
 
-  /* 译文语言的名字跟着界面语言写：中文界面“日语”，英文界面“Japanese” */
+  /* 譯文語言的名字跟著介面語言寫：中文介面“日語”，英文介面“Japanese” */
   PR.TARGETS = [["zh-TW", "繁體中文"], ["zh", PR.t("中文")], ["ja", PR.t("日语")], ["ko", PR.t("韩语")], ["es", PR.t("西班牙语")], ["fr", PR.t("法语")], ["de", PR.t("德语")]]; // i18n-ok
   PR.targetName = (code) => (PR.TARGETS.find(([k]) => k === code) || PR.TARGETS[0])[1];
 
-  /* 论文标题哪个当主标题：译文语言和界面语言一样时用译文标题（中文界面看中文译文），
-     否则用英文原标题，译文标题放第二行。short 是侧栏用的短标题 */
+  /* 論文標題哪個當主標題：譯文語言和介面語言一樣時用譯文標題（中文介面看中文譯文），
+     否則用英文原標題，譯文標題放第二行。short 是側欄用的短標題 */
   PR.titles = function (i) {
     const tr = i.title_zh || "", en = i.title_en || "", lang = i.target || "zh";
     if (tr && (PR.lang === lang || !en)) return { main: tr, sub: en, subLang: "en", short: i.short_zh || tr.split(/[：:]/)[0] };
@@ -34,7 +34,7 @@ window.PR = window.PR || {};
   PR.esc = (s) => String(s == null ? "" : s)
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-  /* 和 Python store.text_hash 一致：FNV-1a 32 位，按 UTF-16 码元 */
+  /* 和 Python store.text_hash 一致：FNV-1a 32 位，按 UTF-16 碼元 */
   PR.hashText = function (s) {
     let h = 0x811c9dc5;
     s = s || "";
@@ -91,7 +91,7 @@ window.PR = window.PR || {};
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } },
     del(k) { try { localStorage.removeItem(k); } catch (e) { /* ignore */ } },
   };
-  try { // 改名前（coread-*）存的偏好搬过来
+  try { // 改名前（coread-*）存的偏好搬過來
     Object.keys(localStorage).filter((k) => k.startsWith("coread-")).forEach((k) => {
       const nk = "paperdesk-" + k.slice(7);
       if (localStorage.getItem(nk) == null) localStorage.setItem(nk, localStorage.getItem(k));
@@ -99,7 +99,7 @@ window.PR = window.PR || {};
     });
   } catch (e) { /* ignore */ }
 
-  /* 偏好存到本机数据目录的 prefs.json（换浏览器、清缓存都还在）；localStorage 只当缓存。离线单文件版没有服务，只用缓存。 */
+  /* 偏好存到本機資料目錄的 prefs.json（換瀏覽器、清快取都還在）；localStorage 只當快取。離線單檔案版沒有服務，只用快取。 */
   let prefQueue = {}, prefT = null;
   PR.savePrefs = function (section, obj) {
     prefQueue[section] = Object.assign(prefQueue[section] || {}, obj);
@@ -110,9 +110,9 @@ window.PR = window.PR || {};
     clearTimeout(prefT);
     if (!PR.token || location.protocol === "file:" || !Object.keys(prefQueue).length) return;
     const body = prefQueue; prefQueue = {};
-    if (leaving) {  // 关页面、刷新时：keepalive 让请求在页面走掉后也能发完
+    if (leaving) {  // 關頁面、重新整理時：keepalive 讓請求在頁面走掉後也能發完
       fetch("/api/prefs", { method: "POST", keepalive: true, headers: { "Content-Type": "application/json", "X-Token": PR.token }, body: JSON.stringify(body) }).catch(() => {});
-    } else PR.api("/api/prefs", { method: "POST", body }).catch(() => { /* 下次改动再存 */ });
+    } else PR.api("/api/prefs", { method: "POST", body }).catch(() => { /* 下次改動再存 */ });
   }
   window.addEventListener("pagehide", () => flushPrefs(true));
   PR.loadPrefs = async function () {
@@ -127,7 +127,7 @@ window.PR = window.PR || {};
 
   PR.autosize = function (ta) { ta.style.height = "auto"; ta.style.height = ta.scrollHeight + 2 + "px"; };
 
-  /* 图标：线性 20×20 */
+  /* 圖標：線性 20×20 */
   const P = {
     menu: "M3 5.5h14M3 10h14M3 14.5h9",
     back: "M12.5 4.5L7 10l5.5 5.5",
@@ -164,7 +164,7 @@ window.PR = window.PR || {};
     sparkle: "M10 3v4M10 13v4M3 10h4M13 10h4M5.5 5.5l2 2M12.5 12.5l2 2M14.5 5.5l-2 2M7.5 12.5l-2 2",
     question: "M7.5 7.5a2.5 2.5 0 1 1 3.4 2.3c-.6.3-.9.8-.9 1.4v.8M10 14.5v.01M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16z",
   };
-  PR.HL_COLORS = [["yellow", PR.t("黄")], ["green", PR.t("绿")], ["blue", PR.t("蓝")], ["pink", PR.t("红")]];  // pink 历史上叫粉，现在画成红
+  PR.HL_COLORS = [["yellow", PR.t("黄")], ["green", PR.t("绿")], ["blue", PR.t("蓝")], ["pink", PR.t("红")]];  // pink 歷史上叫粉，現在畫成紅
   PR.logo = (cls) => '<svg class="' + (cls || "mark") + '" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="30" height="30" rx="8" fill="#2d6173"/><path d="M16 10.5C13.6 8.8 10.4 8.3 7 8.6v14.2c3.4-.3 6.6.2 9 1.9 2.4-1.7 5.6-2.2 9-1.9V8.6c-3.4-.3-6.6.2-9 1.9z" fill="#f6f3ec"/><path d="M16 10.5v14.2" stroke="#2d6173" stroke-width="1.2"/><path d="M9.4 13.4h4M9.4 16.4h4M9.4 19.4h2.6" stroke="#9fb7bf" stroke-width="1.6" stroke-linecap="round"/><path d="M18.6 13.4h4M18.6 16.4h4M18.6 19.4h2.6" stroke="#e0a84f" stroke-width="1.6" stroke-linecap="round"/></svg>';
   PR.icon = (name, cls) => '<svg class="i' + (cls ? " " + cls : "") + '" viewBox="0 0 20 20" aria-hidden="true"><path d="' + (P[name] || "") + '"/></svg>';
   PR.icons = { menu: PR.icon("menu"), edit: PR.icon("edit", "sm"), note: PR.icon("note", "sm") };
@@ -183,7 +183,7 @@ window.PR = window.PR || {};
     PR._toastT = setTimeout(() => t.classList.remove("open"), ms || 4200);
   };
 
-  /* 服务接口：写操作带页面加载时拿到的令牌 */
+  /* 服務介面：寫操作帶頁面載入時拿到的令牌 */
   PR.api = async function (path, opts) {
     opts = opts || {};
     const headers = Object.assign({}, opts.headers || {});
@@ -196,7 +196,7 @@ window.PR = window.PR || {};
     return data;
   };
 
-  /* 主题：文献库和阅读页共用 */
+  /* 主題：文獻庫和閱讀頁共用 */
   PR.DARK_PALETTES = [["graphite", PR.t("石墨青藍")], ["nord", PR.t("北歐霧藍")], ["mocha", PR.t("暮色薰衣草")], ["forest", PR.t("森林薄荷")], ["dracula", PR.t("夜幕紫")]];
   PR.darkPalette = (value) => PR.DARK_PALETTES.some(([id]) => id === value) ? value : "graphite";
   PR.applyTheme = function (theme, palette) {
@@ -205,12 +205,12 @@ window.PR = window.PR || {};
     document.documentElement.dataset.palette = PR.darkPalette(palette === undefined ? PR.ls.get("paperdesk-prefs", {}).darkPalette : palette);
   };
 
-  /* 简单事件总线 */
+  /* 簡單事件總線 */
   const subs = {};
   PR.on = (ev, fn) => (subs[ev] = subs[ev] || []).push(fn);
   PR.emit = (ev, data) => (subs[ev] || []).forEach((fn) => { try { fn(data); } catch (e) { console.error(e); } });
 
-  /* 通用下拉菜单：items = [{label, icon, kbd, fn} | "-"] */
+  /* 通用下拉菜單：items = [{label, icon, kbd, fn} | "-"] */
   PR.menu = function (anchorOrPoint, items) {
     let m = PR.$("#ctxmenu");
     if (!m) { m = PR.el("div", { id: "ctxmenu", class: "menu" }); document.body.appendChild(m); }
@@ -220,7 +220,7 @@ window.PR = window.PR || {};
     m.onclick = (e) => {
       const b = e.target.closest("[data-i]"); if (!b) return;
       const r = m.getBoundingClientRect();
-      PR.lastMenuAt = { x: r.left, y: r.top };  // 菜单项要确认时，确认框就出在菜单原来的位置
+      PR.lastMenuAt = { x: r.left, y: r.top };  // 菜單項要確認時，確認框就出在菜單原來的位置
       PR.closeMenu(); items[+b.dataset.i].fn();
       setTimeout(() => (PR.lastMenuAt = null), 0);
     };

@@ -1,10 +1,10 @@
-"""界面文字对账：哪些中文还没套 PR.t / tr，哪些词条缺英文。
+"""介面文字對賬：哪些中文還沒套 PR.t / tr，哪些詞條缺英文。
 
-    python scripts/i18n_check.py            # 列出问题，有问题时退出码 1
-    python scripts/i18n_check.py --missing  # 只输出缺英文的词条（JSON，补翻译时用）
+    python scripts/i18n_check.py            # 列出問題，有問題時退出碼 1
+    python scripts/i18n_check.py --missing  # 只輸出缺英文的詞條（JSON，補翻譯時用）
 
-规则：前端界面文字写 PR.t("中文")，后端会显示到界面上的写 tr("中文")。
-确实不该翻译的中文（匹配后端输出的正则、给模型的提示词……）在那一行末尾写注释 i18n-ok。
+規則：前端介面文字寫 PR.t("中文")，後端會顯示到介面上的寫 tr("中文")。
+確實不該翻譯的中文（匹配後端輸出的正則、給模型的提示詞……）在那一行末尾寫註釋 i18n-ok。
 """
 from __future__ import annotations
 
@@ -17,9 +17,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / "easyread" / "web"
 EN = WEB / "i18n" / "en.json"
-CJK = re.compile("[、-〿一-鿿！-～]")  # 汉字和全角标点
+CJK = re.compile("[、-〿一-鿿！-～]")  # 漢字和全角標點
 
-# 后端里只检查会显示到界面上的模块；cli（命令行）、prompts*（给模型的提示词）不翻
+# 後端裡只檢查會顯示到介面上的模組；cli（命令列）、prompts*（給模型的提示詞）不翻
 PY_SKIP = {"cli.py", "prompts.py", "prompts_en.py", "front_context.py", "i18n.py", "log.py", "__main__.py"}
 
 _JS_STR = r'"(?:[^"\\\n]|\\.)*"|\'(?:[^\'\\\n]|\\.)*\'|`(?:[^`\\]|\\.)*`'
@@ -86,7 +86,7 @@ def scan_py(path: Path, keys: set, raw: list):
                 continue
             if re.search(r"\btr\(\s*$", code[:m.start()]) and not m[1]:
                 keys.add(_unquote(lit))
-            elif not re.search(r"\blog\.\w+\(\s*$", code[:m.start()]):  # 日志给人排查用，不翻
+            elif not re.search(r"\blog\.\w+\(\s*$", code[:m.start()]):  # 日誌給人排查用，不翻
                 raw.append(f"{path.relative_to(ROOT)}:{no}: {m[0][:70]}")
 
 

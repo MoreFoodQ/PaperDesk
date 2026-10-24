@@ -1,12 +1,12 @@
-/* 设置对话框（文献库页和阅读页共用）：外壳、分页、保存。
-   页：模型（翻译和问 AI 合在一起，settings-chat.js）、阅读 / 侧边栏 / 快捷键（settings-tabs.js 等）。
-   本文件里的 engine 不再单独成页，只留它的 collect：存的时候从 cfg 取翻译设置。
-   PR.openSettings("keys") 直接打开某一页；不指定就从“模型”页开始（不记上次停在哪页）。 */
+/* 設定對話框（文獻庫頁和閱讀頁共用）：外殼、分頁、儲存。
+   頁：模型（翻譯和問 AI 合在一起，settings-chat.js）、閱讀 / 側邊欄 / 快捷鍵（settings-tabs.js 等）。
+   本檔案裡的 engine 不再單獨成頁，只留它的 collect：存的時候從 cfg 取翻譯設定。
+   PR.openSettings("keys") 直接打開某一頁；不指定就從“模型”頁開始（不記上次停在哪頁）。 */
 (function (PR) {
   "use strict";
   const dlg = () => PR.$("#settingsDlg");
   const ALL_TABS = [["chat", PR.t("模型")], ['usage', PR.t('額度與用量')], ["reading", PR.t("阅读")], ["library", PR.t("侧边栏")], ["cloud", PR.t("云文献库")], ["keys", PR.t("快捷键")]];
-  const tabs = () => ALL_TABS.filter(([k]) => PR.settingsTabs[k]);  // “侧边栏”页只在文献库页面有
+  const tabs = () => ALL_TABS.filter(([k]) => PR.settingsTabs[k]);  // “側邊欄”頁只在文獻庫頁面有
   PR.settingsTabs = PR.settingsTabs || {};
   const st = (PR.settingsState = { tab: "chat", cfg: null, presets: [], groups: [], found: null, chat: null, ui: null });
 
@@ -20,7 +20,7 @@
       theme: PR.ls.get("paperdesk-prefs", {}).theme || "auto", darkPalette: PR.darkPalette(PR.ls.get("paperdesk-prefs", {}).darkPalette), recording: null, editing: null, form: null, chatKeys: null, type: null, transChecked: false, pinned: false });
     render();
     dlg().classList.add("open");
-    // 每次打开都问一次（后端有缓存，很快）：刚装好或更新了 Claude Code / Codex，版本号和模型名单马上跟上
+    // 每次打開都問一次（後端有快取，很快）：剛裝好或更新了 Claude Code / Codex，版本號和模型名單馬上跟上
     const r = await PR.api("/api/engines").catch(() => null);
     if (r && (JSON.stringify([r.found, r.models]) !== JSON.stringify([st.found, st.models]))) {
       st.found = r.found; st.models = r.models;
@@ -94,15 +94,15 @@
     Object.assign(prefs, appearance); PR.ls.set("paperdesk-prefs", prefs);
     if (PR.prefs) Object.assign(PR.prefs, appearance);
     PR.applyTheme(st.theme, st.darkPalette);
-    if (st.type) {  // 排版：阅读页里立刻生效；文献库页只存起来
+    if (st.type) {  // 排版：閱讀頁裡立刻生效；文獻庫頁只存起來
       PR.ls.set("paperdesk-prefs", Object.assign(PR.ls.get("paperdesk-prefs", {}), st.type));
       if (PR.resetAllType) PR.resetAllType(st.type); else PR.savePrefs("reader", st.type);
     }
-    if (st.target && st.target !== PR.target) {  // 译文语言存在 config.json，按钮文字跟着变，所以也刷新一下
+    if (st.target && st.target !== PR.target) {  // 譯文語言存在 config.json，按鈕文字跟著變，所以也重新整理一下
       await PR.api("/api/config", { method: "POST", body: { target: st.target } });
       if (!st.lang || st.lang === PR.langChoice) return location.reload();
     }
-    if (st.lang && st.lang !== PR.langChoice) {  // 换界面语言：存好后刷新，页面由后端按新语言重新生成
+    if (st.lang && st.lang !== PR.langChoice) {  // 換介面語言：存好後重新整理，頁面由後端按新語言重新生成
       await PR.api("/api/prefs", { method: "POST", body: { ui: { lang: st.lang } } });
       return location.reload();
     }
@@ -141,11 +141,11 @@
     if (e.key === "Escape") { restoreAppearance(); dlg().classList.remove("open"); }
   }, true);
 
-  /* ---------- 翻译设置：存的时候从 cfg 取（页面在 settings-chat.js，改动随时写回 cfg） ---------- */
+  /* ---------- 翻譯設定：存的時候從 cfg 取（頁面在 settings-chat.js，改動隨時寫回 cfg） ---------- */
   PR.settingsTabs.engine = {
     collect(state) {
       const c = state.cfg, o = c.openai;
-      return { engine: c.engine, batch_pages: c.batch_pages, concurrency: c.concurrency, page_cap: c.page_cap, auto_translate: c.auto_translate,
+      return { engine: c.engine, batch_pages: c.batch_pages, concurrency: c.concurrency, page_cap: c.page_cap, auto_translate: c.auto_translate, translate_images: c.translate_images !== false,
         claude: { model: c.claude.model, reasoning_effort: c.claude.reasoning_effort || "" },
         codex: { model: c.codex.model, reasoning_effort: c.codex.reasoning_effort || "", service_tier: c.codex.service_tier || "" },
         openai: { preset: o.preset, base_url: o.base_url, api: o.api, model: o.model, api_key: o.api_key, vision: o.vision,

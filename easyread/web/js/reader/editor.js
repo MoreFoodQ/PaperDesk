@@ -1,4 +1,4 @@
-/* 改译文：双击一段或按 E，原地变成编辑框。草稿随手存在浏览器里，误关页面也能找回。 */
+/* 改譯文：按兩下一段或按 E，原地變成編輯框。草稿隨手存在瀏覽器裡，誤關頁面也能找回。 */
 (function (PR) {
   "use strict";
   PR.editingKey = null;
@@ -56,7 +56,7 @@
     PR.editZh(zh);
   });
 
-  /* 我改过、译者稿后来又变了 */
+  /* 我改過、譯者稿後來又變了 */
   PR.showStale = function (zh) {
     const key = zh.dataset.key;
     const agent = PR.agentText(key);
@@ -74,7 +74,7 @@
     };
   };
 
-  /* 术语一键替换：在我的版本里把旧译法换成新译法（写成我的修改，不动译者稿） */
+  /* 術語一鍵替換：在我的版本里把舊譯法換成新譯法（寫成我的修改，不動譯者稿） */
   PR.replaceTerm = function (from, to, dryRun) {
     if (!from || from === to) return 0;
     const esc = from.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -84,7 +84,7 @@
     for (const b of PR.state.paper.blocks || []) {
       for (const key of PR.blockKeys(b)) {
         const cur = PR.textFor(key);
-        const parts = cur.split(/(\$[^$]*\$)/);  // 公式里不替换
+        const parts = cur.split(/(\$[^$]*\$)/);  // 公式裡不替換
         let hits = 0;
         const next = parts.map((p, i) => (i % 2 ? p : p.replace(re, () => { hits++; return to; }))).join("");
         if (!hits) continue;

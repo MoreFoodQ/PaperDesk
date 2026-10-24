@@ -1,4 +1,4 @@
-"""从 PDF 图像和矢量路径确定图的范围，题注只用于关联，不限制图所在的栏。"""
+"""從 PDF 圖像和矢量路徑確定圖的範圍，題注只用於關聯，不限制圖所在的欄。"""
 from __future__ import annotations
 
 import math
@@ -66,7 +66,7 @@ def _groups(boxes, aspect, gap):
 
 
 def _blank_fill(obj):
-    """只填充不描边、填的是白色（页面底色）的路径：PDF 常用它铺背景，页面上看不见。"""
+    """只填充不描邊、填的是白色（頁面底色）的路徑：PDF 常用它鋪背景，頁面上看不見。"""
     color = obj.get("non_stroking_color")
     if not obj.get("fill") or obj.get("stroke") or not isinstance(color, (tuple, list)) or not color:
         return False
@@ -83,13 +83,13 @@ def _separator(box):
 
 
 def _separators(page):
-    """页眉横线、栏间竖线这类分隔线；渲染判断可见范围时也要抹掉，免得图片白边靠它撑到页眉。"""
+    """頁眉橫線、欄間豎線這類分隔線；渲染判斷可見範圍時也要抹掉，免得圖片白邊靠它撐到頁眉。"""
     boxes = [_box(obj, page) for obj in page.lines + page.rects]
     return [b for b in boxes if b and _separator(b)]
 
 
 def _clear_gap(a, b, blockers):
-    """两块图形之间没有正文或别的题注隔开。"""
+    """兩塊圖形之間沒有正文或別的題注隔開。"""
     if a[3] <= b[1] or b[3] <= a[1]:
         gap = [min(a[0], b[0]), min(a[3], b[3]), max(a[2], b[2]), max(a[1], b[1])]
     else:
@@ -102,7 +102,7 @@ def _graphics(page, occupied, captions, visible):
     images = []
     for obj in page.images:
         box = _box(obj, page)
-        box = visible(box) if box else None  # 图片自带的白边不算图
+        box = visible(box) if box else None  # 圖片自帶的白邊不算圖
         if box and _area(box) < .8 and box[3] > .06 and box[1] < .94 \
                 and box[2] - box[0] >= .04 and box[3] - box[1] >= .025 \
                 and not (box[2] - box[0] < .2 and box[3] - box[1] < .08 and _covered(box, occupied)):
@@ -121,14 +121,14 @@ def _graphics(page, occupied, captions, visible):
         box = visible([max(0, box[0] - .001), max(0, box[1] - .001),
                        min(1, box[2] + .001), min(1, box[3] + .001)])
         if not box:
-            continue  # 被裁剪路径挡住或画成底色，页面上看不见
+            continue  # 被裁剪路徑擋住或畫成底色，頁面上看不見
         if _covered(box, occupied + images) or _covered(box, captions, .5) \
                 or any(_covered(cap, [box], .8) for cap in captions):
             continue
         paths.append(box)
     vectors = _groups(paths, page.width / page.height, .008)
     large = [b for b in vectors if b[2] - b[0] >= .045 and b[3] - b[1] >= .025]
-    # 太小的组（勾叉记号、虚线分隔）不单独当图，但能像标签一样把图里分开的几块连起来。
+    # 太小的組（勾叉記號、虛線分隔）不單獨當圖，但能像標籤一樣把圖裡分開的幾塊連起來。
     return images + large, [b for b in vectors if b not in large]
 
 
@@ -150,7 +150,7 @@ def _page_regions(page, captions, occupied, render, running=()):
     top, bottom = page_margins.margins(separators, running)
     masks = render(all_words + separators)
     if masks is None:
-        return {}  # 渲染不了就无法确认哪些图形看得见，交给题注估算
+        return {}  # 渲染不了就無法確認哪些圖形看得見，交給題注估算
     mask, ink = masks
     graphics, marks = _graphics(page, occupied, [c["box"] for c in captions.values()],
                                 lambda box: figure_pixels.trim(mask, box))
@@ -161,7 +161,7 @@ def _page_regions(page, captions, occupied, render, running=()):
             assigned[bid].append(graphic)
 
     result = {}
-    # 页眉页脚里的字不能当图的标签。
+    # 頁眉頁腳裡的字不能當圖的標籤。
     words = [b for b in all_words if b[3] > top + .002 and b[1] < bottom - .002
              and not _covered(b, occupied) and figure_pixels.inked(ink, b)]
     marks = [b for b in marks if b[3] > top + .002 and b[1] < bottom - .002]
@@ -176,7 +176,7 @@ def _page_regions(page, captions, occupied, render, running=()):
         others = [c["box"] for key, c in captions.items() if key != bid]
         # A distant top row belongs to the same figure when it connects to the
         # bottom row. Do not require every panel to be near the caption itself.
-        # 隔着空白、但中间没有正文的上一排子图也算同一张图。
+        # 隔著空白、但中間沒有正文的上一排子圖也算同一張圖。
         while True:
             near = [b for b in candidates if b not in selected and
                     any(_distance(b, chosen, aspect) <= .045 or _distance(b, chosen, aspect) <= .2
@@ -187,7 +187,7 @@ def _page_regions(page, captions, occupied, render, running=()):
 
         # Vector plots can put labels just outside their paths. Keep those labels,
         # while excluding body paragraphs and captions belonging to other figures.
-        # 标签可以一个挨一个连出去（图里的小标题、坐标轴说明常是 PDF 文字）。
+        # 標籤可以一個挨一個連出去（圖裡的小標題、座標軸說明常是 PDF 文字）。
         labels, pending = [], [b for b in words + marks if not _covered(b, others)]
         while True:
             near = [b for b in pending if any(_distance(b, g, aspect) <= .03 for g in selected + labels)]
@@ -197,7 +197,7 @@ def _page_regions(page, captions, occupied, render, running=()):
             pending = [b for b in pending if b not in near]
         bounds = _bounds(selected + labels + [caption["box"]])
         cap, drawing = caption["box"], _bounds(selected)
-        # 题注整个在图下方（或上方）时，图框不越过题注继续往外扩；侧边题注和图上下重叠，不受限。
+        # 題注整個在圖下方（或上方）時，圖框不越過題注繼續往外擴；側邊題注和圖上下重疊，不受限。
         if caption.get("caption_pos", "below") == "below":
             if cap[1] >= drawing[3] - .01:
                 bounds[3] = cap[3]
@@ -209,7 +209,7 @@ def _page_regions(page, captions, occupied, render, running=()):
 
 
 def locate_figures(root: Path, blocks: list[dict], layout: dict) -> dict[str, list[float]]:
-    """没有可靠图形边界时返回空结果，让原有题注估算规则继续工作。"""
+    """沒有可靠圖形邊界時回傳空結果，讓原有題注估算規則繼續工作。"""
     by_page = {}
     caption_ids = {b.get("id") for b in blocks if b.get("type") in ("figure", "table")}
     for block in blocks:

@@ -1,4 +1,4 @@
-"""启动本地服务：只监听 127.0.0.1，记下地址给命令行复用；start.cmd / start.sh 启动时页面都关了就退出。"""
+"""啟動僅監聽 127.0.0.1 的服務；啟動器可指定頁面全部關閉後自動結束。"""
 from __future__ import annotations
 
 import os
@@ -16,7 +16,7 @@ from .store import now_iso, read_json, write_json_atomic
 
 
 class _Server(ThreadingHTTPServer):
-    # Windows 上 SO_REUSEADDR 会让两个进程同时占住 8765，浏览器随机连到其中一个（比如旧版本）
+    # Windows 上 SO_REUSEADDR 會讓兩個行程同時佔住 8765，瀏覽器隨機連到其中一個（比如舊版本）
     allow_reuse_address = os.name != "nt"
     slots = threading.BoundedSemaphore(32)
 
@@ -38,7 +38,7 @@ class _Server(ThreadingHTTPServer):
 
 
 def serve(port: int | None = None, open_browser: bool = False, path: str = "/", exit_on_close: bool = False):
-    """exit_on_close：start.cmd / start.sh 启动时为真，页面都关了、后台任务也做完了就退出。"""
+    """exit_on_close 為 True 時，等待所有頁面離線且背景工作完成後結束。"""
     setup_log(config.LOG_PATH)
     started = time.monotonic()
     cfg = config.load()
@@ -62,7 +62,7 @@ def serve(port: int | None = None, open_browser: bool = False, path: str = "/", 
         if os.name != 'nt':
             config.SERVER_INFO.chmod(0o600)
     log.info("EasyRead %s 已启动：%s  文献库：%s", __version__, url, app.lib.root)
-    print(f"EasyRead 已启动：{url}  文献库：{app.lib.root}", flush=True)  # i18n-ok Electron 和 smoke_backend 用正则匹配这行
+    print(f"EasyRead 已启动：{url}  文献库：{app.lib.root}", flush=True)  # i18n-ok Electron 和 smoke_backend 用正則匹配這行
     if open_browser:
         threading.Timer(0.4, lambda: webbrowser.open(url + '/auth?session=' + app.token + '&next=' + quote(path, safe=''))).start()
     try:
@@ -73,4 +73,4 @@ def serve(port: int | None = None, open_browser: bool = False, path: str = "/", 
         app.location.marker.close()
         httpd.server_close()
         if not config.temp_library() and (read_json(config.SERVER_INFO, {}) or {}).get("pid") == os.getpid():
-            config.SERVER_INFO.unlink(missing_ok=True)  # 下次 easyread 命令不会去连一个已经关掉的服务
+            config.SERVER_INFO.unlink(missing_ok=True)  # 下次 easyread 命令不會去連一個已經關掉的服務

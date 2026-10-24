@@ -1,9 +1,9 @@
-/* 导出引用：导出哪些论文由批量操作（batch.js）或侧栏分类决定；这里选格式、选顺序（作者 / 年份 / 自己拖）、预览、复制。 */
+/* 匯出引用：匯出哪些論文由批量操作（batch.js）或側欄分類決定；這裡選格式、選順序（作者 / 年份 / 自己拖）、預覽、複製。 */
 (function (PR) {
   "use strict";
   const L = PR.lib, dlg = PR.$("#citeExportDlg");
   const styles = [["gb", "GB/T 7714"], ["apa", "APA"], ["bibtex", "BibTeX"], ["zotero", "Zotero RDF"]];
-  // 学位论文多用顺序编码制：按正文里第一次引用的先后编号，所以要能自己排
+  // 學位論文多用順序編碼制：按正文裡第一次引用的先後編號，所以要能自己排
   const ORDERS = [["author", PR.t("按作者")], ["year", PR.t("按年份")], ["custom", PR.t("自己排（拖动）")]];
   let items = [], style = "gb", order = "author", title = "", previousFocus = null, dragging = -1;
   const $ = (selector) => PR.$(selector, dlg);
@@ -69,7 +69,7 @@
     if (sel && sel.value !== order) sel.value = order;
   }
 
-  /* 拖一行到另一行的位置：顺序自动切到“自己排” */
+  /* 拖一行到另一行的位置：順序自動切到“自己排” */
   PR.citeMove = function (from, to) {
     if (from === to || from < 0 || to < 0 || from >= items.length || to >= items.length) return;
     const [moved] = items.splice(from, 1);

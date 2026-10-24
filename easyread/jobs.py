@@ -1,5 +1,5 @@
-"""后台任务：导入后的渲染与整篇翻译（一条队列，状态落在每篇的 job.json，重启后接着做），
-以及“让模型回答我的问题 / 重译这段”这类小任务（另一条队列，不用等整篇翻译）。"""
+"""背景任務：匯入後的渲染與整篇翻譯（一條佇列，狀態落在每篇的 job.json，重新啟動後接著做），
+以及“讓模型回答我的問題 / 重譯這段”這類小任務（另一條佇列，不用等整篇翻譯）。"""
 from __future__ import annotations
 
 import queue
@@ -7,7 +7,7 @@ import threading
 import time
 from uuid import uuid4
 
-from . import chat_models, config, langs, translate, usage
+from . import chat_models, config, figure_translation, langs, translate, usage
 from .engines import Cancelled, EngineError
 from .i18n import tr
 from .library import Library
@@ -16,14 +16,14 @@ from .store import Workspace, now_iso
 
 
 def engine_for(cfg: dict, model: str | None) -> dict:
-    """导入时选了“问 AI”名单里的模型就用它，否则用设置里的翻译引擎。名单里已经没有这个模型了，也用翻译引擎。"""
+    """匯入時選了“問 AI”名單裡的模型就用它，否則用設定裡的翻譯引擎。名單裡已經沒有這個模型了，也用翻譯引擎。"""
     m = next((x for x in chat_models.models(cfg) if x.get("id") == model), None) if model else None
     if not m:
         return cfg
     out, _ = chat_models.engine_cfg(cfg, model)
     o = cfg.get("openai") or {}
     if m["engine"] == "openai" and m.get("preset") == o.get("preset") and (m.get("model") or o.get("model")) == o.get("model"):
-        out["openai"]["vision"] = o.get("vision", False)  # 和翻译引擎是同一个模型：沿用“模型能看图”
+        out["openai"]["vision"] = o.get("vision", False)  # 和翻譯引擎是同一個模型：沿用“模型能看圖”
     return out
 
 
@@ -33,7 +33,7 @@ class Jobs:
         self.bulk: queue.Queue[str] = queue.Queue()
         self.small: queue.Queue[dict] = queue.Queue()
         self.cancels: dict[str, threading.Event] = {}
-        self.recent: list[dict] = []  # 小任务的状态，给页面轮询
+        self.recent: list[dict] = []  # 小任務的狀態，給頁面輪詢
         self.lock = threading.Lock()
         self._resume()
         for target in (self._bulk_loop, self._small_loop):
@@ -47,12 +47,19 @@ class Jobs:
         ws.update("job", apply)
 
     def enqueue(self, ws: Workspace, pages: list[int] | None = None, translate_after: bool = True, scope: str | None = None,
-                read: bool = False, model: str = "", confirmed: bool = False, target: str = "", cap_check: bool = False):
-        """pages=None：按 scope（all / body / range:A-B / first:N）翻译还没译的页。
-        read：只读原文，用模型把页整理成段落、公式、表格，不翻译；之后再翻译时就地补中文。
-        model：用“问 AI”名单里的哪个模型（导入时选的）；空着用设置里的翻译引擎。
-        confirmed：只接受真正的 True；target：续跑时保留原任务的译文语言。
-        cap_check：pages 来自系统计划而非用户指定，仍检查页数上限并跳过已完成页。"""
+                read: bool = False, model: str = "", confirmed: bool = False, target: str = "", cap_check: bool = False,
+                translate_images: bool | None = None, images_only: bool = False, fill_skipped_images: bool | None = None):
+        """pages=None：按 scope（all / body / range:A-B / first:N）翻譯還沒譯的頁。
+        read：閱讀原文，用模型把頁整理成段落、公式、表格，不翻譯；之後再翻譯時就地補中文。
+        model：用“問 AI”名單裡的哪個模型（匯入時選的）；空著用設定裡的翻譯引擎。
+        confirmed：只接受真正的 True；target：續跑時保留原任務的譯文語言。
+        cap_check：pages 來自系統計劃而非使用者指定，仍檢查頁數上限並跳過已完成頁。"""
+        if translate_images is None:
+            translate_images = figure_translation.enabled(config.load())
+        if type(translate_images) is not bool or type(images_only) is not bool:
+            raise ValueError("Figure translation options must be boolean")
+        if fill_skipped_images is None:
+            fill_skipped_images = pages is None or cap_check or images_only
         target = langs.valid(target) if target else langs.of_paper((ws.load("paper") or {}).get("meta"))
         def apply(job):
             if job.get("state") in ("queued", "running"):
@@ -60,6 +67,7 @@ class Jobs:
             job.update(type="read" if read and translate_after else "translate" if translate_after else "prepare",
                        state="queued", message=tr("排队中"), pages=pages, scope=scope or "all", translate=translate_after, read=read, model=model or "",
                        confirmed=confirmed is True, target=target, cap_check=cap_check is True,
+                       translate_images=translate_images, images_only=images_only, fill_skipped_images=fill_skipped_images,
                        done=0, total=0, error="", failed={}, updated=now_iso(), usage={})
             job.pop("page_cap", None)
         with self.lock:
@@ -116,7 +124,8 @@ class Jobs:
                     self.cancels.pop(pid, None)
 
     def _run_bulk(self, ws: Workspace, job: dict, cancel: threading.Event):
-        cfg = engine_for(config.load(), job.get("model"))
+        cfg = dict(engine_for(config.load(), job.get("model")))
+        cfg["translate_images"] = job.get("translate_images", True)
         if job.get("target"):
             cfg = {**cfg, "target": langs.valid(job["target"])}
         if cancel.is_set():
@@ -133,18 +142,25 @@ class Jobs:
         paper = ws.load("paper")
         all_pages = [p["n"] for p in paper["meta"]["pages"]]
         tl = paper.get("translation", {})
-        # 只读原文：跳过已经整理过（或已经译过）的页；翻译：跳过已经有译文的页，只有原文的页会补译文
+        # 閱讀原文：跳過已經整理過（或已經譯過）的頁；翻譯：跳過已經有譯文的頁，只有原文的頁會補譯文
         skip = set(tl.get("done_pages", [])) if read else set(tl.get("done_pages", [])) - set(tl.get("en_pages", []))
+        fill_skipped = job.get("fill_skipped_images", job.get("pages") is None or job.get("cap_check") or job.get("images_only"))
+        figure_pages = figure_translation.pending_pages(paper) if figure_translation.enabled(cfg) and not read and fill_skipped else set()
+        figure_pages &= set(tl.get("done_pages", [])) - set(tl.get("en_pages", []))
+        skip -= figure_pages
+        cfg["_figure_fill_pages"] = figure_pages
         planned = job.get("pages") is not None
         wanted = job["pages"] if planned else translate.scope_pages(ws, job.get("scope")) or all_pages
         pages = wanted if planned and not job.get("cap_check") else [n for n in wanted if n not in skip]
+        if job.get("images_only"):
+            pages = [n for n in pages if n in figure_pages]
         if not pages:
             self._write(ws, state="done", message=tr("选定范围已整理完") if read else tr("选定范围已译完"))
             return
 
         cap = cfg.get("page_cap", 60)
         if type(cap) is not int or cap < 0:
-            cap = 60  # 手改配置写错时仍按默认上限保护，不把错误值当作不限。
+            cap = 60  # 手改設定寫錯時仍按預設上限保護，不把錯誤值當作不限。
         check_cap = job.get("cap_check") or (not planned and (job.get("scope") or "all") in ("all", "body"))
         if cap > 0 and len(pages) > cap and check_cap and job.get("confirmed") is not True:
             with self.lock:
@@ -165,7 +181,7 @@ class Jobs:
         started = time.time()
         try:
             failed = translate.translate_pages(ws, cfg, pages, cancel, report, meter, read)
-        finally:  # 取消、出错也把已经花掉的记上
+        finally:  # 取消、出錯也把已經花掉的記上
             run = meter.snapshot()
             if run["calls"]:
                 ws.update("job", lambda j: j.update(usage=run, usage_total=usage.merge(j.get("usage_total"), run)))
@@ -180,7 +196,7 @@ class Jobs:
                         message=tr("原文整理完成（{n} 页，用时约 {m} 分钟）", n=len(pages), m=minutes) if read
                         else tr("翻译完成（{n} 页，用时约 {m} 分钟）", n=len(pages), m=minutes))
 
-    # ---------- 小任务 ----------
+    # ---------- 小任務 ----------
     def submit_small(self, kind: str, pid: str, **kw) -> dict:
         job = {"id": "j" + uuid4().hex, "kind": kind, "pid": pid, "state": "queued", "message": tr("排队中"),
                "at": now_iso(), **kw}
@@ -196,7 +212,7 @@ class Jobs:
             return [dict(j) for j in self.recent if not pid or j["pid"] == pid]
 
     def busy(self) -> bool:
-        """还有整篇翻译或小任务没做完（关页自动退出时要等它们）。"""
+        """還有整篇翻譯或小任務沒做完（關頁自動退出時要等它們）。"""
         if self.cancels or not self.bulk.empty() or not self.small.empty():
             return True
         with self.lock:
