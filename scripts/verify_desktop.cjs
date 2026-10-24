@@ -31,8 +31,10 @@ const {_electron}=require(process.env.PAPERDESK_PLAYWRIGHT||'playwright');
   const token=await page.evaluate(()=>window.PR.token);
   const headers={'X-Token':token};
   const api=async(p,opts={})=>{const r=await fetch(base+p,{...opts,headers:{...headers,...opts.headers}});assert.ok(r.ok,'HTTP '+r.status+' '+p);return r.json()};
-  const state=await app.evaluate(({app})=>({packaged:app.isPackaged,profile:app.getPath('userData')}));
+  const state=await app.evaluate(({app})=>({packaged:app.isPackaged,profile:app.getPath('userData'),version:app.getVersion(),electron:process.versions.electron}));
   assert.equal(state.packaged,true);assert.equal(path.resolve(state.profile),path.resolve(env.PAPERDESK_DESKTOP_PROFILE));
+  const expected=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
+  assert.equal(state.version,expected.version);assert.equal(state.electron,expected.devDependencies.electron);
   assert.equal(await page.evaluate(()=>typeof window.easyreadDesktop.loginCodex),'function');
   await page.evaluate(()=>window.PR.openSettings());
   await page.locator('[data-codex-login]').waitFor();assert.ok((await page.locator('[data-codex-login]').textContent()).includes('登入'));
@@ -71,13 +73,32 @@ const {_electron}=require(process.env.PAPERDESK_PLAYWRIGHT||'playwright');
    const output=await fetch(base+'/api/p/'+item.id+'/export',{headers});assert.ok(output.ok);const html=await output.text();assert.ok(html.includes('Packaged persistence note'));assert.ok(html.includes('data:image/webp;base64,'));
    fs.writeFileSync(path.join(home,item.format+'-offline.html'),html);
   }
+  // 以合成資料驗證實際安裝包的略過／已翻譯呈現，不呼叫模型。
+  for (const item of [pdf,book]) {
+    const paperPath=path.join(env.EASYREAD_HOME,'library',item.id,'paper.json');
+    const paper=JSON.parse(fs.readFileSync(paperPath,'utf8'));
+    paper.blocks=[{id:'qa-body',type:'para',page:1,en:'Synthetic body',zh:'合成正文'},
+      {id:'qa-figure',type:'figure',page:1,src:paper.meta.pages[0].img,image_en:'Score',caption_en:'Synthetic caption',caption_zh:'合成圖說',image_translation_skipped:true}];
+    paper.translation={...(paper.translation||{}),done_pages:[1],en_pages:[]};
+    fs.writeFileSync(paperPath,JSON.stringify(paper));
+    await page.goto(base+'/read/'+item.id);await page.locator('#b-qa-figure').waitFor();
+    assert.equal(await page.locator('.figure-translation').count(),0);
+    assert.equal(await page.locator('[data-t="translate-images"]').count(),0); // No model is configured in this isolated package test.
+    assert.equal(await page.evaluate(()=>window.PR.state.reader.paper_note.body),'Packaged persistence note');
+    paper.blocks[1].image_zh='分數';delete paper.blocks[1].image_translation_skipped;
+    fs.writeFileSync(paperPath,JSON.stringify(paper));
+    await page.reload();await page.locator('.figure-translation').waitFor();
+    assert.ok((await page.locator('.figure-translation').textContent()).includes('分數'));
+    assert.equal(await page.locator('[data-t="translate-images"]').count(),0);
+    assert.equal(await page.evaluate(()=>window.PR.state.reader.paper_note.body),'Packaged persistence note');
+  }
   const original=await fetch(base+'/p/'+book.id+'/source.epub',{headers});assert.deepEqual(Buffer.from(await original.arrayBuffer()),fs.readFileSync(path.join(env.EASYREAD_HOME,'fixture.epub')));
   assert.equal((await fetch(base+'/p/'+book.id+'/source.epub')).status,401);
   const captured=await app.evaluate(async({BrowserWindow})=>(await BrowserWindow.getAllWindows()[0].webContents.capturePage(undefined,{stayHidden:true,stayAwake:true})).toPNG().toString('base64'));
   fs.writeFileSync(path.join(home,'packaged-reader.png'),Buffer.from(captured,'base64'));
   assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
   assert.ok(!fs.existsSync(path.join(env.CODEX_HOME,'auth.json')));
-  fs.writeFileSync(path.join(home,'RESULT.json'),JSON.stringify({packaged:true,external_python_node_path:false,pdf_epub:true,notes_reload:true,offline_exports:true,auth:true,bundled_codex:true,live_model_calls:0},null,2));
+  fs.writeFileSync(path.join(home,'RESULT.json'),JSON.stringify({packaged:true,version:state.version,electron:state.electron,figure_visibility:true,external_python_node_path:false,pdf_epub:true,notes_reload:true,offline_exports:true,auth:true,bundled_codex:true,live_model_calls:0},null,2));
   console.log('PASS: actual packaged app without Python/Node on PATH; bundled CLI, login UI, PDF/EPUB, notes, offline exports and authentication. No live model calls.');
   console.log('Synthetic evidence: '+home);
  }finally{

@@ -1,5 +1,5 @@
 {
-  "version": "0.2.0",
+  "version": "0.3.0",
   "name": "paperdesk-desktop",
   "dependencies": {
     "electron-builder": {
@@ -331,8 +331,8 @@
                       }
                     },
                     "undici": {
-                      "version": "6.29.0",
-                      "resolved": "https://registry.npmjs.org/undici/-/undici-6.29.0.tgz",
+                      "version": "6.29.1",
+                      "resolved": "https://registry.npmjs.org/undici/-/undici-6.29.1.tgz",
                       "overridden": false
                     },
                     "which": {
@@ -598,8 +598,8 @@
                   "overridden": false
                 },
                 "fast-uri": {
-                  "version": "3.1.8",
-                  "resolved": "https://registry.npmjs.org/fast-uri/-/fast-uri-3.1.8.tgz",
+                  "version": "3.1.9",
+                  "resolved": "https://registry.npmjs.org/fast-uri/-/fast-uri-3.1.9.tgz",
                   "overridden": false
                 },
                 "json-schema-traverse": {
@@ -1750,8 +1750,8 @@
       }
     },
     "electron": {
-      "version": "44.5.1",
-      "resolved": "https://registry.npmjs.org/electron/-/electron-44.5.1.tgz",
+      "version": "44.9.3",
+      "resolved": "https://registry.npmjs.org/electron/-/electron-44.9.3.tgz",
       "overridden": false,
       "dependencies": {
         "@electron-internal/extract-zip": {
@@ -1794,8 +1794,8 @@
               }
             },
             "undici": {
-              "version": "7.30.0",
-              "resolved": "https://registry.npmjs.org/undici/-/undici-7.30.0.tgz",
+              "version": "7.30.1",
+              "resolved": "https://registry.npmjs.org/undici/-/undici-7.30.1.tgz",
               "overridden": false
             }
           }

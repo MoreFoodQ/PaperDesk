@@ -55,10 +55,13 @@ def check(root=ROOT):
 
 def build(root=ROOT):
     paths = check(root)
-    manifest = {'version': '0.2.0', 'edition': 'windows-source', 'files': {
+    version = json.loads((root/'package.json').read_text(encoding='utf-8')).get('version', '')
+    if not isinstance(version, str) or not re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+(?:-[A-Za-z0-9.-]+)?', version):
+        raise ValueError('Invalid release version in package.json')
+    manifest = {'version': version, 'edition': 'windows-source', 'files': {
         p.relative_to(root).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}}
     out = root/'outputs'; out.mkdir(exist_ok=True)
-    archive = out/'paperdesk-0.2.0-source.zip'
+    archive = out/f'paperdesk-{version}-source.zip'
     with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED) as z:
         for path in paths:
             info = zipfile.ZipInfo('paperdesk/'+path.relative_to(root).as_posix(), (2026, 10, 11, 0, 0, 0))
