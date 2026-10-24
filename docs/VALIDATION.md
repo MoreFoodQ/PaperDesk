@@ -142,3 +142,12 @@ Full regressions: 390 Python tests and 122 JavaScript tests passed. Browser test
 used structured model substitutes for PDF/EPUB and checked live/offline rendering,
 original-label and crop preservation, note persistence and responsive layouts.
 Source privacy checks also passed. No new live model request was made for this fix.
+
+## CI YAML parsing correction (2026-10-24)
+
+The dependency installation command contained `: ` in an unquoted YAML scalar
+(`--only-binary=:all: -r`). The local YAML parser reproduced an error at line 34,
+before GitHub could create test jobs. The command now uses a block scalar so its
+contents are passed unchanged to PowerShell. Both workflow files parse locally.
+This is independent of the earlier runner-context fix and does not change the
+application or dependency versions. The PR checks provide remote execution results.
