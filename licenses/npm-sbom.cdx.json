@@ -5,7 +5,7 @@
   "serialNumber": "urn:uuid:***",
   "version": 1,
   "metadata": {
-    "timestamp": "2026-10-12T16:45:41.236Z",
+    "timestamp": "2026-10-24T13:08:20.679Z",
     "lifecycles": [
       {
         "phase": "build"
@@ -19,14 +19,14 @@
       }
     ],
     "component": {
-      "bom-ref": "paperdesk-desktop@0.2.0",
+      "bom-ref": "paperdesk-desktop@0.3.0",
       "type": "library",
       "name": "PaperDesk",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "scope": "required",
       "author": "MoreFoodQ",
       "description": "PaperDesk: Traditional Chinese research workbench with Codex CLI",
-      "purl": "pkg:npm/paperdesk-desktop@0.2.0",
+      "purl": "pkg:npm/paperdesk-desktop@0.3.0",
       "properties": [
         {
           "name": "cdx:npm:package:private",
@@ -3305,14 +3305,14 @@
       ]
     },
     {
-      "bom-ref": "electron@44.5.1",
+      "bom-ref": "electron@44.9.3",
       "type": "library",
       "name": "electron",
-      "version": "44.5.1",
+      "version": "44.9.3",
       "scope": "optional",
       "author": "Electron Community",
       "description": "Build cross platform desktop apps with JavaScript, HTML, and CSS",
-      "purl": "pkg:npm/electron@44.5.1",
+      "purl": "pkg:npm/electron@44.9.3",
       "properties": [
         {
           "name": "cdx:npm:package:development",
@@ -3322,13 +3322,13 @@
       "externalReferences": [
         {
           "type": "distribution",
-          "url": "https://registry.npmjs.org/electron/-/electron-44.5.1.tgz"
+          "url": "https://registry.npmjs.org/electron/-/electron-44.9.3.tgz"
         }
       ],
       "hashes": [
         {
           "alg": "SHA-512",
-          "content": "971ec06281488b2bc4be0be9c963bd90e0bad31b4d3e988f640b61e859a0f4dbadce908030bc295256816361177d9c888147731262cc8fd2af2b456ba24975c9"
+          "content": "0aff7fc8c9d9c4d5ac32521ef13e2ffff34a1dd52f6deca84c9a17137048711c6eb3699e78568ef61fcfdf30797787015ee9b9d4880062b4f6423a480d62a924"
         }
       ],
       "licenses": [
@@ -4068,14 +4068,14 @@
       ]
     },
     {
-      "bom-ref": "fast-uri@3.1.8",
+      "bom-ref": "fast-uri@3.1.9",
       "type": "library",
       "name": "fast-uri",
-      "version": "3.1.8",
+      "version": "3.1.9",
       "scope": "optional",
       "author": "Vincent Le Goff <vince.legoff@gmail.com> (https://github.com/zekth)",
       "description": "Dependency-free RFC 3986 URI toolbox",
-      "purl": "pkg:npm/fast-uri@3.1.8",
+      "purl": "pkg:npm/fast-uri@3.1.9",
       "properties": [
         {
           "name": "cdx:npm:package:development",
@@ -4085,7 +4085,7 @@
       "externalReferences": [
         {
           "type": "distribution",
-          "url": "https://registry.npmjs.org/fast-uri/-/fast-uri-3.1.8.tgz"
+          "url": "https://registry.npmjs.org/fast-uri/-/fast-uri-3.1.9.tgz"
         },
         {
           "type": "vcs",
@@ -4103,7 +4103,7 @@
       "hashes": [
         {
           "alg": "SHA-512",
-          "content": "19932d6544cd4693952040a85f02cd652e7150613e99535b4c1f21ffb4708764c559c05088fcd3832662d39045f543192a42c9bfc5c14494e553bce0f3e65f32"
+          "content": "852ff45addd86b4e37a0a5ecd2c231acca4a4084d784c2c8ad500a2978b8828cc60bdbfb6115959d7219ce334f4ced3633d05dc4b096a8ad7245780dce257225"
         }
       ],
       "licenses": [
@@ -6144,13 +6144,13 @@
       ]
     },
     {
-      "bom-ref": "undici@6.29.0",
+      "bom-ref": "undici@6.29.1",
       "type": "library",
       "name": "undici",
-      "version": "6.29.0",
+      "version": "6.29.1",
       "scope": "optional",
       "description": "An HTTP/1.1 client, written from scratch for Node.js",
-      "purl": "pkg:npm/undici@6.29.0",
+      "purl": "pkg:npm/undici@6.29.1",
       "properties": [
         {
           "name": "cdx:npm:package:development",
@@ -6160,7 +6160,7 @@
       "externalReferences": [
         {
           "type": "distribution",
-          "url": "https://registry.npmjs.org/undici/-/undici-6.29.0.tgz"
+          "url": "https://registry.npmjs.org/undici/-/undici-6.29.1.tgz"
         },
         {
           "type": "vcs",
@@ -6178,7 +6178,7 @@
       "hashes": [
         {
           "alg": "SHA-512",
-          "content": "47e44e0c1aa9ea2da93df94676afb120e52497e44d7c6807c288a779c2aefc90ae7f6b8ed3a70e2a80db2363fb0e7e8a72cc1d2b0adccdb53a21827a2bc5fec2"
+          "content": "12f46552dfd0a8012f5dd41e44c6147f0390b1fce90f3b7292b1b6a3018413fac1381a18bfdb85dfd673b0d0e1e254c51e14ebd973998ca91882e783d7666618"
         }
       ],
       "licenses": [
@@ -8462,13 +8462,13 @@
       ]
     },
     {
-      "bom-ref": "undici@7.30.0",
+      "bom-ref": "undici@7.30.1",
       "type": "library",
       "name": "undici",
-      "version": "7.30.0",
+      "version": "7.30.1",
       "scope": "optional",
       "description": "An HTTP/1.1 client, written from scratch for Node.js",
-      "purl": "pkg:npm/undici@7.30.0",
+      "purl": "pkg:npm/undici@7.30.1",
       "properties": [
         {
           "name": "cdx:npm:package:development",
@@ -8478,7 +8478,7 @@
       "externalReferences": [
         {
           "type": "distribution",
-          "url": "https://registry.npmjs.org/undici/-/undici-7.30.0.tgz"
+          "url": "https://registry.npmjs.org/undici/-/undici-7.30.1.tgz"
         },
         {
           "type": "vcs",
@@ -8496,7 +8496,7 @@
       "hashes": [
         {
           "alg": "SHA-512",
-          "content": "764ad05de1d26a86a69c8b6561b9b31b4c0562b3346700f108883403b68a8d3cb2861f6cbd1cc234513357e566d39ff27a18c2ce30d9df52977c6123612ced0d"
+          "content": "d372ab31b8c814359047944d3eb4b0ddb775af5d89a7215097dff2c6351b26daa48e6965a82e65163661eae8deb8908aafc10e42f456f3bd8ecbf6b3fa72d8c6"
         }
       ],
       "licenses": [
@@ -9186,9 +9186,9 @@
   ],
   "dependencies": [
     {
-      "ref": "paperdesk-desktop@0.2.0",
+      "ref": "paperdesk-desktop@0.3.0",
       "dependsOn": [
-        "electron@44.5.1",
+        "electron@44.9.3",
         "electron-builder@26.15.3"
       ]
     },
@@ -9247,7 +9247,7 @@
         "progress@2.0.3",
         "semver@7.8.5",
         "sumchecker@3.0.1",
-        "undici@7.30.0"
+        "undici@7.30.1"
       ]
     },
     {
@@ -9419,7 +9419,7 @@
       "ref": "ajv@8.20.0",
       "dependsOn": [
         "fast-deep-equal@3.1.3",
-        "fast-uri@3.1.8",
+        "fast-uri@3.1.9",
         "json-schema-traverse@1.0.0",
         "require-from-string@2.0.2"
       ]
@@ -9719,7 +9719,7 @@
       ]
     },
     {
-      "ref": "electron@44.5.1",
+      "ref": "electron@44.9.3",
       "dependsOn": [
         "@electron-internal/extract-zip@1.0.5",
         "@electron/get@5.1.0",
@@ -9840,7 +9840,7 @@
       "dependsOn": []
     },
     {
-      "ref": "fast-uri@3.1.8",
+      "ref": "fast-uri@3.1.9",
       "dependsOn": []
     },
     {
@@ -10117,7 +10117,7 @@
         "semver@7.8.5",
         "tar@7.5.22",
         "tinyglobby@0.2.17",
-        "undici@6.29.0",
+        "undici@6.29.1",
         "which@6.0.1"
       ]
     },
@@ -10130,7 +10130,7 @@
       "dependsOn": []
     },
     {
-      "ref": "undici@6.29.0",
+      "ref": "undici@6.29.1",
       "dependsOn": []
     },
     {
@@ -10444,7 +10444,7 @@
       "dependsOn": []
     },
     {
-      "ref": "undici@7.30.0",
+      "ref": "undici@7.30.1",
       "dependsOn": []
     },
     {

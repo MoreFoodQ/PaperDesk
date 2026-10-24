@@ -1,6 +1,6 @@
 # Document formats
 
-PaperDesk 0.2.0 supports PDF and a bounded subset of reflowable EPUB 2/3. Local file selection, drag-and-drop, and file paste accept both formats. URL, DOI, arXiv, and title lookup continue to retrieve PDFs.
+PaperDesk 0.3.0 supports PDF and a bounded subset of reflowable EPUB 2/3. Local file selection, drag-and-drop, and file paste accept both formats. URL, DOI, arXiv, and title lookup continue to retrieve PDFs.
 
 ## EPUB behavior
 

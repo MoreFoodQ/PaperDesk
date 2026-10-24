@@ -161,3 +161,30 @@ The expected fixture path now uses resolve() before comparison. The assertion
 still verifies the exact bundled executable and rejects a global CLI fallback;
 application code and packaging behavior are unchanged. The three local packaged
 runtime regressions passed before the correction was pushed for remote validation.
+
+
+## Windows 0.3.0 release validation (2026-10-24)
+
+The installer uses Electron 44.9.3, Python 3.12.10 and native Codex CLI
+0.162.1. Electron, fast-uri and undici were updated to patched versions;
+the locked npm dependency audit reported zero known vulnerabilities at build time.
+This audit does not guarantee that no undiscovered vulnerability exists.
+
+Validation completed on Windows 11 x64:
+
+- 393 Python tests and 122 JavaScript tests passed.
+- Version consistency, dynamic source ZIP versioning and invalid version rejection passed.
+- Packaged-file privacy, native CLI hashes and runtime license notices passed.
+- Both the unpacked build and installed application passed isolated PDF/EPUB,
+  note persistence, authenticated originals, offline export, drawer and shutdown checks.
+- Synthetic skipped figure labels stayed hidden; translated labels appeared again
+  without changing saved notes. No model was configured in this package check;
+  interactive fill workflows are covered by the earlier feature validation.
+- Silent installation to a path containing spaces, same-version reinstallation
+  and uninstallation succeeded. Both synthetic note stores remained byte-identical.
+- No live model calls were made. Personal libraries and login credentials were
+  excluded from the test profile and release artifacts.
+
+The installer is unsigned. This is a development-host check with Python/Node
+removed from the application PATH, not a fresh Windows VM test. Cross-version
+upgrades, macOS and Linux installers were not validated in this release run.

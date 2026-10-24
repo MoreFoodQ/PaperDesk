@@ -1,6 +1,6 @@
 {
   "name": "paperdesk-desktop",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "PaperDesk: Traditional Chinese research workbench with Codex CLI",
   "main": "electron/main.cjs",
   "private": true,
@@ -12,7 +12,7 @@
     "build:runtime": "python scripts/prepare_desktop_runtime.py"
   },
   "devDependencies": {
-    "electron": "44.5.1",
+    "electron": "44.9.3",
     "electron-builder": "26.15.3"
   },
   "build": {
