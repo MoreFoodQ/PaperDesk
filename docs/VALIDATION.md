@@ -114,3 +114,31 @@ require separate compatibility and behavior changes. Runtime dependencies, packa
 versions, personal libraries and existing installer binaries were not changed.
 The JavaScript tree comparison has one reviewed test-only exception: the palette
 test's source delimiter was replaced with code declarations rather than comment text.
+
+## Skipped figure-label visibility (2026-10-24)
+
+| Problem | Change | Result |
+|---|---|---|
+| Disabled figure translation still showed a duplicate OCR block | Omit the extra label block when the application skip marker is true and no model/reader translation exists | Original image and caption remain; stored source labels and the fill action are retained |
+| A visibility change could hide existing content | Preserve model translations, reader edits and original-only figures without a skip marker | Four added rendering regressions passed |
+| Offline exports could disagree with the live reader | Use the shared renderer and verify both skipped and filled states in exported HTML | PDF/EPUB live and offline browser checks passed |
+
+All 122 JavaScript tests and 35 targeted figure-translation/EPUB Python tests passed.
+Browser checks also covered fill completion, note/body preservation, reload and
+responsive widths. Model replies were simulated; no live model calls were made.
+This is a presentation change; translation policy, source data and saved notes are
+unchanged. Existing 0.2.0 installers are not rebuilt by this change.
+
+## Structured figure-fill reply correction (2026-10-24)
+
+| Problem | Change | Result |
+|---|---|---|
+| Live manual QA returned an object containing image_zh under an image fill key; str(object) appeared in the reader | Request plain strings explicitly; extract only a valid image_zh string from structured replies | Plain strings, nested replies and serialized JSON normalize to label text |
+| Invalid objects could be marked translated | Reject missing/non-string translations before validation and again at the storage boundary | Malformed replies remain pending and follow the existing failure/retry path |
+| Extra model fields could alter source content | Discard source labels, paths and crop boxes returned in a fill value | Body, captions, source labels, images, crop geometry and reader data preserved |
+| Already saved manual-QA output contained a Python object representation | Back up the isolated test data and recover its existing translated string locally | One synthetic figure recovered without another model call; saved notes unchanged |
+
+Full regressions: 390 Python tests and 122 JavaScript tests passed. Browser tests
+used structured model substitutes for PDF/EPUB and checked live/offline rendering,
+original-label and crop preservation, note persistence and responsive layouts.
+Source privacy checks also passed. No new live model request was made for this fix.

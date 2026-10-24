@@ -45,3 +45,40 @@ test('legacy figure without image text retains its page fallback', () => {
   assert.match(html, /fig-missing/);
   assert.doesNotMatch(html, /figure-translation/);
 });
+
+test('skipped figure labels stay stored without a visible duplicate text block', () => {
+  const block = {id: 'fig1', type: 'figure', src: 'figures/a.webp', image_en: 'Accuracy',
+    image_translation_skipped: true, caption_en: 'Figure 1', caption_zh: 'translated caption'};
+  const {PR, html} = reader(block);
+  assert.match(html, /src="\/p\/test\/figures\/a.webp"/);
+  assert.match(html, /translated caption/);
+  assert.doesNotMatch(html, /figure-translation|data-key="fig1#image"|Accuracy/);
+  assert.equal(PR.blockById.fig1.image_en, 'Accuracy');
+  assert.deepEqual(Array.from(PR.blockKeys(block)), ['fig1#caption', 'fig1#image']);
+});
+
+test('existing figure translations remain visible even with a stale skip marker', () => {
+  const {html} = reader({id: 'fig1', type: 'figure', image_en: 'Accuracy', image_zh: 'translated labels',
+    image_translation_skipped: true, caption_zh: 'translated caption'});
+  assert.match(html, /figure-translation/);
+  assert.match(html, /data-key="fig1#image">translated labels/);
+});
+
+test('a reader-authored figure translation is not hidden by the skip marker', () => {
+  const {html} = reader({id: 'fig1', type: 'figure', image_en: 'Accuracy', image_translation_skipped: true}, {
+    'fig1#image': {zh: 'reader translation'},
+  });
+  assert.match(html, /figure-translation/);
+  assert.match(html, /data-key="fig1#image">reader translation/);
+});
+
+test('filling skipped labels reveals the translation without changing the original', () => {
+  const block = {id: 'fig1', type: 'figure', image_en: 'Accuracy', image_translation_skipped: true};
+  assert.doesNotMatch(reader(block).html, /figure-translation/);
+  block.image_zh = 'translated labels';
+  delete block.image_translation_skipped;
+  const {html} = reader(block);
+  assert.match(html, /figure-translation/);
+  assert.match(html, /translated labels/);
+  assert.match(html, /class="en" lang="en">Accuracy/);
+});

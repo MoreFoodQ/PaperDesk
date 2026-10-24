@@ -7,11 +7,17 @@ Older configuration files and previously queued jobs retain the enabled behavior
 |---|---|---|
 | Body, headings and tables | Translated | Translated |
 | Figure captions | Translated | Translated |
-| Readable labels, axes and legends inside figures | Translated | Original text retained |
+| Readable labels, axes and legends inside figures | Translated and shown below the image | Original text retained for later translation; duplicate text block hidden |
 | Source images | Retained | Retained |
 | Existing figure translations | Retained | Retained |
 
 This controls the structured figure-label text displayed below the original image.
+When labels were deliberately skipped and have no translation, the reader and
+offline HTML omit the extra original-label block. Existing model translations and
+reader-authored translations remain visible. Original-only documents without a
+skip marker keep their existing source-label display. Completing an image fill
+reveals the translated block without deleting its original text.
+
 It does not edit pixels or replace text inside the original image. Page images may
 still be sent to the model for body text, formulas, tables and layout. This option
 does not prevent image transmission or guarantee a particular token reduction.
@@ -83,3 +89,17 @@ Previously built 0.2.0 executables do not contain this feature and must not be r
 Branch source can be tried before merging with an isolated library. Merging does not
 update a running process or an installed executable; restart the source app or install
 the new package. The separate daily-use checkout is not updated by this branch.
+
+## Fill response validation
+
+Image fill keys expect plain translated strings. A structured reply is accepted
+only when its image_zh member is a non-empty string; unrelated image_en, src and
+box fields are ignored. Strict serialized JSON objects are normalized through the
+same validation. Other malformed values remain untranslated and can be retried;
+objects are never converted to display text. Normalization also applies after a
+model repair reply and at the final storage boundary.
+
+The 2026-10-24 correction passed 390 Python and 122 JavaScript regressions, including
+structured-reply browser checks for both supported formats. A manually observed
+bad result in the isolated synthetic library was backed up and recovered from its
+existing translated text without another model request.

@@ -30,7 +30,7 @@ def fake(cfg,prompt,cwd,images=None,cancel=None,meter=None):
  marker='要翻译的内容（键 → 英文）：'+chr(10)
  if marker in prompt:
   items=json.loads(prompt.split(marker,1)[1])
-  return json.dumps({'zh':{**{k:'時間（天）' for k in items},'p1':'UNREQUESTED BODY CHANGE'},'meta':{'title_zh':'UNREQUESTED TITLE CHANGE'}})
+  return json.dumps({'zh':{**{k:({'image_zh':'時間（天）','image_en':'UNREQUESTED SOURCE CHANGE','src':'../../untrusted','box':[0,0,1,1]} if k.endswith('#image') else '時間（天）') for k in items},'p1':'UNREQUESTED BODY CHANGE'},'meta':{'title_zh':'UNREQUESTED TITLE CHANGE'}})
  pages=[int(n) for n in re.search(r'这次只处理第 ([0-9, ]+) 页',prompt)[1].split(',')]
  return json.dumps({'blocks':[b for n in pages for b in [
   {'id':f'p{n}','page':n,'type':'para','en':'Synthetic body text.','zh':'合成正文測試。'},
@@ -97,17 +97,39 @@ serve(port=0)
       await page.goto(base+'/read/'+item.id);
       await page.locator('[data-t="translate-images"]').waitFor();
       await page.waitForFunction(()=>document.querySelector('.figure-media img')?.naturalWidth>0);
+      assert.equal(await page.locator('.figure-translation').count(),0);
+      const skippedExport = await (await fetch(base+'/api/p/'+item.id+'/export',{headers})).text();
+      const offline = await context.newPage();
+      offline.on('pageerror',e=>errors.push(e.message));
+      await offline.setContent(skippedExport);
+      await offline.locator('.figure-media img').first().waitFor();
+      assert.equal(await offline.locator('.figure-translation').count(),0);
+      assert.equal(await offline.locator('[data-t="translate-images"]').count(),0);
+      await offline.close();
       await page.screenshot({animations:'disabled',path:path.join(home,'figure-skipped-'+item.format+'.png')});
       await Promise.all([page.waitForResponse(r=>r.url()===base+'/api/p/'+item.id+'/translate' && r.request().method()==='POST'), page.locator('[data-t="translate-images"]').click()]);
       const filled=await waitJob(item.id);
       assert.deepEqual(filled.paper.blocks.filter(b=>b.type!=='figure'),originals);
       assert.deepEqual(filled.reader,skipped.reader);
+      for (const before of figures) {
+        const after = filled.paper.blocks.find(b=>b.id===before.id);
+        assert.equal(after.image_en,before.image_en);
+        assert.equal(after.src,before.src);
+        assert.deepEqual(after.box,before.box);
+      }
       assert.ok(filled.paper.blocks.filter(b=>b.type==='figure').every(b=>b.image_zh==='時間（天）'&&!b.image_translation_skipped));
       await page.reload();await page.locator('#paper .blk').first().waitFor();
       assert.equal(await page.locator('[data-t="translate-images"]').count(),0);
+      assert.equal(await page.locator('.figure-translation').count(),figures.length);
       await page.screenshot({animations:'disabled',path:path.join(home,'figure-filled-'+item.format+'.png')});
       const html=await (await fetch(base+'/api/p/'+item.id+'/export',{headers})).text();
       assert.ok(html.includes('Synthetic retained note')&&html.includes('data:image/webp;base64,'));
+      const filledOffline = await context.newPage();
+      filledOffline.on('pageerror',e=>errors.push(e.message));
+      await filledOffline.setContent(html);
+      await filledOffline.locator('.figure-translation').first().waitFor();
+      assert.equal(await filledOffline.locator('.figure-translation').count(),figures.length);
+      await filledOffline.close();
       for(const width of [390,900,1440]) {
         await page.setViewportSize({width,height:1000});
         assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);

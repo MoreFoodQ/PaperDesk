@@ -4,7 +4,7 @@ from __future__ import annotations
 import hashlib
 import json
 
-from . import sentences
+from . import figure_translation, sentences
 from .i18n import tr
 from .store import Workspace, now_iso
 
@@ -118,7 +118,8 @@ def fill_zh(ws: Workspace, data: dict, pages: list[int], keys: set[str], sents: 
     """給閱讀原文整理出來的塊就地補譯文（塊 id 不變，筆記還維持關聯）。
     data 是模型的輸出 {"zh": {鍵: 譯文}, "meta", "glossary"}；keys 是這次要譯的鍵；sents：段落和清單項的句子對齊 {鍵: sents}。
     回傳漏譯的鍵；這幾頁的鍵都譯齊了，才把頁從 en_pages 去掉。"""
-    got = {k: v for k, v in (data.get("zh") or {}).items() if k in keys and v}
+    values = figure_translation.fill_values(data.get("zh") or {}, keys)
+    got = {k: v for k, v in values.items() if v}
 
     def apply(paper):
         by_id = {b.get("id"): b for b in paper.get("blocks", [])}

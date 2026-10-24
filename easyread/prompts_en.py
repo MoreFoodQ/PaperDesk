@@ -71,13 +71,21 @@ def todo(blocks: list[dict], translate_images: bool = True) -> dict[str, object]
 
 def fill(ws: Workspace, pages: list[int], items: dict[str, object]) -> str:
     """給已經整理好的原文塊補譯文。"""
+    image_keys = [key for key in items if key.endswith("#image")]
+    image_rule = ""
+    if image_keys:
+        example = json.dumps({"zh": {image_keys[0]: "圖片文字的純譯文"}}, ensure_ascii=False)
+        image_rule = (
+            "- 本次只補翻既有欄位，不建立或回傳圖塊。\n"
+            "- #image 鍵的值必須是純譯文字串，可用換行分隔標籤；禁止物件、陣列或序列化的物件文字。\n"
+            "- 不要在值中回傳 image_zh、image_en、src 或 box 欄位。正確格式例如：" + example + "\n")
     first = 1 in pages
     target = langs.of_paper(ws.load("paper").get("meta"))
     name = langs.prompt_name(target)
     meta = ('  "meta": {"title_zh": "", "short_zh": "' + ("不超过 12 字的短标题" if target == "zh" else "不超过 6 个词的短标题") + '"},   // 论文英文标题：'
             + json.dumps(ws.load("paper").get("meta", {}).get("title_en", ""), ensure_ascii=False) + "\n") if first else ""
     return (f"你在把一篇学术论文译成{name}。原文已经整理成块，这次只翻译第 {', '.join(map(str, pages))} 页上下面这些键对应的文字。\n\n"
-            f"{_context(ws, pages, new_blocks=False)}\n\n{rules(target)}\n"
+            f"{_context(ws, pages, new_blocks=False)}\n\n{rules(target)}\n" + image_rule +
             f"- 表头（键以 #head 结尾）是二维数组：保持行列数不变，把文字译成{name}，数字和符号原样。\n"
             + (f"- 英文里的 ‖ 是句子分界：译文在对应的句子交界处也插 ‖，个数和这条英文的一样。两句英文在{name}里要合成一句时，也在合并后最接近的位置插上。\n"
                if any(isinstance(v, str) and "‖" in v for v in items.values()) else "") + "\n"

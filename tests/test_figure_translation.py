@@ -369,5 +369,77 @@ class FigureTranslationTest(unittest.TestCase):
             self.assertFalse(stored['translate_images'])
 
 
+
+    def test_structured_image_fill_extracts_only_translation(self):
+        self.seed_skipped()
+        before = self.ws.load('paper')
+        original = before['blocks'][2].copy()
+        translate_api.enqueue(self.jobs, self.ws, {'images': True})
+        value = {'image_zh': '分數\n時間（天）\n群組 A', 'image_en': 'DO NOT REPLACE SOURCE',
+                 'src': '../../untrusted', 'box': [0, 0, 1, 1]}
+        with patch.object(engines, 'run', return_value=json.dumps({'zh': {'f1#image': value}})) as model:
+            self.drain()
+        self.assertEqual(model.call_count, 1)
+        after = self.ws.load('paper')
+        figure = after['blocks'][2]
+        self.assertEqual(figure['image_zh'], value['image_zh'])
+        self.assertEqual(figure['image_en'], original['image_en'])
+        self.assertEqual(figure.get('src'), original.get('src'))
+        self.assertEqual(figure.get('box'), original.get('box'))
+        self.assertEqual(after['blocks'][:2], before['blocks'][:2])
+        self.assertNotIn('image_translation_skipped', figure)
+        self.assertEqual(self.ws.load('job')['state'], 'done')
+
+    def test_malformed_image_values_stay_pending_instead_of_becoming_text(self):
+        for value in [True, 80, ['translated'], {'image_en': 'no translation'},
+                      {'image_zh': {'nested': 'not text'}}, "{'image_zh': 'Python repr'}"]:
+            with self.subTest(value=value):
+                self.seed_skipped()
+                original = self.ws.load('paper')['blocks']
+                translate_api.enqueue(self.jobs, self.ws, {'images': True})
+                with patch.object(engines, 'run', return_value=json.dumps({'zh': {'f1#image': value}})) as model:
+                    self.drain()
+                self.assertEqual(model.call_count, 2)
+                self.assertEqual(self.ws.load('job')['state'], 'partial')
+                self.assertEqual(self.ws.load('paper')['blocks'], original)
+                self.assertEqual(figure_translation.pending_pages(self.ws.load('paper')), {1})
+
+    def test_repair_reply_is_subject_to_image_type_validation(self):
+        self.seed_skipped()
+        translate_api.enqueue(self.jobs, self.ws, {'images': True})
+        replies = [json.dumps({'zh': {'f1#image': 'bad math'}}),
+                   json.dumps({'zh': {'f1#image': {'image_zh': '修正譯文', 'src': 'ignored'}}})]
+        with patch.object(engines, 'run', side_effect=replies), patch.object(translate, '_problems', return_value=['repair']):
+            self.drain()
+        self.assertEqual(self.ws.load('job')['state'], 'done')
+        self.assertEqual(self.ws.load('paper')['blocks'][2]['image_zh'], '修正譯文')
+
+    def test_low_level_image_fill_never_stringifies_objects_and_keeps_table_arrays(self):
+        from easyread import paperdata
+        self.seed_skipped()
+        missing = paperdata.fill_zh(self.ws, {'zh': {'f1#image': {'image_zh': ['invalid']}}}, [1], {'f1#image'})
+        self.assertEqual(missing, ['f1#image'])
+        self.assertNotIn('image_zh', self.ws.load('paper')['blocks'][2])
+        missing = paperdata.fill_zh(self.ws, {'zh': {'f1#image': {'image_zh': '純譯文'},
+                                                    't1#head': [['組別', '數值']]}},
+                                    [1], {'f1#image', 't1#head'})
+        self.assertEqual(missing, [])
+        self.assertEqual(self.ws.load('paper')['blocks'][2]['image_zh'], '純譯文')
+        self.assertEqual(self.ws.load('paper')['blocks'][1]['head'], [['組別', '數值']])
+
+    def test_serialized_json_image_object_and_prompt_schema(self):
+        self.seed_skipped()
+        translate_api.enqueue(self.jobs, self.ws, {'images': True})
+        seen=[]
+        def model(cfg, prompt, *args):
+            seen.append(prompt)
+            return json.dumps({'zh': {'f1#image': json.dumps({'image_zh': '分數\n時間'})}})
+        with patch.object(engines, 'run', side_effect=model):
+            self.drain()
+        self.assertEqual(self.ws.load('job')['state'], 'done')
+        self.assertEqual(self.ws.load('paper')['blocks'][2]['image_zh'], '分數\n時間')
+        self.assertIn('#image 鍵的值必須是純譯文字串', seen[0])
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -148,7 +148,7 @@ def _fill_batch(ws: Workspace, cfg: dict, batch: list[int], cancel, say, meter=N
     data = engines.parse_json(text)
     if not isinstance(data, dict) or not isinstance(data.get("zh"), dict):
         raise engines.EngineError(tr("模型输出的格式不对（缺 zh）"))
-    data["zh"] = {k: v for k, v in data["zh"].items() if k in items}
+    data["zh"] = figure_translation.fill_values(data["zh"], set(items))
     fake = [{"id": k, "type": "para", "zh": v} for k, v in data["zh"].items() if isinstance(v, str)]
     problems = _problems({"blocks": fake})
     if problems:
@@ -159,6 +159,7 @@ def _fill_batch(ws: Workspace, cfg: dict, batch: list[int], cancel, say, meter=N
                 data = fixed
         except engines.EngineError as e:
             journal(ws, tr("第 {pages} 页修正失败，保留原译：{err}", pages=batch, err=e))
+    data["zh"] = figure_translation.fill_values(data["zh"], set(items))
     if set(batch) <= figure_only:
         data = {"zh": data["zh"]}
     with _merge_lock:

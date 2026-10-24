@@ -101,7 +101,9 @@
       const img = b.src ? '<img src="' + PR.esc(PR.imageUrl(b.src)) + '" alt="" loading="lazy">'
         : '<button class="fig-missing" data-t="page">' + PR.esc(PR.t("图见原文第 {n} 页（点击查看）", { n: b.page })) + "</button>";
       const key = b.id + "#image";
-      const imageText = b.image_zh || b.image_en ? '<div class="figure-translation"><div class="figure-translation-label">' + PR.t("图内文字") + '</div>' + zhDiv(key) + enIfZh(key, b.image_en) + '</div>' : "";
+      // 略過翻譯時隱藏重複的原文；既有譯文與使用者修改仍保留顯示。
+      const showImageText = b.image_zh || (PR.editOf(key) || {}).zh || (b.image_en && b.image_translation_skipped !== true);
+      const imageText = showImageText ? '<div class="figure-translation"><div class="figure-translation-label">' + PR.t("图内文字") + '</div>' + zhDiv(key) + enIfZh(key, b.image_en) + '</div>' : "";
       return '<div class="figure-media">' + img + '</div>' + imageText + captionHtml(b);
     },
     note: (b) => '<div class="inline-note"><div class="lbl">' + PR.t("阅读批注（非原文）") + "</div>" + PR.mdBlocks(b.zh) + "</div>",
