@@ -15,7 +15,8 @@ class PackagedRuntimeTest(unittest.TestCase):
             native=root/'resources/codex/bin/codex.exe'
             native.parent.mkdir(parents=True);native.write_bytes(b'synthetic')
             with patch.object(sys,'frozen',True,create=True), patch.object(sys,'executable',str(root/'resources/backend/easyread-backend.exe')), patch.object(engines.shutil,'which') as which:
-                self.assertEqual(Path(engines.codex_path({})),native)
+                # Windows CI 的暫存目錄可能使用 8.3 短路徑；比對正規化後的完整路徑。
+                self.assertEqual(Path(engines.codex_path({})),native.resolve())
                 which.assert_not_called()
 
     def test_incomplete_installer_does_not_use_unverified_global_cli(self):

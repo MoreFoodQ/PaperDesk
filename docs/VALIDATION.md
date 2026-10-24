@@ -151,3 +151,13 @@ before GitHub could create test jobs. The command now uses a block scalar so its
 contents are passed unchanged to PowerShell. Both workflow files parse locally.
 This is independent of the earlier runner-context fix and does not change the
 application or dependency versions. The PR checks provide remote execution results.
+
+## Windows runner path normalization (2026-10-24)
+
+The first executable PR checks reached all 390 Python tests. Both Python versions
+reported the packaged-CLI path assertion because the runner's temporary path used
+an 8.3 account directory while the application returned its resolved long path.
+The expected fixture path now uses resolve() before comparison. The assertion
+still verifies the exact bundled executable and rejects a global CLI fallback;
+application code and packaging behavior are unchanged. The three local packaged
+runtime regressions passed before the correction was pushed for remote validation.
