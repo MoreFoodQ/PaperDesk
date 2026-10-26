@@ -72,6 +72,25 @@ class I18nTest(unittest.TestCase):
             self.assertEqual(i18n.tr('万'), '萬')
             self.assertEqual(i18n.tr('自定义地址'), '自訂位址')
 
+    def test_taiwan_ui_terminology(self):
+        dictionary = i18n.tw_dict()
+        unwanted = ('回車', '回收站', '字號', '版心', '配置', '梯子',
+                    '國內直連', '幾毛錢', '熒光筆', '下劃線', '接口', '中轉地址')
+        for key, value in dictionary.items():
+            for term in unwanted:
+                self.assertNotIn(term, value, key)
+        self.assertEqual(dictionary['分类名，回车'], '輸入分類名稱，按 Enter')
+        self.assertEqual(dictionary['回收站'], '回收區')
+        self.assertEqual(dictionary['快捷键'], '快捷鍵')
+        self.assertEqual(dictionary['字号'], '字體大小')
+        self.assertEqual(dictionary['接口地址（base URL）'], 'API 網址（base URL）')
+
+    def test_taiwan_ui_keeps_target_languages_and_service_names(self):
+        dictionary = i18n.tw_dict()
+        self.assertEqual(dictionary['中文'], '簡體中文')
+        self.assertIn('Codex', dictionary['Codex 默认'])
+        self.assertIn('Responses', dictionary['用 Responses 接口。'])
+
     def test_legacy_simplified_ui_preference_uses_traditional(self):
         from easyread import prefs
         with mock.patch.dict(os.environ, {}, clear=True), \

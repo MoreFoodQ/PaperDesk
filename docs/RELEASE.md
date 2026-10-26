@@ -1,6 +1,6 @@
 # Release scope
 
-PaperDesk 0.3.0 provides a Windows x64 installer and a source distribution. The installer includes Electron 44.9.3, Python 3.12.10, and the official native Codex CLI 0.162.1. Python or Node.js need not be installed on the user's machine. Windows 11 x64 is the validated host.
+PaperDesk 0.3.1 provides a Windows x64 installer and a source distribution. The installer includes Electron 44.9.3, Python 3.12.10, and the official native Codex CLI 0.162.1. Python or Node.js need not be installed on the user's machine. Windows 11 x64 is the validated host.
 
 EPUB 2/3 is supported through generated reading pages; see [Document formats](FORMATS.md). Automatic update downloads remain disabled.
 
@@ -10,7 +10,7 @@ Maintainers need Windows x64, the source environment created by Setup-PaperDesk.
 
 The pipeline stages only official CLI program files, builds a folder-based Python backend to avoid repeated extraction during document processing, then creates an NSIS installer. Unused voice libraries are omitted. Runtime license notices are included.
 
-Outputs are in `dist/electron/`. Publish the `PaperDesk-Setup-0.3.0.exe` and its SHA-256 checksum through GitHub Release Assets. `win-unpacked/` is a complete app directory for validation, not a single-file portable executable. The installer is unsigned; no signing credentials are configured.
+Outputs are in `dist/electron/`. Publish the `PaperDesk-Setup-0.3.1.exe` and its SHA-256 checksum through GitHub Release Assets. `win-unpacked/` is a complete app directory for validation, not a single-file portable executable. The installer is unsigned; no signing credentials are configured.
 
 ## Validate before publication
 

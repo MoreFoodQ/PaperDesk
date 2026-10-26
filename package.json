@@ -1,6 +1,6 @@
 {
   "name": "paperdesk-desktop",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "PaperDesk: Traditional Chinese research workbench with Codex CLI",
   "main": "electron/main.cjs",
   "private": true,

@@ -188,3 +188,16 @@ Validation completed on Windows 11 x64:
 The installer is unsigned. This is a development-host check with Python/Node
 removed from the application PATH, not a fresh Windows VM test. Cross-version
 upgrades, macOS and Linux installers were not validated in this release run.
+
+
+## Taiwan UI terminology revision (2026-10-26)
+
+Reviewed all 1202 Traditional Chinese locale entries and updated 227 displayed values. Source lookup keys, placeholders, HTML markup, model identifiers and document content remain unchanged.
+
+| Problem | Change | Result |
+|---|---|---|
+| Keyboard and system terms used inconsistent regional wording | Use Enter, 回收區, 字體大小 and 閱讀寬度; retain 快捷鍵 as requested | Category creation with Enter and settings labels verified |
+| API and connection guidance retained old assumptions | Use API 網址／回傳 and neutral network troubleshooting | No service routing or account behavior changed |
+| Mechanical conversion introduced awkward labels | Correct navigation, highlighting and note terminology | Library, six settings tabs and reader text checked |
+
+395 Python tests and 122 JavaScript tests passed. Synthetic PDF/EPUB browser workflows covered settings, category creation, figure skip/fill, note persistence, offline export and responsive layouts. No live model calls were made. For 0.3.1, the Windows installer was rebuilt. Both the unpacked and installed applications passed packaged checks, including the exact Enter, 快捷鍵 and 回收區 translations, PDF/EPUB, authentication, note persistence, offline export and shutdown. The source authentication smoke, packaged privacy/native CLI hash gates and npm audit passed. Runtime dependency versions are unchanged from 0.3.0.

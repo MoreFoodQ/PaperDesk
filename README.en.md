@@ -55,7 +55,7 @@ Bilingual passages, the paper outline, and the original PDF side by side.
 
 ### Windows installer
 
-Download `PaperDesk-Setup-0.3.0.exe` from the Assets section of [GitHub Releases](https://github.com/MoreFoodQ/PaperDesk/releases). Install and open PaperDesk. Python and the official native Codex CLI are bundled; no separate Python, Node.js, or npm installation is required.
+Download `PaperDesk-Setup-0.3.1.exe` from the Assets section of [GitHub Releases](https://github.com/MoreFoodQ/PaperDesk/releases). Install and open PaperDesk. Python and the official native Codex CLI are bundled; no separate Python, Node.js, or npm installation is required.
 
 Choose **Do nothing yet** when importing documents for local reading. For translation or GPT questions, open **Settings → Models → Sign in to ChatGPT / Codex** and complete the official browser sign-in. An existing valid Codex login can be reused.
 

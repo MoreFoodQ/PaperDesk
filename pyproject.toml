@@ -1,6 +1,6 @@
 [project]
 name = "paperdesk"
-version = "0.3.0"
+version = "0.3.1"
 description = "PaperDesk：繁體中文論文閱讀工作台，使用 Codex CLI 翻譯與問答"
 readme = "README.md"
 license = { text = "MIT" }
